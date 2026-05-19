@@ -66,7 +66,7 @@
                     }
                 }
             },
-            "required": ["id", "transitions", "isInitial", "isFinal", "regions"]
+            "required": ["id", "actions", "variables", "transitions", "isInitial", "isFinal", "regions"]
         },
         "transition": {
             "type": "object",
@@ -80,8 +80,8 @@
                 "isImmediate": {
                     "type": "boolean"
                 },
-                "isTermination": {
-                    "type": "boolean"
+                "preemption": {
+                    "enum": [ "strong", "weak", "termination" ]
                 },
                 "guard": {
                     "type": "string"
@@ -90,7 +90,7 @@
                     "type": "string"
                 }
             },
-            "required": ["targetID", "isImmediate", "isTermination"]
+            "required": ["targetID", "isImmediate", "preemption"]
         },
         "variable": {
             "type": "object",
@@ -102,7 +102,7 @@
                     "type": "string"
                 },
                 "initialValue": {
-                    "type": ["string", "number", "boolean", "null"]
+                    "type": ["string", "number", "boolean"]
                 },
                 "isInput": {
                     "type": "boolean"
