@@ -40,7 +40,7 @@ export function findInputVariables(states: State[]): Variable[] {
 			if (variable.isInput) inputVariables.push(variable);
 		}
 
-		inputVariables.concat(
+		inputVariables = inputVariables.concat(
 			findInputVariables(state.regions.flatMap((r) => r.states)),
 		);
 	}
@@ -56,7 +56,7 @@ export function findOutputVariables(states: State[]): Variable[] {
 			if (variable.isOutput) outputVariables.push(variable);
 		}
 
-		outputVariables.concat(
+		outputVariables = outputVariables.concat(
 			findOutputVariables(state.regions.flatMap((r) => r.states)),
 		);
 	}

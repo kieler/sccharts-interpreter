@@ -6,6 +6,8 @@ import {
 	findOutputVariables,
 } from "./schema/utils.js";
 import type { SCChartModel, Variable } from "./schema/types.js";
+import type { Context } from "./interpreter/types.js";
+import { constructStateGraph } from "./interpreter/constructor.js";
 
 const filePath = process.argv[2];
 if (!filePath) {
@@ -43,6 +45,10 @@ try {
 		console.log(
 			"Input Variables: " + outputVariables.map((v) => v.id).join(", "),
 		);
+		console.log("");
+
+		const context: Context = constructStateGraph(model);
+		console.log(context);
 	}
 } catch (err) {
 	const e = err as Error;

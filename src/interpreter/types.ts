@@ -2,7 +2,7 @@ import { SCChartModel, State, Transition } from "../schema/types.js";
 
 export interface TransitionEdge {
 	from: StateNode;
-	to: StateNode;
+	to: StateNode | undefined;
 	isImmediate: boolean;
 	guard?: string;
 	action?: string;
@@ -26,6 +26,6 @@ export interface Context {
 	graph: StateGraph;
 	activeStates: Set<StateNode>;
 	variables: Map<string, unknown>;
-	outputVariabls: string[];
+	outputVariables: string[];
 	// Input Variables seprate to ignore "faulty" inputs of tick()?
 }
