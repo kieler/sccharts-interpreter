@@ -1,0 +1,24 @@
+{
+	"name": "sccharts-interpreter",
+	"version": "0.0.1",
+	"description": "Interpreter for the synchronous language SCChart",
+	"type": "module",
+	"bin": {
+		"sccharts-interpreter": "./bin/sccharts-interpreter"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/main.js",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"typescript": "^5.6.0",
+		"vitest": "^3.0.0"
+	}
+}
