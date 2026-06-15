@@ -8,6 +8,7 @@ import {
 import type { SCChartModel, Variable } from "./schema/types.js";
 import type { Context } from "./interpreter/types.js";
 import { constructStateGraph } from "./interpreter/constructor.js";
+import { run } from "./interpreter/run.js";
 
 const filePath = process.argv[2];
 if (!filePath) {
@@ -49,6 +50,15 @@ try {
 
 		const context: Context = constructStateGraph(model);
 		console.log(context);
+
+		const inputs = [
+			{ A: false, B: false },
+			{ A: true, B: false },
+			{ A: false, B: true },
+			{ A: false, B: false },
+		];
+
+		run(context, inputs);
 	}
 } catch (err) {
 	const e = err as Error;
