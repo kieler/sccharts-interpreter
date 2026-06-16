@@ -1,0 +1,107 @@
+[
+  {
+    "id": "IM",
+    "label": "IM",
+    "actions": [],
+    "transitions": [],
+    "variables": [
+      {
+        "id": "A",
+        "type": "bool",
+        "isInput": true,
+        "isOutput": false
+      },
+      {
+        "id": "O1",
+        "type": "bool",
+        "isInput": false,
+        "isOutput": true
+      },
+      {
+        "id": "O2",
+        "type": "bool",
+        "isInput": false,
+        "isOutput": true
+      },
+      {
+        "id": "O3",
+        "type": "bool",
+        "isInput": false,
+        "isOutput": true
+      }
+    ],
+    "isInitial": false,
+    "isFinal": false,
+    "regions": [
+      {
+        "id": "region",
+        "states": [
+          {
+            "id": "A",
+            "label": "A",
+            "actions": [],
+            "transitions": [
+              {
+                "targetID": "B",
+                "isImmediate": true,
+                "preemption": "weak",
+                "guard": "A",
+                "action": "O1 \u003d true"
+              }
+            ],
+            "variables": [],
+            "isInitial": true,
+            "isFinal": false,
+            "regions": []
+          },
+          {
+            "id": "B",
+            "label": "B",
+            "actions": [],
+            "transitions": [
+              {
+                "targetID": "C",
+                "isImmediate": false,
+                "preemption": "weak",
+                "guard": "A",
+                "action": "O2 \u003d true"
+              }
+            ],
+            "variables": [],
+            "isInitial": false,
+            "isFinal": false,
+            "regions": []
+          },
+          {
+            "id": "C",
+            "label": "C",
+            "actions": [],
+            "transitions": [
+              {
+                "targetID": "D",
+                "isImmediate": true,
+                "preemption": "weak",
+                "guard": "A",
+                "action": "O3 \u003d true"
+              }
+            ],
+            "variables": [],
+            "isInitial": false,
+            "isFinal": false,
+            "regions": []
+          },
+          {
+            "id": "D",
+            "label": "D",
+            "actions": [],
+            "transitions": [],
+            "variables": [],
+            "isInitial": false,
+            "isFinal": true,
+            "regions": []
+          }
+        ]
+      }
+    ]
+  }
+]

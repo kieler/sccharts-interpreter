@@ -56,7 +56,7 @@ try {
       { A: false, B: false },
       { A: true, B: false },
       { A: false, B: false },
-      { A: false, B: true },
+      { A: true, B: true },
       { A: false, B: false },
     ];
 

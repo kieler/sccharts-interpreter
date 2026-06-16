@@ -1,7 +1,72 @@
 import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
-import { Context } from "./types.js";
-import { isSuper } from "./util.js";
+import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
+
+function addRegionsToRuntime(
+  graphs: StateGraph[] | undefined,
+  context: Context,
+) {
+  if (!graphs) return;
+
+  for (const graph of graphs) {
+    if (graph.terminated) return;
+    if (!graph.initalNode) return;
+
+    context.activeNodes.add(graph.initalNode);
+  }
+}
+
+function walkEdge(edge: TransitionEdge, context: Context): StateNode {
+  // Returns the StateNode it ends at
+
+  let node = edge.from;
+
+  // If (edge.from.subgraphs) then edge.from is SuperState
+  // Else we just say true
+  let subGraphDone = true;
+  if (edge.from.subgraphs) {
+    subGraphDone = edge.from.subgraphs
+      .flatMap((graph) => graph.terminated)
+      .every((x) => x);
+  }
+
+  const guardPass =
+    !edge.transition.guard ||
+    parseGuard(edge.transition.guard, context.variables);
+
+  if (guardPass && subGraphDone) {
+    if (!edge.to) return node;
+
+    if (edge.to.state.isFinal) {
+      edge.to.graph.terminated = true;
+    } else {
+      context.activeNodes.add(edge.to);
+      addRegionsToRuntime(edge.to.subgraphs, context);
+    }
+
+    if (edge.transition.action)
+      parseAction(edge.transition.action, context.variables);
+
+    context.activeNodes.delete(edge.from);
+
+    if (edge.transition.isImmediate) {
+      processNode(edge.to, context);
+    }
+
+    node = edge.to;
+  }
+
+  return node;
+}
+
+function processNode(node: StateNode, context: Context): void {
+  for (const edge of node.edgesOut) {
+    const nextNode = walkEdge(edge, context);
+    if (nextNode?.id != node.id) {
+      break;
+    }
+  }
+}
 
 export function run(context: Context, inputs: any) {
   // TODO: immediate transitions
@@ -11,66 +76,23 @@ export function run(context: Context, inputs: any) {
 
   context.activeNodes.add(context.graph.nodes[0].subgraphs[0].initalNode);
 
-  for (const state of context.activeNodes) {
-    console.log(state.id);
-  }
-  console.log();
-
   // "tick()"
   for (const input of inputs) {
     for (const variable in input) {
       context.variables.set(variable, input[variable]);
     }
 
-    if (context.activeNodes.size === 0) return;
+    if (context.activeNodes.size == 0) return;
 
-    for (const node of context.activeNodes) {
-      let allDone = false;
-      if (node.subgraphs) {
-        allDone = node.subgraphs
-          .flatMap((graph) => graph.terminated)
-          .every((x) => x);
-      }
-
-      for (const edge of node.edgesOut) {
-        // should the super state behaviour be more based on the termitaion preemtion? but also preemtion=termination only really makes sense for super states as far as I understand?
-        if (
-          (!edge.transition.guard ||
-            parseGuard(edge.transition.guard, context.variables)) &&
-          (!isSuper(node) || allDone)
-        ) {
-          if (edge.to) {
-            if (edge.to.state.isFinal) {
-              edge.to.graph.terminated = true;
-            } else {
-              context.activeNodes.add(edge.to);
-              if (edge.to.subgraphs) {
-                for (const subgraph of edge.to.subgraphs) {
-                  if (!subgraph.initalNode) continue;
-                  context.activeNodes.add(subgraph.initalNode);
-                }
-              }
-            }
-          }
-          if (edge.transition.action)
-            parseAction(edge.transition.action, context.variables);
-
-          context.activeNodes.delete(node);
-        }
-      }
+    // Cloning the Set, bc activeNodes gets overridden
+    for (const node of new Set(context.activeNodes)) {
+      processNode(node, context);
     }
 
-    let output = "";
-    for (const [key, value] of Object.entries(input)) {
-      output += ", " + key + ": " + value;
-    }
-    for (const variable of context.outputVariables) {
-      output += ", " + variable + ": " + context.variables.get(variable);
-    }
-    console.log(output);
+    console.log(context.variables);
 
-    // for (const state of context.activeNodes) {
-    //   console.log(state.id);
-    // }
+    for (const state of context.activeNodes) {
+      console.log(state.id);
+    }
   }
 }
