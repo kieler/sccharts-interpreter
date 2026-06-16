@@ -1,31 +1,33 @@
 import { SCChartModel, State, Transition } from "../schema/types.js";
 
 export interface TransitionEdge {
-	from: StateNode;
-	to: StateNode | undefined;
-	isImmediate: boolean;
-	guard?: string;
-	action?: string;
-	transition: Transition;
+  from: StateNode;
+  to?: StateNode;
+  transition: Transition;
 }
+
 export interface StateNode {
-	edgesOut: TransitionEdge[];
-	edgesIn: TransitionEdge[];
-	id: string;
-	state: State;
+  id: string;
+  edgesOut: TransitionEdge[];
+  edgesIn: TransitionEdge[];
+  subgraphs?: StateGraph[];
+  graph: StateGraph;
+  state: State;
 }
 
 export interface StateGraph {
-	edges: TransitionEdge[];
-	nodes: StateNode[];
-	initalNodes: StateNode[];
+  edges: TransitionEdge[];
+  nodes: StateNode[];
+  initalNode?: StateNode;
+  terminated: boolean;
 }
 
 export interface Context {
-	model: SCChartModel;
-	graph: StateGraph;
-	activeStates: Set<StateNode>;
-	variables: Map<string, unknown>;
-	outputVariables: string[];
-	// Input Variables seprate to ignore "faulty" inputs of tick()?
+  model: SCChartModel;
+  graph: StateGraph;
+  variables: Map<string, unknown>;
+  outputVariables: string[];
+  inputVariables: string[];
+  nodeMap: Map<string, StateNode>;
+  activeNodes: Set<StateNode>;
 }

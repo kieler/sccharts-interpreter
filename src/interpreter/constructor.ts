@@ -1,84 +1,109 @@
 import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
-import type { SCChartModel, State } from "../schema/types.js";
+import type { Region, SCChartModel, State } from "../schema/types.js";
+import { rootState } from "./util.js";
+
+function constructRegion(region: Region, context: Context): StateGraph {
+  console.log("Processing Region: " + region.id);
+
+  let graph: StateGraph = {
+    edges: [],
+    nodes: [],
+    initalNode: undefined,
+    terminated: false,
+  };
+
+  for (const state of region.states) {
+    if (!state) continue;
+    console.log("Processing State: " + state.label);
+
+    const isSuper = state.regions.length != 0;
+
+    const stateNode: StateNode = {
+      id: state.id,
+      edgesIn: [],
+      edgesOut: [],
+      state: state,
+      graph: graph,
+    };
+    if (isSuper) {
+      stateNode.subgraphs = [];
+      for (const subRegion of state.regions) {
+        stateNode.subgraphs.push(constructRegion(subRegion, context));
+      }
+    }
+    if (state.isInitial) graph.initalNode = stateNode;
+    context.nodeMap.set(state.id, stateNode);
+    graph.nodes.push(stateNode);
+
+    // Add outgoing transitions / edges
+    for (const transition of state.transitions) {
+      const transitionEdge: TransitionEdge = {
+        from: stateNode,
+        to: undefined,
+        transition: transition,
+      };
+      graph.edges.push(transitionEdge);
+      stateNode.edgesOut.push(transitionEdge);
+    }
+
+    // Add variables
+    for (const variable of state.variables) {
+      if (variable.initialValue !== undefined) {
+        context.variables.set(variable.id, variable.initialValue);
+      } else {
+        if (variable.type == "int") {
+          context.variables.set(variable.id, 0);
+        } else if (variable.type == "bool") {
+          context.variables.set(variable.id, false);
+        } else if (variable.type == "string") {
+          context.variables.set(variable.id, "");
+        }
+        // TODO: the rest
+      }
+
+      if (variable.isOutput) {
+        context.outputVariables.push(variable.id);
+      }
+    }
+  }
+
+  return graph;
+}
+
+function finishEdges(graph: StateGraph, context: Context): void {
+  for (const edge of graph.edges) {
+    edge.to = context.nodeMap.get(edge.transition.targetID);
+  }
+  for (const node of graph.nodes) {
+    if (node.subgraphs) {
+      for (const subgraph of node.subgraphs) {
+        finishEdges(subgraph, context);
+      }
+    }
+  }
+}
 
 export function constructStateGraph(model: SCChartModel): Context {
-	let nodeMap: Map<string, StateNode> = new Map();
-	let heap: State[] = [];
+  const rootRegion: Region = { id: "top", states: [rootState(model)] };
 
-	let context: Context = {
-		model: model,
-		graph: {
-			edges: [],
-			nodes: [],
-			initalNodes: [],
-		},
-		activeStates: new Set(),
-		variables: new Map(),
-		outputVariables: [],
-	};
+  let context: Context = {
+    model: model,
+    graph: {
+      edges: [],
+      nodes: [],
+      initalNode: undefined,
+      terminated: false,
+    },
+    variables: new Map(),
+    outputVariables: [],
+    inputVariables: [],
+    nodeMap: new Map(),
+    activeNodes: new Set(),
+  };
 
-	// Go over all States once and add them and the transitions to the graph
-	heap = heap.concat(model);
-	while (heap.length > 0) {
-		const state = heap.pop();
-		if (!state) continue;
-		console.log("Processing State: " + state.label);
-		heap = heap.concat(state.regions.flatMap((r) => r.states));
+  // Go over all States once and add them and the transitions to the graph
+  context.graph = constructRegion(rootRegion, context);
+  finishEdges(context.graph, context);
 
-		const stateNode: StateNode = {
-			id: state.id,
-			edgesIn: [],
-			edgesOut: [],
-			state: state,
-		};
-		nodeMap.set(state.id, stateNode);
-
-		// Add outgoing transitions / edges
-		for (const transition of state.transitions) {
-			const transitionEdge: TransitionEdge = {
-				from: stateNode,
-				to: undefined,
-				isImmediate: transition.isImmediate,
-				guard: transition.guard,
-				action: transition.action,
-				transition: transition,
-			};
-			context.graph.edges.push(transitionEdge);
-			stateNode.edgesOut.push(transitionEdge);
-		}
-
-		// Add variables
-		for (const variable of state.variables) {
-			if (variable.initialValue !== undefined) {
-				context.variables.set(variable.id, variable.initialValue);
-			} else {
-				if (variable.type == "int") {
-					context.variables.set(variable.id, 0);
-				} else if (variable.type == "bool") {
-					context.variables.set(variable.id, false);
-				} else if (variable.type == "string") {
-					context.variables.set(variable.id, "");
-				}
-				// TODO: the rest
-			}
-
-			if (variable.isOutput) {
-				context.outputVariables.push(variable.id);
-			}
-		}
-
-		context.graph.nodes.push(stateNode);
-		if (state.isInitial) {
-			context.graph.initalNodes.push(stateNode);
-		}
-	}
-
-	for (const edge of context.graph.edges) {
-		const destNode = nodeMap.get(edge.transition.targetID);
-		if (!destNode) continue;
-		edge.to = destNode;
-		destNode.edgesIn.push(edge);
-	}
-
-	return context;
+  return context;
 }

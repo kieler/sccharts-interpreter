@@ -1,156 +1,156 @@
 [
-	{
-		"id": "ABO",
-		"label": "ABO",
-		"actions": [],
-		"transitions": [],
-		"variables": [
-			{
-				"id": "A",
-				"type": "bool",
-				"isInput": true,
-				"isOutput": false
-			},
-			{
-				"id": "B",
-				"type": "bool",
-				"isInput": true,
-				"isOutput": false
-			},
-			{
-				"id": "O1",
-				"type": "bool",
-				"isInput": false,
-				"isOutput": true
-			},
-			{
-				"id": "O2",
-				"type": "bool",
-				"isInput": false,
-				"isOutput": true
-			}
-		],
-		"isInitial": false,
-		"isFinal": false,
-		"regions": [
-			{
-				"id": "region",
-				"states": [
-					{
-						"id": "Init",
-						"label": "Init",
-						"actions": [],
-						"transitions": [
-							{
-								"targetID": "WaitAB1",
-								"isImmediate": true,
-								"isTermination": false,
-								"action": "O1 \u003d false; O2 \u003d false"
-							}
-						],
-						"variables": [],
-						"isInitial": true,
-						"isFinal": false,
-						"regions": []
-					},
-					{
-						"id": "WaitAB1",
-						"label": "WaitAB1",
-						"actions": [],
-						"transitions": [
-							{
-								"targetID": "GotAB1",
-								"isImmediate": false,
-								"isTermination": true,
-								"action": "O1 \u003d false; O2 \u003d true"
-							}
-						],
-						"variables": [],
-						"isInitial": false,
-						"isFinal": false,
-						"regions": [
-							{
-								"id": "HandleA",
-								"label": "HandleA",
-								"states": [
-									{
-										"id": "WaitA",
-										"label": "WaitA",
-										"actions": [],
-										"transitions": [
-											{
-												"targetID": "DoneA1",
-												"isImmediate": true,
-												"isTermination": false,
-												"guard": "A",
-												"action": "B \u003d true; O1 \u003d true"
-											}
-										],
-										"variables": [],
-										"isInitial": true,
-										"isFinal": false,
-										"regions": []
-									},
-									{
-										"id": "DoneA1",
-										"label": "DoneA1",
-										"actions": [],
-										"transitions": [],
-										"variables": [],
-										"isInitial": false,
-										"isFinal": true,
-										"regions": []
-									}
-								]
-							},
-							{
-								"id": "HandleB",
-								"label": "HandleB",
-								"states": [
-									{
-										"id": "WaitB",
-										"label": "WaitB",
-										"actions": [],
-										"transitions": [
-											{
-												"targetID": "DoneB1",
-												"isImmediate": false,
-												"isTermination": false,
-												"guard": "B",
-												"action": "O1 \u003d true"
-											}
-										],
-										"variables": [],
-										"isInitial": true,
-										"isFinal": false,
-										"regions": []
-									},
-									{
-										"id": "DoneB1",
-										"label": "DoneB1",
-										"actions": [],
-										"transitions": [],
-										"variables": [],
-										"isInitial": false,
-										"isFinal": true,
-										"regions": []
-									}
-								]
-							}
-						]
-					},
-					{
-						"id": "GotAB1",
-						"label": "GotAB1",
-						"actions": [],
-						"transitions": [],
-						"variables": [],
-						"isInitial": false,
-						"isFinal": false,
-						"regions": []
-					}
-				]
-			}
-		]
-	}
+  {
+    "id": "ABO",
+    "label": "ABO",
+    "actions": [],
+    "transitions": [],
+    "variables": [
+      {
+        "id": "A",
+        "type": "bool",
+        "isInput": true,
+        "isOutput": false
+      },
+      {
+        "id": "B",
+        "type": "bool",
+        "isInput": true,
+        "isOutput": false
+      },
+      {
+        "id": "O1",
+        "type": "bool",
+        "isInput": false,
+        "isOutput": true
+      },
+      {
+        "id": "O2",
+        "type": "bool",
+        "isInput": false,
+        "isOutput": true
+      }
+    ],
+    "isInitial": false,
+    "isFinal": false,
+    "regions": [
+      {
+        "id": "region",
+        "states": [
+          {
+            "id": "EntryInit",
+            "label": "EntryInit",
+            "actions": [],
+            "transitions": [
+              {
+                "targetID": "WaitAB",
+                "isImmediate": true,
+                "preemption": "weak",
+                "action": "O1 \u003d false; O2 \u003d false"
+              }
+            ],
+            "variables": [],
+            "isInitial": true,
+            "isFinal": false,
+            "regions": []
+          },
+          {
+            "id": "WaitAB",
+            "label": "WaitAB",
+            "actions": [],
+            "transitions": [
+              {
+                "targetID": "GotAB",
+                "isImmediate": false,
+                "preemption": "termination",
+                "action": "O1 \u003d false; O2 \u003d true"
+              }
+            ],
+            "variables": [],
+            "isInitial": false,
+            "isFinal": false,
+            "regions": [
+              {
+                "id": "HandleA",
+                "label": "HandleA",
+                "states": [
+                  {
+                    "id": "WaitA",
+                    "label": "WaitA",
+                    "actions": [],
+                    "transitions": [
+                      {
+                        "targetID": "DoneA",
+                        "isImmediate": true,
+                        "preemption": "weak",
+                        "guard": "A",
+                        "action": "B \u003d true; O1 \u003d true"
+                      }
+                    ],
+                    "variables": [],
+                    "isInitial": true,
+                    "isFinal": false,
+                    "regions": []
+                  },
+                  {
+                    "id": "DoneA",
+                    "label": "DoneA",
+                    "actions": [],
+                    "transitions": [],
+                    "variables": [],
+                    "isInitial": false,
+                    "isFinal": true,
+                    "regions": []
+                  }
+                ]
+              },
+              {
+                "id": "HandleB",
+                "label": "HandleB",
+                "states": [
+                  {
+                    "id": "WaitB",
+                    "label": "WaitB",
+                    "actions": [],
+                    "transitions": [
+                      {
+                        "targetID": "DoneB",
+                        "isImmediate": false,
+                        "preemption": "weak",
+                        "guard": "B",
+                        "action": "O1 \u003d true"
+                      }
+                    ],
+                    "variables": [],
+                    "isInitial": true,
+                    "isFinal": false,
+                    "regions": []
+                  },
+                  {
+                    "id": "DoneB",
+                    "label": "DoneB",
+                    "actions": [],
+                    "transitions": [],
+                    "variables": [],
+                    "isInitial": false,
+                    "isFinal": true,
+                    "regions": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "GotAB",
+            "label": "GotAB",
+            "actions": [],
+            "transitions": [],
+            "variables": [],
+            "isInitial": false,
+            "isFinal": true,
+            "regions": []
+          }
+        ]
+      }
+    ]
+  }
 ]

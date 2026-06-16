@@ -1,0 +1,93 @@
+[
+  {
+    "id": "AO",
+    "label": "AO",
+    "actions": [],
+    "transitions": [],
+    "variables": [
+      {
+        "id": "A",
+        "type": "bool",
+        "isInput": true,
+        "isOutput": false
+      },
+      {
+        "id": "O",
+        "type": "bool",
+        "initialValue": "false",
+        "isInput": false,
+        "isOutput": true
+      }
+    ],
+    "isInitial": false,
+    "isFinal": false,
+    "regions": [
+      {
+        "id": "region",
+        "states": [
+          {
+            "id": "wA",
+            "label": "wA",
+            "actions": [],
+            "transitions": [
+              {
+                "targetID": "da",
+                "isImmediate": false,
+                "preemption": "weak",
+                "guard": "A",
+                "action": "O \u003d true"
+              }
+            ],
+            "variables": [],
+            "isInitial": true,
+            "isFinal": false,
+            "regions": []
+          },
+          {
+            "id": "da",
+            "label": "da",
+            "actions": [],
+            "transitions": [],
+            "variables": [],
+            "isInitial": false,
+            "isFinal": true,
+            "regions": [
+              {
+                "id": "region2",
+                "states": [
+                  {
+                    "id": "A",
+                    "label": "A",
+                    "actions": [],
+                    "transitions": [
+                      {
+                        "targetID": "B",
+                        "isImmediate": false,
+                        "preemption": "weak",
+                        "action": ""
+                      }
+                    ],
+                    "variables": [],
+                    "isInitial": true,
+                    "isFinal": false,
+                    "regions": []
+                  },
+                  {
+                    "id": "B",
+                    "label": "B",
+                    "actions": [],
+                    "transitions": [],
+                    "variables": [],
+                    "isInitial": false,
+                    "isFinal": false,
+                    "regions": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
