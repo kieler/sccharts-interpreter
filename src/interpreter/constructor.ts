@@ -64,6 +64,9 @@ function constructRegion(region: Region, context: Context): StateGraph {
       if (variable.isOutput) {
         context.outputVariables.push(variable.id);
       }
+      if (variable.isInput) {
+        context.inputVariables.push(variable.id);
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
   context: Context,
+  currentIsImmediate: boolean,
 ) {
   if (!graphs) return;
 
@@ -13,6 +14,7 @@ function addRegionsToRuntime(
     if (!graph.initalNode) return;
 
     context.activeNodes.add(graph.initalNode);
+    if (currentIsImmediate) processNode(graph.initalNode, context);
   }
 }
 
@@ -41,7 +43,11 @@ function walkEdge(edge: TransitionEdge, context: Context): StateNode {
       edge.to.graph.terminated = true;
     } else {
       context.activeNodes.add(edge.to);
-      addRegionsToRuntime(edge.to.subgraphs, context);
+      addRegionsToRuntime(
+        edge.to.subgraphs,
+        context,
+        edge.transition.isImmediate,
+      );
     }
 
     if (edge.transition.action)
@@ -68,31 +74,23 @@ function processNode(node: StateNode, context: Context): void {
   }
 }
 
-export function run(context: Context, inputs: any) {
-  // TODO: immediate transitions
-  // The inital thing here is extremely janky, I need to rework that
-  if (!context.graph.nodes[0].subgraphs) return;
-  if (!context.graph.nodes[0].subgraphs[0].initalNode) return;
+export function tick(context: Context, inputs: any): void {
+  if (context.activeNodes.size == 0) return;
 
-  context.activeNodes.add(context.graph.nodes[0].subgraphs[0].initalNode);
+  for (const variable in inputs) {
+    // if (!context.inputVariables.includes(variable)) continue;
+    context.variables.set(variable, inputs[variable]);
+  }
 
-  // "tick()"
-  for (const input of inputs) {
-    for (const variable in input) {
-      context.variables.set(variable, input[variable]);
-    }
+  // TODO: copy the terminated stuff, because that should only be availbal enext tick as then we are only in the new states
+  // ore maybe not? it is weird with the compiled version
+  // tick 1 A=true -> model finishes tick 2
+  // tick 2 A=true -> model finishes tick 2
+  // tick 3 A=true -> model finishes tick 3
+  // ?????????????????
 
-    if (context.activeNodes.size == 0) return;
-
-    // Cloning the Set, bc activeNodes gets overridden
-    for (const node of new Set(context.activeNodes)) {
-      processNode(node, context);
-    }
-
-    console.log(context.variables);
-
-    for (const state of context.activeNodes) {
-      console.log(state.id);
-    }
+  // Cloning the Set, bc activeNodes gets overridden
+  for (const node of new Set(context.activeNodes)) {
+    processNode(node, context);
   }
 }

@@ -15,6 +15,7 @@ export interface StateNode {
   state: State;
 }
 
+// TODO: move the active states to the graph, so i can handle subgraphs before edges easier. a state has to be active for the substates to be active anyway i think
 export interface StateGraph {
   edges: TransitionEdge[];
   nodes: StateNode[];
