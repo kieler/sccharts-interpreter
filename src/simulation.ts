@@ -43,14 +43,13 @@ if (setupResp.status !== 200) {
   process.exit(1);
 }
 
-console.log(inputs);
-
 for (const input of inputs as Data) {
   const tickResp = await fetch(url + "/tick", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ inputs: input }),
   });
+
   if (tickResp.status !== 200) {
     const err = await tickResp.json();
     console.error("Tick failed:", err);
@@ -58,7 +57,7 @@ for (const input of inputs as Data) {
   }
   const result = await tickResp.json();
 
-  console.log(result.output);
+  console.log("Input: ", input, " - Output: ", result.output);
 
   if (result.terminated) {
     console.log("Final Output:", result.output);

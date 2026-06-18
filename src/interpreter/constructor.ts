@@ -3,18 +3,19 @@ import type { Region, SCChartModel, State } from "../schema/types.js";
 import { rootState } from "./util.js";
 
 function constructRegion(region: Region, context: Context): StateGraph {
-  console.log("Processing Region: " + region.id);
+  // console.log("Region: " + region.id);
 
   let graph: StateGraph = {
     edges: [],
     nodes: [],
     initalNode: undefined,
+    activeNode: undefined,
     terminated: false,
   };
 
   for (const state of region.states) {
     if (!state) continue;
-    console.log("Processing State: " + state.label);
+    // console.log("  State: " + state.label);
 
     const isSuper = state.regions.length != 0;
 
@@ -95,17 +96,22 @@ export function constructStateGraph(model: SCChartModel): Context {
       edges: [],
       nodes: [],
       initalNode: undefined,
+      activeNode: undefined,
       terminated: false,
     },
     variables: new Map(),
     outputVariables: [],
     inputVariables: [],
     nodeMap: new Map(),
-    activeNodes: new Set(),
   };
 
   // Go over all States once and add them and the transitions to the graph
   context.graph = constructRegion(rootRegion, context);
+
+  // Add the root node as inital, so the progamm starts
+  context.graph.initalNode = context.graph.nodes[0];
+
+  // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
 
   return context;

@@ -40,7 +40,7 @@ for input in inputs:
     resp = tick(input)
     if resp.status_code != 200:
         exit(1)
-    # print(resp.status_code, json.dumps(resp.json(), indent=2))
+    print(resp.status_code, json.dumps(resp.json(), indent=2))
     if resp.json()["terminated"]:
         print(f"Final Output: {resp.json()['output']}")
         break

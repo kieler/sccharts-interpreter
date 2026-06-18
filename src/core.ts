@@ -28,9 +28,7 @@ core.post("/setup", (req, res) => {
     if (!globalContext.graph.nodes[0].subgraphs[0].initalNode)
       return res.status(400);
 
-    globalContext.activeNodes.add(
-      globalContext.graph.nodes[0].subgraphs[0].initalNode,
-    );
+    globalContext.graph.activeNode = globalContext.graph.initalNode;
 
     return res.status(200).json({
       message: "Setup successful",
@@ -46,7 +44,7 @@ core.post("/tick", (req, res) => {
   try {
     tick(globalContext, inputs);
     return res.status(200).json({
-      terminated: globalContext.activeNodes.size == 0,
+      terminated: globalContext.graph.terminated,
       output: Object.fromEntries(
         globalContext.outputVariables.map((v) => [
           v,
@@ -64,9 +62,7 @@ core.get("/reset", (_, res) => {
   if (!globalContext.graph.nodes[0].subgraphs) return res.status(400);
   if (!globalContext.graph.nodes[0].subgraphs[0].initalNode)
     return res.status(400);
-  globalContext.activeNodes.add(
-    globalContext.graph.nodes[0].subgraphs[0].initalNode,
-  );
+  globalContext.graph.activeNode = globalContext.graph.initalNode;
   res.status(200).json({ context: globalContext });
 });
 
