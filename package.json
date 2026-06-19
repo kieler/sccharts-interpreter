@@ -11,7 +11,7 @@
     "start": "",
     "core": "node dist/core.js",
     "simulation": "node dist/simulation.js",
-    "test": "cd tests && uv run run_tests.py"
+    "test": "cd testing && uv run run_tests.py"
   },
   "dependencies": {
     "ajv": "^8.17.1",

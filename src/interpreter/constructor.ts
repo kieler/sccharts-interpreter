@@ -50,7 +50,18 @@ function constructRegion(region: Region, context: Context): StateGraph {
     // Add variables
     for (const variable of state.variables) {
       if (variable.initialValue !== undefined) {
-        context.variables.set(variable.id, variable.initialValue);
+        // WHYYYYYLIhycxiuv ndifnh vnksfxvh i
+        // Why does KiCo export every variable inital value as stinrg?
+        // apparently c: bool = "true" sets it to true????
+        if (variable.type == "int") {
+          context.variables.set(variable.id, Number(variable.initialValue));
+        } else if (variable.type == "bool") {
+          if (variable.initialValue == "true")
+            context.variables.set(variable.id, true);
+          else context.variables.set(variable.id, false);
+        } else {
+          context.variables.set(variable.id, variable.initialValue);
+        }
       } else {
         if (variable.type == "int") {
           context.variables.set(variable.id, 0);

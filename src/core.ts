@@ -63,7 +63,10 @@ core.get("/reset", (_, res) => {
   if (!globalContext.graph.nodes[0].subgraphs[0].initalNode)
     return res.status(400);
   globalContext.graph.activeNode = globalContext.graph.initalNode;
-  res.status(200).json({ context: globalContext });
+  return res.status(200).json({
+    message: "Reset successful",
+    model: globalContext.model[0].label,
+  });
 });
 
 const PORT = process.env.PORT ?? 19339;

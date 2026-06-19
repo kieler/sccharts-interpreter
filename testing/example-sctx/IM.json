@@ -61,9 +61,9 @@
             "transitions": [
               {
                 "targetID": "C",
-                "isImmediate": false,
+                "isImmediate": true,
                 "preemption": "weak",
-                "guard": "A",
+                "guard": "O1",
                 "action": "O2 \u003d true"
               }
             ],
@@ -81,7 +81,7 @@
                 "targetID": "D",
                 "isImmediate": true,
                 "preemption": "weak",
-                "guard": "A",
+                "guard": "O2",
                 "action": "O3 \u003d true"
               }
             ],
