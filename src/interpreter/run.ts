@@ -59,7 +59,11 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
   return false;
 }
 
-function processNode(node: StateNode, context: Context): void {
+function processNode(
+  node: StateNode,
+  context: Context,
+  entering: boolean = false,
+): void {
   if (node.state.isFinal) node.graph.terminated = true;
   if (node.graph.terminated) return;
 
