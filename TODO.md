@@ -5,8 +5,8 @@
 ### must
 - [x] Transitions
 - [x] Hierarchy
-- [ ] Weak and Strong Abort
-	- Weak should be working by default?
+- [x] Weak and Strong Abort
+	- Testing still required, but implemented
 - [ ] Connectors
 - [x] Concurrency (logial) 
 - [ ] Actions

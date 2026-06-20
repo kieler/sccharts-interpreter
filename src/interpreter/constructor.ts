@@ -3,8 +3,6 @@ import type { Region, SCChartModel, State } from "../schema/types.js";
 import { rootState } from "./util.js";
 
 function constructRegion(region: Region, context: Context): StateGraph {
-  // console.log("Region: " + region.id);
-
   let graph: StateGraph = {
     edges: [],
     nodes: [],
@@ -21,8 +19,9 @@ function constructRegion(region: Region, context: Context): StateGraph {
 
     const stateNode: StateNode = {
       id: state.id,
-      edgesIn: [],
-      edgesOut: [],
+      joinEdges: [],
+      weakEdges: [],
+      strongEdges: [],
       state: state,
       graph: graph,
     };
@@ -44,7 +43,14 @@ function constructRegion(region: Region, context: Context): StateGraph {
         transition: transition,
       };
       graph.edges.push(transitionEdge);
-      stateNode.edgesOut.push(transitionEdge);
+
+      if (transition.preemption == "weak") {
+        stateNode.weakEdges.push(transitionEdge);
+      } else if (transition.preemption == "strong") {
+        stateNode.strongEdges.push(transitionEdge);
+      } else if (transition.preemption == "termination") {
+        stateNode.joinEdges.push(transitionEdge);
+      }
     }
 
     // Add variables

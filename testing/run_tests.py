@@ -7,7 +7,12 @@ import pytest
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run integration tests with pytest")
-    parser.add_argument("tests", nargs="*", default=["all"], help='Test names (e.g. "abo ao im") or "all"')
+    parser.add_argument(
+        "tests",
+        nargs="*",
+        default=["all"],
+        help='Test names (e.g. "abo ao im") or "all"',
+    )
     args = parser.parse_args()
 
     tests_dir = Path(__file__).parent / "tests"
@@ -17,7 +22,7 @@ def main() -> None:
     else:
         test_paths = []
         for name in args.tests:
-            matches = sorted(tests_dir.glob(f"{name}*.py"))
+            matches = sorted(tests_dir.glob(f"*{name}*.py"))
             if not matches:
                 print(f"Error: no test files matching '{name}'")
                 sys.exit(1)

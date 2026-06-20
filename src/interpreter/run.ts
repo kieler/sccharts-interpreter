@@ -19,44 +19,42 @@ function addRegionsToRuntime(
 }
 
 function walkEdge(edge: TransitionEdge, context: Context): boolean {
-  // Returns true if it walked an edge
-
-  // If (edge.from.subgraphs) then edge.from is SuperState
-  // Else we just say true
-  let subGraphDone = true;
-  if (edge.from.subgraphs) {
-    subGraphDone = edge.from.subgraphs
-      .flatMap((graph) => graph.terminated)
-      .every((x) => x);
-  }
+  // Returns true if edge was walked.
 
   const guardPass =
     !edge.transition.guard ||
     parseGuard(edge.transition.guard, context.variables);
 
-  if (guardPass && subGraphDone) {
-    if (!edge.to) return false;
+  if (!guardPass) return false;
+  if (!edge.to) return false;
 
-    if (edge.to.state.isFinal) {
-      edge.to.graph.terminated = true;
-    } else {
-      edge.to.graph.activeNode = edge.to;
-      addRegionsToRuntime(
-        edge.to.subgraphs,
-        context,
-        edge.transition.isImmediate,
-      );
-    }
+  if (edge.transition.preemption == "termination" && edge.from.subgraphs) {
+    // edge.from.subgraphs == undefined should never be the case in a properly defined model
+    // If the guard passes and the inner behaviour is done, walk the Edge
 
-    if (edge.transition.action)
-      parseAction(edge.transition.action, context.variables);
-
-    if (edge.transition.isImmediate) processNode(edge.to, context);
-
-    return true;
+    const subGraphDone = edge.from.subgraphs
+      .flatMap((graph) => graph.terminated)
+      .every((x) => x);
+    if (!subGraphDone) return false;
   }
 
-  return false;
+  if (edge.to.state.isFinal) {
+    edge.to.graph.terminated = true;
+  } else {
+    edge.to.graph.activeNode = edge.to;
+    addRegionsToRuntime(
+      edge.to.subgraphs,
+      context,
+      edge.transition.isImmediate,
+    );
+  }
+
+  if (edge.transition.action)
+    parseAction(edge.transition.action, context.variables);
+
+  if (edge.transition.isImmediate) processNode(edge.to, context);
+
+  return true;
 }
 
 function processNode(
@@ -66,6 +64,11 @@ function processNode(
 ): void {
   if (node.state.isFinal) node.graph.terminated = true;
   if (node.graph.terminated) return;
+
+  for (const edge of node.strongEdges) {
+    // If the guard passes for a strong abort, the inner behaviour is not executed
+    if (walkEdge(edge, context)) break;
+  }
 
   if (node.subgraphs) {
     for (const subgraph of node.subgraphs) {
@@ -83,14 +86,20 @@ function processNode(
     // This is kind of an artifact of how the JSON SCChart Model is structured
     // If thet root node ever gets removed and just the graph as the main graph in the context, this can be removed as well.
     if (
-      node.edgesOut.length === 0 &&
+      node.weakEdges.length === 0 &&
+      node.strongEdges.length === 0 &&
+      node.joinEdges.length === 0 &&
       node.subgraphs.every((graph) => graph.terminated)
     ) {
       node.graph.terminated = true;
     }
   }
 
-  for (const edge of node.edgesOut) {
+  for (const edge of node.weakEdges) {
+    if (walkEdge(edge, context)) break;
+  }
+
+  for (const edge of node.joinEdges) {
     if (walkEdge(edge, context)) break;
   }
 }

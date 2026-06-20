@@ -8,8 +8,10 @@ export interface TransitionEdge {
 
 export interface StateNode {
   id: string;
-  edgesOut: TransitionEdge[];
-  edgesIn: TransitionEdge[]; // Do I need this?
+  weakEdges: TransitionEdge[];
+  strongEdges: TransitionEdge[];
+  joinEdges: TransitionEdge[];
+  // edgesIn: TransitionEdge[]; // Do I need this?
   subgraphs?: StateGraph[];
   graph: StateGraph;
   state: State;
