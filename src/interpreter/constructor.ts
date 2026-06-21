@@ -22,6 +22,9 @@ function constructRegion(region: Region, context: Context): StateGraph {
       joinEdges: [],
       weakEdges: [],
       strongEdges: [],
+      entryActions: [],
+      duringActions: [],
+      exitActions: [],
       state: state,
       graph: graph,
     };
@@ -76,7 +79,7 @@ function constructRegion(region: Region, context: Context): StateGraph {
         } else if (variable.type == "string") {
           context.variables.set(variable.id, "");
         }
-        // TODO: the rest
+        // TODO: the rest?
       }
 
       if (variable.isOutput) {
@@ -84,6 +87,23 @@ function constructRegion(region: Region, context: Context): StateGraph {
       }
       if (variable.isInput) {
         context.inputVariables.push(variable.id);
+      }
+    }
+
+    for (const action of state.actions) {
+      switch (action.type) {
+        case "entry":
+          stateNode.entryActions.push(action);
+          break;
+        case "during":
+          stateNode.duringActions.push(action);
+          if (action.isImmediate) {
+            stateNode.entryActions.push(action);
+          }
+          break;
+        case "exit":
+          stateNode.exitActions.push(action);
+          break;
       }
     }
   }
@@ -105,6 +125,8 @@ function finishEdges(graph: StateGraph, context: Context): void {
 }
 
 export function constructStateGraph(model: SCChartModel): Context {
+  console.log("Setting up model: ", model[0].id);
+
   const rootRegion: Region = { id: "top", states: [rootState(model)] };
 
   let context: Context = {

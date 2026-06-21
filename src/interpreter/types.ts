@@ -1,4 +1,4 @@
-import { SCChartModel, State, Transition } from "../schema/types.js";
+import { Action, SCChartModel, State, Transition } from "../schema/types.js";
 
 export interface TransitionEdge {
   from: StateNode;
@@ -8,10 +8,15 @@ export interface TransitionEdge {
 
 export interface StateNode {
   id: string;
+
   weakEdges: TransitionEdge[];
   strongEdges: TransitionEdge[];
   joinEdges: TransitionEdge[];
-  // edgesIn: TransitionEdge[]; // Do I need this?
+
+  entryActions: Action[];
+  duringActions: Action[];
+  exitActions: Action[];
+
   subgraphs?: StateGraph[];
   graph: StateGraph;
   state: State;

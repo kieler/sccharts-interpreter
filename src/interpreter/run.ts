@@ -36,17 +36,37 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
       .flatMap((graph) => graph.terminated)
       .every((x) => x);
     if (!subGraphDone) return false;
+
+    // Clear the current activeNode incase we come back
+    // History Transotions?
+    edge.from.subgraphs?.forEach((graph) => {
+      graph.activeNode = undefined;
+      graph.terminated = false;
+    });
   }
 
   if (edge.to.state.isFinal) {
     edge.to.graph.terminated = true;
   } else {
     edge.to.graph.activeNode = edge.to;
+
     addRegionsToRuntime(
       edge.to.subgraphs,
       context,
       edge.transition.isImmediate,
     );
+  }
+
+  for (const action of edge.from.exitActions) {
+    if (!action.guard || parseGuard(action.guard, context.variables)) {
+      parseAction(action.action, context.variables);
+    }
+  }
+
+  for (const action of edge.to.entryActions) {
+    if (!action.guard || parseGuard(action.guard, context.variables)) {
+      parseAction(action.action, context.variables);
+    }
   }
 
   if (edge.transition.action)
@@ -57,17 +77,21 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
   return true;
 }
 
-function processNode(
-  node: StateNode,
-  context: Context,
-  entering: boolean = false,
-): void {
+function processNode(node: StateNode, context: Context): void {
   if (node.state.isFinal) node.graph.terminated = true;
   if (node.graph.terminated) return;
+
+  console.log("Processing Node: ", node.id);
 
   for (const edge of node.strongEdges) {
     // If the guard passes for a strong abort, the inner behaviour is not executed
     if (walkEdge(edge, context)) break;
+  }
+
+  for (const action of node.duringActions) {
+    if (!action.guard || parseGuard(action.guard, context.variables)) {
+      parseAction(action.action, context.variables);
+    }
   }
 
   if (node.subgraphs) {
@@ -75,6 +99,7 @@ function processNode(
       if (subgraph.activeNode) {
         processNode(subgraph.activeNode, context);
       } else if (subgraph.initalNode) {
+        // If no activeNode exists, the graph has not been initialised
         processNode(subgraph.initalNode, context);
       } else {
         processNode(subgraph.nodes[0], context);
@@ -121,4 +146,6 @@ export function tick(context: Context, inputs: any): void {
   // Is tick 1 really tick 0 and more like a setup? That would be weird.
 
   processNode(context.graph.activeNode, context);
+  console.log(context.variables);
+  console.log();
 }

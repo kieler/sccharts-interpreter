@@ -7,12 +7,14 @@
 - [x] Hierarchy
 - [x] Weak and Strong Abort
 	- Testing still required, but implemented
-- [ ] Connectors
+- [?] Connectors
+	- Connectors are only really in the compiler, the JSON doesn't haven them anymore, so they are probably not explicitly needed in the interpreter
 - [x] Concurrency (logial) 
-- [ ] Actions
+- [x] Actions
 	- [x] Transition
-	- [ ] State
+	- [x] State
 		- How is that with entry, during, exit as maybe?
+		- Implemented entry, during, exit. testing needed, but should be working
 - [x] Final + Initial States
 	- I think they are done?
 
@@ -20,7 +22,7 @@
 for the PoC, these should probably be left out unless it is easy.
 
 - [ ] Complex Final States
-- [ ] Entrance, Exit, During Actions
+- [x] Entrance, Exit, During Actions
 - [ ] Reference SCCharts
 - [ ] History Transitions
 	- Only deep?
