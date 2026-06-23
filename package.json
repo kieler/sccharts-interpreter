@@ -1,6 +1,6 @@
 {
   "name": "sccharts-interpreter",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Interpreter for the synchronous language SCChart",
   "type": "module",
   "bin": {

@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).parent.parent.resolve()
 
 
 def load_model(name: str) -> list[dict[str, Any]]:
-    path = BASE_DIR / "example-sctx" / f"{name}.json"
+    path = BASE_DIR / "example-json" / f"{name}.json"
     with open(path) as f:
         return json.load(f)
 

@@ -28,6 +28,8 @@ const setupResp = await fetch(url + "/setup", {
   body: JSON.stringify({ model: data }),
 });
 
+console.log("Setup done");
+
 if (setupResp.status !== 200) {
   const err = await setupResp.json();
   console.error("Setup failed:", err);

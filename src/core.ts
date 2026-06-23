@@ -23,11 +23,6 @@ core.post("/setup", (req, res) => {
       return res.status(400).json({ error: "No inital state in model" });
 
     globalContext = constructStateGraph(chartModel);
-
-    if (!globalContext.graph.nodes[0].subgraphs) return res.status(400);
-    if (!globalContext.graph.nodes[0].subgraphs[0].initalNode)
-      return res.status(400);
-
     globalContext.graph.activeNode = globalContext.graph.initalNode;
 
     return res.status(200).json({
@@ -54,10 +49,8 @@ core.post("/tick", (req, res) => {
 
 core.get("/reset", (_, res) => {
   globalContext = constructStateGraph(chartModel);
-  if (!globalContext.graph.nodes[0].subgraphs) return res.status(400);
-  if (!globalContext.graph.nodes[0].subgraphs[0].initalNode)
-    return res.status(400);
   globalContext.graph.activeNode = globalContext.graph.initalNode;
+
   return res.status(200).json({
     message: "Reset successful",
     model: globalContext.model[0].label,

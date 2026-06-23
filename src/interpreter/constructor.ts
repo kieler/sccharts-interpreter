@@ -1,6 +1,6 @@
 import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
-import type { Region, SCChartModel, State } from "../schema/types.js";
-import { rootState } from "./util.js";
+import type { Region, SCChartModel } from "../schema/types.js";
+import { createFakeRootRegion, emptyContext } from "./util.js";
 
 function constructRegion(region: Region, context: Context): StateGraph {
   let graph: StateGraph = {
@@ -13,7 +13,6 @@ function constructRegion(region: Region, context: Context): StateGraph {
 
   for (const state of region.states) {
     if (!state) continue;
-    // console.log("  State: " + state.label);
 
     const isSuper = state.regions.length != 0;
 
@@ -117,6 +116,7 @@ function finishEdges(graph: StateGraph, context: Context): void {
   for (const edge of graph.edges) {
     edge.to = context.nodeMap.get(edge.transition.targetID);
   }
+
   for (const node of graph.nodes) {
     if (node.subgraphs) {
       for (const subgraph of node.subgraphs) {
@@ -129,29 +129,12 @@ function finishEdges(graph: StateGraph, context: Context): void {
 export function constructStateGraph(model: SCChartModel): Context {
   console.log("Setting up model: ", model[0].id);
 
-  const rootRegion: Region = { id: "top", states: [rootState(model)] };
+  const rootRegion: Region = createFakeRootRegion(model);
 
-  let context: Context = {
-    model: model,
-    graph: {
-      edges: [],
-      nodes: [],
-      initalNode: undefined,
-      activeNode: undefined,
-      terminated: false,
-    },
-    variables: new Map(),
-    variableTypes: new Map(),
-    outputVariables: [],
-    inputVariables: [],
-    nodeMap: new Map(),
-  };
+  let context: Context = emptyContext(model);
 
   // Go over all States once and add them and the transitions to the graph
   context.graph = constructRegion(rootRegion, context);
-
-  // Add the root node as inital, so the progamm starts
-  context.graph.initalNode = context.graph.nodes[0];
 
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
