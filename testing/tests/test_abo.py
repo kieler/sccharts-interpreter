@@ -15,8 +15,14 @@ def test_abo_Afirst():
     ]
 
     expected = [
-        {"terminated": False, "output": {"O1": False, "O2": False}},
-        {"terminated": True, "output": {"O1": False, "O2": True}},
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "O1": False, "O2": False},
+        },
+        {
+            "terminated": True,
+            "variables": {"A": True, "B": True, "O1": False, "O2": True},
+        },
     ]
 
     assert runner.run(inputs) == expected
@@ -36,10 +42,22 @@ def test_abo_Bfirst():
     ]
 
     expected = [
-        {"terminated": False, "output": {"O1": False, "O2": False}},
-        {"terminated": False, "output": {"O1": True, "O2": False}},
-        {"terminated": False, "output": {"O1": True, "O2": False}},
-        {"terminated": True, "output": {"O1": False, "O2": True}},
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "O1": False, "O2": False},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": True, "O1": True, "O2": False},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "O1": True, "O2": False},
+        },
+        {
+            "terminated": True,
+            "variables": {"A": True, "B": True, "O1": False, "O2": True},
+        },
     ]
 
     assert runner.run(inputs) == expected

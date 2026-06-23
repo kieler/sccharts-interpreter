@@ -34,6 +34,7 @@ export interface Context {
   model: SCChartModel;
   graph: StateGraph;
   variables: Map<string, unknown>;
+  variableTypes: Map<string, string>;
   outputVariables: string[];
   inputVariables: string[];
   nodeMap: Map<string, StateNode>;

@@ -15,9 +15,18 @@ def test_immediate():
     ]
 
     expected = [
-        {"terminated": False, "output": {"O1": False, "O2": False, "O3": False}},
-        {"terminated": False, "output": {"O1": False, "O2": False, "O3": False}},
-        {"terminated": True, "output": {"O1": True, "O2": True, "O3": True}},
+        {
+            "terminated": False,
+            "variables": {"A": False, "O1": False, "O2": False, "O3": False},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "O1": False, "O2": False, "O3": False},
+        },
+        {
+            "terminated": True,
+            "variables": {"A": True, "O1": True, "O2": True, "O3": True},
+        },
     ]
 
     assert runner.run(inputs) == expected

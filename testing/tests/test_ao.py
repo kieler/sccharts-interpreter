@@ -15,9 +15,9 @@ def test_ao():
     ]
 
     expected = [
-        {"terminated": False, "output": {"O": False}},
-        {"terminated": False, "output": {"O": False}},
-        {"terminated": True, "output": {"O": True}},
+        {"terminated": False, "variables": {"A": False, "O": False}},
+        {"terminated": False, "variables": {"A": False, "O": False}},
+        {"terminated": True, "variables": {"A": True, "O": True}},
     ]
 
     assert runner.run(inputs) == expected

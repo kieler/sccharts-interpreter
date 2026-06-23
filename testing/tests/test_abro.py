@@ -17,13 +17,34 @@ def test_abro_basic():
     ]
 
     expected = [
-        {"terminated": False, "output": {"O": False}},
-        {"terminated": False, "output": {"O": False}},
-        {"terminated": False, "output": {"O": True}},
-        {"terminated": False, "output": {"O": True}},
-        {"terminated": False, "output": {"O": True}},
-        {"terminated": False, "output": {"O": False}},
-        {"terminated": False, "output": {"O": False}},
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "R": False, "O": False},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": True, "R": False, "O": False},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": True, "B": False, "R": False, "O": True},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "R": False, "O": True},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "R": False, "O": True},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "R": True, "O": False},
+        },
+        {
+            "terminated": False,
+            "variables": {"A": False, "B": False, "R": False, "O": False},
+        },
     ]
 
     assert runner.run(inputs) == expected

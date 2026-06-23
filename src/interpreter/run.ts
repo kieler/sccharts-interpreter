@@ -132,9 +132,24 @@ function processNode(node: StateNode, context: Context): void {
 export function tick(context: Context, inputs: any): void {
   if (!context.graph.activeNode) return;
 
-  for (const variable in inputs) {
-    if (!context.inputVariables.includes(variable)) continue;
-    context.variables.set(variable, inputs[variable]);
+  for (const variable of context.inputVariables) {
+    if (inputs[variable] !== undefined) {
+      context.variables.set(variable, inputs[variable]);
+    } else {
+      switch (context.variableTypes.get(variable)) {
+        case "int":
+          context.variables.set(variable, 0);
+          break;
+        case "string":
+          context.variables.set(variable, "");
+          break;
+        case "bool":
+          context.variables.set(variable, false);
+          break;
+        default:
+          context.variables.set(variable, 0);
+      }
+    }
   }
 
   // TODO: copy the terminated stuff, because that should only be availbal enext tick as then we are only in the new states

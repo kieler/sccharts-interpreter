@@ -45,12 +45,7 @@ core.post("/tick", (req, res) => {
     tick(globalContext, inputs);
     return res.status(200).json({
       terminated: globalContext.graph.terminated,
-      output: Object.fromEntries(
-        globalContext.outputVariables.map((v) => [
-          v,
-          globalContext.variables.get(v),
-        ]),
-      ),
+      variables: Object.fromEntries(globalContext.variables),
     });
   } catch (error) {
     return res.status(500).send(error);

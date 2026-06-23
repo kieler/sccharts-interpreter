@@ -82,6 +82,8 @@ function constructRegion(region: Region, context: Context): StateGraph {
         // TODO: the rest?
       }
 
+      context.variableTypes.set(variable.id, variable.type);
+
       if (variable.isOutput) {
         context.outputVariables.push(variable.id);
       }
@@ -139,6 +141,7 @@ export function constructStateGraph(model: SCChartModel): Context {
       terminated: false,
     },
     variables: new Map(),
+    variableTypes: new Map(),
     outputVariables: [],
     inputVariables: [],
     nodeMap: new Map(),

@@ -9,6 +9,7 @@
 	- Testing still required, but implemented
 - [?] Connectors
 	- Connectors are only really in the compiler, the JSON doesn't haven them anymore, so they are probably not explicitly needed in the interpreter
+	- Wll come in a future version of the JSON exporter
 - [x] Concurrency (logial) 
 - [x] Actions
 	- [x] Transition
