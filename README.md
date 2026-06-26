@@ -21,12 +21,12 @@ To simulate an SCChart model with the interperter use `npm run simulation`.
 
 By default it expects two arguments. The first is a path to the JSON and the second is your input list in JSON format. For expample
 ```bash
-npm run simulation testing/example-sctx/IM.json '[{"A": true}, {"A": false},{"A": true}]'
+npm run simulation testing/sctx/IM.json '[{"A": true}, {"A": false},{"A": true}]'
 ```
 
 There is also an interactive mode, which can be called like:
 ```bash
-npm run simulation testing/example-sctx/IM.json -- -i
+npm run simulation testing/sctx/IM.json -- -i
 ```
 It reads inputs in JSON format from stdin every tick and prints the state of all variables as a response.
 

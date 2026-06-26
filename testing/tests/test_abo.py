@@ -1,4 +1,4 @@
-from base import TestRunner
+from base import TestRunner, generate_expected
 
 
 def test_abo_Afirst():
@@ -14,16 +14,7 @@ def test_abo_Afirst():
         {"A": False, "B": False},
     ]
 
-    expected = [
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "O1": False, "O2": False},
-        },
-        {
-            "terminated": True,
-            "variables": {"A": True, "B": True, "O1": False, "O2": True},
-        },
-    ]
+    expected = generate_expected("ABO", inputs, ["A", "B", "O1", "O2"])
 
     assert runner.run(inputs) == expected
 
@@ -41,23 +32,6 @@ def test_abo_Bfirst():
         {"A": False, "B": False},
     ]
 
-    expected = [
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "O1": False, "O2": False},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": True, "O1": True, "O2": False},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "O1": True, "O2": False},
-        },
-        {
-            "terminated": True,
-            "variables": {"A": True, "B": True, "O1": False, "O2": True},
-        },
-    ]
+    expected = generate_expected("ABO", inputs, ["A", "B", "O1", "O2"])
 
     assert runner.run(inputs) == expected

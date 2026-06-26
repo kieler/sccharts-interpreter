@@ -1,0 +1,15 @@
+scchart AO {
+	input bool A
+	output bool O = false
+
+	initial state wA
+	if A do O = true go to da
+
+	final state da {
+
+		initial state A
+		go to B
+
+		state B
+	}
+}

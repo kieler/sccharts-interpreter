@@ -169,6 +169,12 @@ export function parseAction(
       case "STRING":
         value = valueToken.value;
         break;
+      case "VAR":
+        value = variables.get(valueToken.name);
+        if (value === undefined) {
+          throw new Error(`Variable '${valueToken.name}' is not defined`);
+        }
+        break;
       default:
         throw new Error(
           `Unexpected token in assignment: '${JSON.stringify(valueToken)}'`,

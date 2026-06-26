@@ -43,6 +43,7 @@ core.post("/tick", (req, res) => {
       variables: Object.fromEntries(globalContext.variables),
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).send(error);
   }
 });

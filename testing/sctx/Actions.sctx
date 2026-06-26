@@ -1,0 +1,19 @@
+scchart Actions {
+    input bool A, B
+    output bool O1, O2, O3, O4, O5
+
+    initial state A
+    if A go to B
+
+    state B {
+        entry do O1 = true
+        immediate during do O2 = true
+        during do O3 = true
+        exit do O4 = true
+
+        initial state BA
+    }
+    immediate if B do O5 = O4 abort to C
+
+    final state C
+}

@@ -28,22 +28,22 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
   if (!guardPass) return false;
   if (!edge.to) return false;
 
-  if (edge.transition.preemption == "termination" && edge.from.subgraphs) {
+  if (edge.transition.preemption == "termination") {
     // edge.from.subgraphs == undefined should never be the case in a properly defined model
     // If the guard passes and the inner behaviour is done, walk the Edge
 
     const subGraphDone = edge.from.subgraphs
-      .flatMap((graph) => graph.terminated)
+      ?.flatMap((graph) => graph.terminated)
       .every((x) => x);
     if (!subGraphDone) return false;
-
-    // Clear the current activeNode incase we come back
-    // History Transotions?
-    edge.from.subgraphs?.forEach((graph) => {
-      graph.activeNode = undefined;
-      graph.terminated = false;
-    });
   }
+
+  // Clear the current activeNode incase we come back
+  // History Transotions?
+  edge.from.subgraphs?.forEach((graph) => {
+    graph.activeNode = undefined;
+    graph.terminated = false;
+  });
 
   for (const action of edge.from.exitActions) {
     if (!action.guard || parseGuard(action.guard, context.variables)) {
@@ -85,7 +85,7 @@ function processNode(node: StateNode, context: Context): void {
 
   for (const edge of node.strongEdges) {
     // If the guard passes for a strong abort, the inner behaviour is not executed
-    if (walkEdge(edge, context)) break;
+    if (walkEdge(edge, context)) return;
   }
 
   for (const action of node.duringActions) {
@@ -106,11 +106,11 @@ function processNode(node: StateNode, context: Context): void {
   }
 
   for (const edge of node.weakEdges) {
-    if (walkEdge(edge, context)) break;
+    if (walkEdge(edge, context)) return;
   }
 
   for (const edge of node.joinEdges) {
-    if (walkEdge(edge, context)) break;
+    if (walkEdge(edge, context)) return;
   }
 }
 

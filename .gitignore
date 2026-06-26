@@ -8,3 +8,8 @@ uv.lock
 .venv
 .pytest_cache
 __pycache__
+kico.jar
+testing/config.json
+testing/json/*.json
+testing/exe/*.exe
+kieler-gen

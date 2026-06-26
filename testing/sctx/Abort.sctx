@@ -1,0 +1,17 @@
+scchart Abort {
+    input bool A, Strong, Weak, Join
+    output bool O1, OS, OW, OJ
+    initial state Init{
+        region A{
+            initial state A
+            if A do O1=true go to dA
+
+            final state dA
+        }
+    }
+    if Strong do OS=true abort to Done
+    if Weak do OW=true go to Done
+    if Join do OJ=true join to Done
+
+    final state Done
+}

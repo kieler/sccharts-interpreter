@@ -1,4 +1,4 @@
-from base import TestRunner
+from base import TestRunner, generate_expected
 
 
 def test_abro_basic():
@@ -16,35 +16,6 @@ def test_abro_basic():
         {"A": False, "B": False, "R": False},
     ]
 
-    expected = [
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "R": False, "O": False},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": True, "R": False, "O": False},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": True, "B": False, "R": False, "O": True},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "R": False, "O": True},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "R": False, "O": True},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "R": True, "O": False},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "B": False, "R": False, "O": False},
-        },
-    ]
+    expected = generate_expected("ABRO", inputs, ["A", "B", "R", "O"])
 
     assert runner.run(inputs) == expected

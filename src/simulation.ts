@@ -65,7 +65,7 @@ if (inputsOrMode === "-i") {
 
       if (tickResp.status !== 200) {
         const err = await tickResp.json();
-        console.error("Tick failed:", err);
+        console.error("Tick failed:", tickResp.status, err);
         rl.close();
         process.exit(1);
       }

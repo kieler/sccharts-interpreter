@@ -1,0 +1,15 @@
+scchart Immediate {
+    input bool A
+    output bool O1, O2, O3
+
+    initial state A
+    immediate if A do O1=true go to B
+
+    state B
+    immediate if O1 do O2=true go to C
+
+    state C
+    immediate if O2 do O3=true go to D
+
+    final state D
+}

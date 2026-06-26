@@ -1,9 +1,9 @@
-from base import TestRunner
+from base import TestRunner, generate_expected
 
 
 def test_immediate():
-    """Test IM (immediate) model"""
-    runner = TestRunner("IM")
+    """Tests immediate transitions"""
+    runner = TestRunner("Immediate")
     runner.setup()
 
     inputs = [
@@ -14,19 +14,6 @@ def test_immediate():
         {"A": False},
     ]
 
-    expected = [
-        {
-            "terminated": False,
-            "variables": {"A": False, "O1": False, "O2": False, "O3": False},
-        },
-        {
-            "terminated": False,
-            "variables": {"A": False, "O1": False, "O2": False, "O3": False},
-        },
-        {
-            "terminated": True,
-            "variables": {"A": True, "O1": True, "O2": True, "O3": True},
-        },
-    ]
+    expected = generate_expected("Immediate", inputs, ["A", "O1", "O2", "O3"])
 
     assert runner.run(inputs) == expected
