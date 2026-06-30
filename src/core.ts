@@ -31,7 +31,9 @@ core.post("/setup", (req, res) => {
       model: globalContext.model[0].label,
     });
   } catch (error) {
-    return res.status(500).json({ error: error });
+    return res
+      .status(500)
+      .json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 

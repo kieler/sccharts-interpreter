@@ -1,29 +1,31 @@
 {
-  "name": "sccharts-interpreter",
-  "version": "0.1.0",
-  "description": "Interpreter for the synchronous language SCChart",
-  "type": "module",
-  "bin": {
-    "sccharts-interpreter": "./bin/sccharts-interpreter"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "",
-    "core": "node dist/core.js",
-    "simulation": "node dist/simulation.js",
-    "test": "cd testing && uv run run_tests.py"
-  },
-  "dependencies": {
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "express": "^5.2.1"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^22.0.0",
-    "concurrently": "^10.0.3",
-    "typescript": "^5.6.0",
-    "vitest": "^3.0.0",
-    "wait-on": "^9.0.10"
-  }
+	"name": "sccharts-interpreter",
+	"version": "0.1.0",
+	"description": "Interpreter for the synchronous language SCChart",
+	"type": "module",
+	"bin": {
+		"sccharts-interpreter": "./bin/sccharts-interpreter"
+	},
+	"scripts": {
+		"build": "tsc",
+		"start": "",
+		"core": "node dist/core.js",
+		"simulation": "node dist/simulation.js",
+		"webui": "node dist/webui.js",
+		"all": "concurrently \"npm run core\" \"npm run webui\"",
+		"test": "cd testing && uv run run_tests.py"
+	},
+	"dependencies": {
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1",
+		"express": "^5.2.1"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.6",
+		"@types/node": "^22.0.0",
+		"concurrently": "^10.0.3",
+		"typescript": "^5.6.0",
+		"vitest": "^3.0.0",
+		"wait-on": "^9.0.10"
+	}
 }

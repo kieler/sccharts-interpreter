@@ -7,16 +7,21 @@ import requests
 
 URL = "http://localhost:19339"
 BASE_DIR = Path(__file__).parent.parent.resolve()
-CONFIG_FILE = BASE_DIR / "config.json"
+PROJECT_ROOT = BASE_DIR.parent
+CONFIG_FILE = PROJECT_ROOT / "kico_config.json"
 
 
 def get_java_jar_path() -> str:
-    """Read the configured Java JAR path from config.json."""
+    """Read the configured Java JAR path from kico_config.json."""
     if not CONFIG_FILE.exists():
         return ""
     with open(CONFIG_FILE) as f:
         config = json.load(f)
-    return config.get("java_jar_path", "")
+    jar_path = config.get("java_jar_path", "")
+    # Resolve relative paths against the project root
+    if jar_path and not Path(jar_path).is_absolute():
+        jar_path = str(PROJECT_ROOT / jar_path)
+    return jar_path
 
 
 def load_model(name: str) -> list[dict[str, Any]]:
@@ -30,11 +35,7 @@ def load_model(name: str) -> list[dict[str, Any]]:
     jar_path = get_java_jar_path()
 
     if not jar_path:
-        raise FileNotFoundError(
-            f"Model file not found: {json_path}\n"
-            f"To generate it, set 'java_jar_path' in {CONFIG_FILE} "
-            f"(copy from {CONFIG_FILE.with_name('config.example.json')})"
-        )
+        raise FileNotFoundError("KiCo Jar not found\n")
 
     if not sctx_path.exists():
         raise FileNotFoundError(

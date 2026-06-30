@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>SCChart Interpreter</title>
+		<link rel="stylesheet" href="./styles.css" />
+	</head>
+	<body>
+		<div class="container">
+			<h1>SCChart Interpreter</h1>
+
+			<div id="connection-status" class="status checking">
+				Checking connection...
+			</div>
+
+			<section id="upload-section" style="display: none">
+				<label class="file-label" for="file-input">Upload JSON</label>
+				<input type="file" id="file-input" accept=".json,.sctx" />
+				<div id="setup-status" class="status" style="display: none"></div>
+			</section>
+
+			<section id="tick-section" style="display: none">
+				<label for="tick-input">Input (JSON or array, e.g. {"A": true} or [{"A":true},{"A":false}])</label>
+				<textarea class="small" id="tick-input" placeholder='{"A": true}'></textarea>
+				<div class="btn-row">
+					<button id="advance-tick-btn" disabled>Advance Tick</button>
+					<button id="auto-run-btn" disabled>Auto Run</button>
+					<label for="auto-interval" style="font-size:0.8rem;color:#aaa;">Interval:</label>
+					<input type="number" id="auto-interval" value="300" min="50" max="10000" step="50" style="width:70px;padding:0.4rem;background:#0a0a1a;color:#e0e0e0;border:1px solid #334;border-radius:4px;font-family:inherit;font-size:0.8rem;" />
+					<span style="font-size:0.8rem;color:#aaa;">ms</span>
+					<button id="reset-btn">Reset Model</button>
+					<button id="clear-output-btn">Clear Output</button>
+				</div>
+			</section>
+
+			<section id="output-section" style="display: none">
+				<label>Output</label>
+				<pre id="tick-output" style="background:#0a0a1a;border:1px solid #334;border-radius:4px;padding:0.75rem;font-family:inherit;font-size:0.82rem;overflow-x:auto;white-space:pre-wrap;word-break:break-all;min-height:60px;max-height:400px;overflow-y:auto;">No output yet.</pre>
+			</section>
+
+			<details id="logs-section">
+				<summary
+					style="
+						font-family: ui-monospace, monospace;
+						font-size: 0.85rem;
+						color: #80cbc4;
+						cursor: pointer;
+					"
+				>
+					Logs
+				</summary>
+				<pre
+					id="console-logs"
+					style="
+						background: #0a0a1a;
+						border: 1px solid #334;
+						border-radius: 4px;
+						padding: 0.75rem;
+						font-family: ui-monospace, monospace;
+						font-size: 0.78rem;
+						max-height: 250px;
+						overflow-y: auto;
+						text-align: left;
+						color: #aaa;
+						margin-top: 0.5rem;
+						white-space: pre-wrap;
+						word-break: break-all;
+					"
+				></pre>
+			</details>
+		</div>
+
+		<script type="module" src="./app.js"></script>
+	</body>
+</html>
