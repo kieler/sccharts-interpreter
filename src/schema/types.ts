@@ -37,6 +37,7 @@ export interface State {
   variables: Variable[];
   isInitial: boolean;
   isFinal: boolean;
+  isConnector: boolean;
   regions: Region[];
 }
 

@@ -17,6 +17,7 @@ core.post("/setup", (req, res) => {
     const valid = validateSCChart(model);
     if (!valid)
       return res.status(400).json({ error: "Invaild SCChart Model JSON" });
+
     chartModel = model as SCChartModel;
 
     if (!findInitalState(chartModel))

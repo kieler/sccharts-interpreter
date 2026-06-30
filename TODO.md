@@ -7,9 +7,7 @@
 - [x] Hierarchy
 - [x] Weak and Strong Abort
 	- Testing still required, but implemented
-- [?] Connectors
-	- Connectors are only really in the compiler, the JSON doesn't haven them anymore, so they are probably not explicitly needed in the interpreter
-	- Wll come in a future version of the JSON exporter
+- [ ] Connectors
 - [x] Concurrency (logial) 
 - [x] Actions
 	- [x] Transition
@@ -31,13 +29,13 @@ for the PoC, these should probably be left out unless it is easy.
 	- Could also be done with some pre- or suffix for varibles in global scope?
 
 ### other
-- [ ] testing
+- [x] testing
 	- [x] framework
 	- [x] comparrison with hardcoded expected outputs
-	- [ ] use the compiled c version to compare dynamically
-- [ ] simulation interface
+	- [x] use the compiled c version to compare dynamically
+- [x] simulation interface
 	- [x] basic via terminal
-	- [ ] something better
-		- for the PoC this might be enough
+	- [x] something better
+		- take stdin like the kico simulation
 
 ## later

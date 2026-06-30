@@ -28,13 +28,13 @@ const setupResp = await fetch(url + "/setup", {
   body: JSON.stringify({ model: data }),
 });
 
-console.log("Setup done");
-
 if (setupResp.status !== 200) {
   const err = await setupResp.json();
   console.error("Setup failed:", err);
   process.exit(1);
 }
+
+console.log("Setup done");
 
 if (inputsOrMode === "-i") {
   const rl = readline.createInterface({

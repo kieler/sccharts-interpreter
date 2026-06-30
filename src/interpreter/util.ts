@@ -23,6 +23,7 @@ export function createFakeRootRegion(model: SCChartModel): Region {
     variables: [],
     isInitial: true,
     isFinal: false,
+    isConnector: false,
     regions: [],
   };
 
@@ -42,6 +43,7 @@ export function createFakeRootRegion(model: SCChartModel): Region {
     variables: [],
     isInitial: false,
     isFinal: true,
+    isConnector: false,
     regions: [],
   };
 
