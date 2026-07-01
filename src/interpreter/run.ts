@@ -73,6 +73,8 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
   }
 
   if (edge.transition.isImmediate) processNode(edge.to, context);
+  // Also implicitly consider all edges from a connector to be immediate for now.
+  else if (edge.from.state.isConnector) processNode(edge.to, context);
 
   return true;
 }
