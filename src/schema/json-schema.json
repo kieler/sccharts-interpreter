@@ -1,0 +1,171 @@
+{
+	"$id": "https://rtsys.informatik.uni-kiel.de/sctx_schema.json",
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "SCChart Model Schema",
+	"description": "A JSON schema for exchanging SCChart models between implementations.",
+	"type": "array",
+	"items": {
+		"$ref": "#/$defs/state"
+	},
+	"$defs": {
+		"region": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"label": {
+					"type": "string"
+				},
+				"states": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/state"
+					}
+				}
+			},
+			"required": ["id", "states"]
+		},
+		"state": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"label": {
+					"type": "string"
+				},
+				"actions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/action"
+					}
+				},
+				"transitions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/transition"
+					}
+				},
+				"variables": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/variable"
+					}
+				},
+				"isInitial": {
+					"type": "boolean"
+				},
+				"isFinal": {
+					"type": "boolean"
+				},
+				"isConnector": {
+					"type": "boolean"
+				},
+				"regions": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/region"
+					}
+				},
+				"reference": {
+					"$ref": "#/$defs/reference"
+				}
+			},
+			"required": [
+				"id",
+				"actions",
+				"variables",
+				"transitions",
+				"isInitial",
+				"isFinal",
+				"isConnector",
+				"regions"
+			]
+		},
+		"transition": {
+			"type": "object",
+			"properties": {
+				"label": {
+					"type": "string"
+				},
+				"targetID": {
+					"type": "string"
+				},
+				"isImmediate": {
+					"type": "boolean"
+				},
+				"preemption": {
+					"enum": ["strong", "weak", "termination"]
+				},
+				"guard": {
+					"type": "string"
+				},
+				"action": {
+					"type": "string"
+				}
+			},
+			"required": ["targetID", "isImmediate", "preemption"]
+		},
+		"variable": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "string"
+				},
+				"type": {
+					"type": "string"
+				},
+				"initialValue": {
+					"type": ["string", "number", "boolean"]
+				},
+				"isInput": {
+					"type": "boolean"
+				},
+				"isOutput": {
+					"type": "boolean"
+				}
+			},
+			"required": ["id", "type", "isInput", "isOutput"]
+		},
+		"action": {
+			"type": "object",
+			"properties": {
+				"label": {
+					"type": "string"
+				},
+				"type": {
+					"enum": ["during", "entry", "exit"]
+				},
+				"isImmediate": {
+					"type": "boolean"
+				},
+				"guard": {
+					"type": "string"
+				},
+				"action": {
+					"type": "string"
+				}
+			},
+			"required": ["type", "isImmediate", "action"]
+		},
+		"reference": {
+			"type": "object",
+			"properties": {
+				"targetID": {
+					"type": "string"
+				},
+				"targetFile": {
+					"type": "string"
+				},
+				"parameters": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			},
+			"required": ["targetID", "parameters"]
+		}
+	}
+}

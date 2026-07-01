@@ -9,23 +9,29 @@
   <body>
     <div id="top-bar">
       <h1>SCChart Interpreter</h1>
-      <div id="connection-status" class="status checking">Checking connection...</div>
-      <button id="upload-btn" style="display: none">Open File</button>
-      <input type="file" id="file-input" accept=".json,.sctx" style="display: none" />
+      <div id="connection-status" class="status checking">Ready — JSON models load locally</div>
+      <button id="upload-json-btn" style="display: none">Upload JSON</button>
+      <button id="show-editor-btn" style="display: none">⊕ Show Text Editor</button>
+      <input type="file" id="json-file-input" accept=".json" style="display: none" />
+      <input type="file" id="sctx-file-input" accept=".sctx" style="display: none" />
     </div>
 
     <div class="main-area">
       <div id="model-panel" class="panel">
-        <label for="sctx-text-input">SCCharts Model (text)</label>
-        <textarea
-          id="sctx-text-input"
-          class="sctx-input"
-          placeholder="Paste SCCharts model code here..."
-        ></textarea>
-        <div class="btn-row">
-          <button id="compile-model-btn" disabled>Compile &amp; Load</button>
+        <button id="upload-sctx-btn" style="display: none; color: #ff6b6b;">Upload SCTX</button>
+        <div class="editor-content">
+          <div id="editor-container">
+            <textarea
+              id="sctx-text-input"
+              class="sctx-input"
+              placeholder="Paste SCCharts model code here..."
+            ></textarea>
+            <div class="btn-row">
+              <button id="compile-model-btn" disabled>Compile &amp; Load</button>
+            </div>
+            <div id="text-compile-status" class="status" style="display: none"></div>
+          </div>
         </div>
-        <div id="text-compile-status" class="status" style="display: none"></div>
       </div>
 
       <div class="right-panel">
@@ -80,6 +86,6 @@
       ></pre>
     </details>
 
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./app.ts"></script>
   </body>
 </html>
