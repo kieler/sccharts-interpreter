@@ -1,9 +1,11 @@
 const connectionStatus = document.getElementById("connection-status");
-const uploadSection = document.getElementById("upload-section");
+const uploadBtn = document.getElementById("upload-btn");
+const fileInput = document.getElementById("file-input");
 const tickSection = document.getElementById("tick-section");
 const outputSection = document.getElementById("output-section");
-const fileInput = document.getElementById("file-input");
-const setupStatus = document.getElementById("setup-status");
+const sctxTextInput = document.getElementById("sctx-text-input");
+const compileModelBtn = document.getElementById("compile-model-btn");
+const textCompileStatus = document.getElementById("text-compile-status");
 const tickInput = document.getElementById("tick-input");
 const advanceTickBtn = document.getElementById("advance-tick-btn");
 const autoRunBtn = document.getElementById("auto-run-btn");
@@ -75,8 +77,10 @@ function showStatus(el, text, type) {
 	el.className = "status " + type;
 }
 
-showStatus(setupStatus, "", "checking");
-setupStatus.style.display = "none";
+function clearModelStatus() {
+	textCompileStatus.style.display = "none";
+	textCompileStatus.textContent = "";
+}
 
 async function checkConnection() {
 	log("Checking core connection...");
@@ -88,7 +92,7 @@ async function checkConnection() {
 		log("Connection check response: " + JSON.stringify(data));
 		if (data.status === "connected") {
 			showStatus(connectionStatus, "Core server connected", "connected");
-			uploadSection.style.display = "flex";
+			uploadBtn.style.display = "block";
 			return;
 		}
 		throw new Error("not connected: " + JSON.stringify(data));
@@ -99,6 +103,10 @@ async function checkConnection() {
 	}
 }
 
+uploadBtn.addEventListener("click", () => {
+	fileInput.click();
+});
+
 fileInput.addEventListener("change", (e) => {
 	const file = e.target.files[0];
 	log("File selected: " + file?.name);
@@ -106,83 +114,64 @@ fileInput.addEventListener("change", (e) => {
 	if (!file) return;
 
 	const isSCTX = file.name.endsWith(".sctx");
+
+	// Reset compile status for next attempt
+	clearModelStatus();
+
 	const reader = new FileReader();
 	reader.onload = async () => {
-		setupStatus.style.display = "block";
-
 		if (isSCTX) {
 			try {
-				log("Converting .sctx with Kico...");
-				showStatus(setupStatus, "Compiling with Kico...", "checking");
+				log("Reading .sctx file as text...");
 
-				const base64 = arrayBufferToBase64(reader.result);
-				log("Request body (" + base64.length + " bytes) for /api/convert-scr");
+				// Read as text and paste into textarea, then auto-compile
+				sctxTextInput.value = reader.result;
+				sctxTextInput.dispatchEvent(new Event("input"));
 
-				const resp = await fetch("/api/convert-scr", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ file: base64, filename: file.name }),
-				});
-
-				log("Convert response status: " + resp.status);
-
-				if (!resp.ok) {
-					let errBody;
-					try {
-						errBody = await resp.json();
-						logError("Convert error JSON: " + JSON.stringify(errBody));
-					} catch {
-						const text = await resp.text().catch(() => "Could not read");
-						logError("Convert error text: " + text);
-						errBody = text;
-					}
-					showStatus(setupStatus, "Compilation failed: " + toErrorString(errBody), "error");
-					return;
+				await compileAndLoadModel(reader.result);
+				if (!isConfigured) {
+					showStatus(connectionStatus, "Failed to load model", "error");
+				} else {
+					showStatus(connectionStatus, "Model compiled and loaded from file", "success");
 				}
-
-				const result = await resp.json();
-				log("Kico conversion successful!");
-				modelData = result.data;
-
-				showStatus(setupStatus, "Converting to JSON... done — setting up...", "checking");
-				await doSetup(modelData);
-
 			} catch (err) {
-				logError("Kico conversion failed: " + err.message);
-				showStatus(setupStatus, "Compilation failed: " + toErrorString(err), "error");
-				modelData = null;
+				logError(".sctx read error: " + err.message);
+				showStatus(connectionStatus, "Failed to read file: " + toErrorString(err), "error");
 			}
 		} else {
 			// .json: parse locally and auto-setup
 			try {
 				log("Parsing JSON from file...");
 				modelData = JSON.parse(reader.result);
-				showStatus(setupStatus, "Loading model...", "checking");
+				showStatus(connectionStatus, "Loading model...", "checking");
 				log("Model parsed: " + Object.keys(modelData).join(", "));
 
-				await doSetup(modelData);
+				const ok = await doSetup(modelData);
+				if (!ok) {
+					showStatus(connectionStatus, "Setup failed for JSON file", "error");
+				} else {
+					showStatus(connectionStatus, "JSON model loaded — model: " + (modelData ? Object.keys(modelData).join(", ") : "(unknown)"), "success");
+				}
 			} catch (err) {
 				logError("Invalid JSON file: " + err.message);
-				showStatus(
-					setupStatus,
-					"Invalid JSON file: " + toErrorString(err),
-					"error",
-				);
-				setupStatus.style.display = "block";
+				showStatus(connectionStatus, "Invalid JSON file: " + toErrorString(err), "error");
 				modelData = null;
-				setupBtn.disabled = false;
 			}
 		}
 	};
 	reader.onerror = () => {
 		logError("FileReader error: could not read file");
+		showStatus(connectionStatus, "Failed to read file", "error");
 	};
 
 	if (isSCTX) {
-		reader.readAsArrayBuffer(file);
+		reader.readAsText(file);
 	} else {
 		reader.readAsText(file);
 	}
+
+	// Reset file input so the same file can be selected again
+	fileInput.value = "";
 });
 
 async function doSetup(data) {
@@ -214,7 +203,7 @@ async function doSetup(data) {
 			logError("Setup error text: " + text);
 			errBody = text;
 		}
-		showStatus(setupStatus, "Setup failed: " + toErrorString(errBody), "error");
+		showStatus(connectionStatus, "Setup failed: " + toErrorString(errBody), "error");
 		modelData = null;
 		return false;
 	}
@@ -222,11 +211,6 @@ async function doSetup(data) {
 	const result = await resp.json();
 	log("Response JSON body: " + JSON.stringify(result));
 	log("Setup successful!");
-	showStatus(
-		setupStatus,
-		"Setup successful — model: " + (result.model ?? "(unknown)"),
-		"success",
-	);
 	isConfigured = true;
 	tickSection.style.display = "flex";
 	outputSection.style.display = "block";
@@ -236,6 +220,79 @@ async function doSetup(data) {
 }
 
 checkConnection();
+
+	sctxTextInput.addEventListener("input", () => {
+		compileModelBtn.disabled = sctxTextInput.value.trim() === "";
+	});
+
+	async function compileAndLoadModel(text) {
+		if (!text || !text.trim()) return;
+
+		clearModelStatus();
+		textCompileStatus.style.display = "block";
+		showStatus(textCompileStatus, "Compiling model...", "checking");
+		compileModelBtn.disabled = true;
+		compileModelBtn.textContent = "Compiling...";
+
+		try {
+			const encoder = new TextEncoder();
+			const bytes = encoder.encode(text);
+			const base64 = arrayBufferToBase64(bytes.buffer);
+
+			const resp = await fetch("/api/convert-scr", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ file: base64, filename: "model.sctx" }),
+			});
+
+			if (!resp.ok) {
+				let errBody;
+				try {
+					errBody = await resp.json();
+					logError("Compile error JSON: " + JSON.stringify(errBody));
+				} catch {
+					const t = await resp.text().catch(() => "Could not read");
+					logError("Compile error text: " + t);
+					errBody = t;
+				}
+				showStatus(textCompileStatus, "Compilation failed: " + toErrorString(errBody), "error");
+				return false;
+			}
+
+			const result = await resp.json();
+			log("Text model compiled successfully!");
+			modelData = result.data;
+			isConfigured = true;
+
+			showStatus(textCompileStatus, "Compilation successful", "success");
+			showStatus(connectionStatus, "Compiled and loaded from text", "success");
+
+			const ok = await doSetup(modelData);
+			if (!ok) {
+				showStatus(textCompileStatus, "Setup failed after compilation", "error");
+			} else {
+				tickSection.style.display = "flex";
+				outputSection.style.display = "block";
+				advanceTickBtn.disabled = false;
+				autoRunBtn.disabled = false;
+			}
+		} catch (err) {
+			logError("Compilation failed: " + err.message);
+			showStatus(textCompileStatus, "Compilation failed: " + toErrorString(err), "error");
+			modelData = null;
+		}
+
+		compileModelBtn.disabled = false;
+		compileModelBtn.textContent = "Compile & Load";
+		return true;
+	}
+
+	compileModelBtn.addEventListener("click", async () => {
+		const text = sctxTextInput.value;
+		if (!text.trim()) return;
+
+		await compileAndLoadModel(text);
+	});
 
 resetBtn.addEventListener("click", async () => {
 	if (!isConfigured) return;
@@ -263,11 +320,7 @@ resetBtn.addEventListener("click", async () => {
 				logError("Reset error text: " + text);
 				errBody = text;
 			}
-			showStatus(
-				setupStatus,
-				"Reset failed: " + toErrorString(errBody),
-				"error",
-			);
+			showStatus(connectionStatus, "Reset failed: " + toErrorString(errBody), "error");
 			advanceTickBtn.disabled = false;
 			advanceTickBtn.textContent = "Advance Tick";
 			return;
@@ -275,11 +328,7 @@ resetBtn.addEventListener("click", async () => {
 
 		const result = await resp.json();
 		log("Reset successful — model: " + (result.model ?? "(unknown)"));
-		showStatus(
-			setupStatus,
-			"Reset successful — model: " + (result.model ?? "(unknown)"),
-			"success",
-		);
+		showStatus(connectionStatus, "Model reset", "success");
 		tickOutput.textContent = "No output yet.";
 		consoleLogs.textContent = "";
 		tickCount = 0;
@@ -291,7 +340,7 @@ resetBtn.addEventListener("click", async () => {
 		advanceTickBtn.textContent = "Advance Tick";
 	} catch (err) {
 		logError("Reset error: " + err.message);
-		showStatus(setupStatus, "Reset failed: " + toErrorString(err), "error");
+		showStatus(connectionStatus, "Reset failed: " + toErrorString(err), "error");
 		advanceTickBtn.disabled = false;
 		advanceTickBtn.textContent = "Advance Tick";
 	}
@@ -468,8 +517,7 @@ advanceTickBtn.addEventListener("click", async () => {
 			"] Error: " +
 			result.error;
 		advanceTickBtn.disabled = false;
-		advanceTickBtn.textContent =
-			inputs.length > 1 ? "Advance Tick" : "Advance Tick";
+		advanceTickBtn.textContent = "Advance Tick";
 		return;
 	}
 

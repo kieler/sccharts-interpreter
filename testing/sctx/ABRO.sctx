@@ -8,15 +8,15 @@ scchart ABRO {
     initial state WaitAB {
       region {
         initial state wA
-          if A go to dA 
-  
+          if A go to dA
+
         final state dA
       }
-      
+
       region {
         initial state wB
           if B go to dB
-  
+
         final state dB
       }
     }
@@ -24,5 +24,5 @@ scchart ABRO {
 
     state done
   }
-  if R abort to ABO 
+  if R abort to ABO
 }
