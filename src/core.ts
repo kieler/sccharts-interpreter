@@ -30,8 +30,8 @@ core.post("/setup", (req, res) => {
       message: "Setup successful",
       model: globalContext.model[0].label,
     });
-  } catch (error) {
-    return res.status(500).json({ error: error });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -43,9 +43,9 @@ core.post("/tick", (req, res) => {
       terminated: globalContext.graph.terminated,
       variables: Object.fromEntries(globalContext.variables),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return res.status(500).send(error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
