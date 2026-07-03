@@ -4,15 +4,23 @@ import type { SCChartModel } from "./schema/types.js";
 import type { Context } from "./interpreter/types.js";
 import { constructStateGraph } from "./interpreter/constructor.js";
 import { tick } from "./interpreter/run.js";
+import { clearMessages } from "./interpreter/errors.js";
 
 const core = express();
 core.use(express.json());
+
+const wonly = process.argv.includes("-Wonly");
+
+if (wonly) console.log("Warning-only mode enabled");
 
 let chartModel: SCChartModel;
 let globalContext: Context;
 
 core.post("/setup", (req, res) => {
-  const { model } = req.body;
+  const { model, temp_wonly } = req.body;
+  if (temp_wonly) {
+    console.log("Warning-only mode enabled");
+  }
   try {
     const valid = validateSCChart(model);
     if (!valid)
@@ -25,6 +33,9 @@ core.post("/setup", (req, res) => {
 
     globalContext = constructStateGraph(chartModel);
     globalContext.graph.activeNode = globalContext.graph.initalNode;
+    if (temp_wonly == undefined)
+      globalContext.errorMode = wonly ? "warnings-only" : "strict";
+    else globalContext.errorMode = temp_wonly ? "warnings-only" : "strict";
 
     return res.status(200).json({
       message: "Setup successful",
@@ -39,9 +50,13 @@ core.post("/tick", (req, res) => {
   const { inputs } = req.body;
   try {
     tick(globalContext, inputs);
+    const messages = globalContext.messages;
+    clearMessages();
+    globalContext.messages = [];
     return res.status(200).json({
       terminated: globalContext.graph.terminated,
       variables: Object.fromEntries(globalContext.variables),
+      messages,
     });
   } catch (error: any) {
     console.error(error);
@@ -52,6 +67,7 @@ core.post("/tick", (req, res) => {
 core.get("/reset", (_, res) => {
   globalContext = constructStateGraph(chartModel);
   globalContext.graph.activeNode = globalContext.graph.initalNode;
+  globalContext.errorMode = wonly ? "warnings-only" : "strict";
 
   return res.status(200).json({
     message: "Reset successful",

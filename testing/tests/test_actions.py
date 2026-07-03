@@ -1,4 +1,4 @@
-from base import TestRunner, generate_expected
+from base import TestRunner, generate_expected, assert_subset
 
 
 def test_actions():
@@ -18,4 +18,4 @@ def test_actions():
         "Actions", inputs, ["A", "B", "O1", "O2", "O3", "O4", "O5"]
     )
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)

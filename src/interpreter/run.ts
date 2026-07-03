@@ -1,3 +1,5 @@
+import { Severity } from "./types.js";
+import { raise } from "./errors.js";
 import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
@@ -119,9 +121,10 @@ function processNode(node: StateNode, context: Context): void {
 
   helper(node, context);
   if (node.graph.activeNode?.state.isConnector) {
-    throw new Error(
-      "Ending a tick in a connector is not allowes. Connector: " +
-        node.graph.activeNode?.id,
+    raise(
+      context,
+      Severity.Error,
+      `Ending a tick in a connector is not allowed. Connector: ${node.graph.activeNode.id}`,
     );
   }
 }

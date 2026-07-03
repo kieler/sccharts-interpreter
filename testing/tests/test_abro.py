@@ -1,4 +1,4 @@
-from base import TestRunner, generate_expected
+from base import TestRunner, generate_expected, assert_subset
 
 
 def test_abro_basic():
@@ -18,4 +18,4 @@ def test_abro_basic():
 
     expected = generate_expected("ABRO", inputs, ["A", "B", "R", "O"])
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)

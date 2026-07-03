@@ -1,4 +1,4 @@
-from base import TestRunner
+from base import TestRunner, assert_subset
 
 
 def test_ao():
@@ -20,4 +20,4 @@ def test_ao():
         {"terminated": True, "variables": {"A": True, "O": True}},
     ]
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)

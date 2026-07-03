@@ -1,5 +1,5 @@
 import { Region, SCChartModel, State } from "../schema/types.js";
-import { Context, StateNode } from "./types.js";
+import { Context, Message, Severity, StateNode } from "./types.js";
 
 export function isSuper(stateNode: StateNode): boolean {
   return stateNode.subgraphs !== undefined;
@@ -68,5 +68,7 @@ export function emptyContext(model: SCChartModel): Context {
     outputVariables: [],
     inputVariables: [],
     nodeMap: new Map(),
+    errorMode: "strict" as const,
+    messages: [],
   };
 }

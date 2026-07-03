@@ -40,12 +40,12 @@ for the PoC, these should probably be left out unless it is easy.
 		- take stdin like the kico simulation
 - [ ] exceptions
 	- some states of the interpreter should raise and expection and throw and error.
-	- [ ] basic structure for that 
+	- [x] basic structure for that 
 	- Explicitly what should throw an error: 
-		- [ ] Ending a tick in a connector
+		- [x] Ending a tick in a connector
 		- [ ] multiple inital stated
 		- [ ] ...
-	- [ ] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
+	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
 
 ## later

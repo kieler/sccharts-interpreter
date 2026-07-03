@@ -1,4 +1,4 @@
-from base import TestRunner, generate_expected
+from base import TestRunner, generate_expected, assert_subset
 
 
 def test_immediate():
@@ -16,4 +16,4 @@ def test_immediate():
 
     expected = generate_expected("Immediate", inputs, ["A", "O1", "O2", "O3"])
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)
