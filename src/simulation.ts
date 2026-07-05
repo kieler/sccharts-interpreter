@@ -72,7 +72,7 @@ if (inputsOrMode === "-i") {
       }
       const result = await tickResp.json();
 
-      console.log(result.variables);
+      console.log(result);
 
       if (result.terminated) {
         console.log("Model terminated - Final Variables:", result.variables);
@@ -117,8 +117,15 @@ if (inputsOrMode === "-i") {
 
     console.log(result.variables);
 
+    if (result.messages && result.messages.length > 0) {
+      for (const msg of result.messages) {
+        const prefix = msg.severity === "Warning" ? "[WARNING]" : "[ERROR]";
+        console.log(`${prefix}: ${msg.text}`);
+      }
+    }
+
     if (result.terminated) {
-      console.log("Model terminated - Final Variables:", result.ariables);
+      console.log("Model terminated - Final Variables:", result.variables);
       break;
     }
   }

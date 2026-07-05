@@ -1,0 +1,11 @@
+scchart BrokenConnector{
+    input bool A
+
+    initial state A
+    go to B
+
+    connector state B
+    if A go to C
+
+    final state C
+}

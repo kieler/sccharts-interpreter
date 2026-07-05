@@ -1,4 +1,4 @@
-from base import TestRunner, generate_expected
+from base import TestRunner, assert_subset, generate_expected
 
 
 def test_join():
@@ -18,7 +18,7 @@ def test_join():
         "Abort", inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
     )
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)
 
 
 def test_strong():
@@ -36,7 +36,7 @@ def test_strong():
         "Abort", inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
     )
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)
 
 
 def test_wak():
@@ -54,4 +54,4 @@ def test_wak():
         "Abort", inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
     )
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)

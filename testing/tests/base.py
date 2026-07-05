@@ -74,31 +74,69 @@ class TestRunner:
         self.name = name
         self.model = load_model(name)
 
-    def setup(self) -> requests.Response:
-        resp = requests.post(f"{URL}/setup", json={"model": self.model})
+    def setup(self, wonly=False) -> requests.Response:
+        resp = requests.post(
+            f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+        )
         assert resp.status_code == 200, (
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
         )
         return resp
 
     def run(self, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        resp = requests.get(f"{URL}/reset")
-        assert resp.status_code == 200, (
-            f"{resp.status_code}, Reset failed for {self.name}: {resp.text}"
-        )
-
         output = []
-        for i, inp in enumerate(inputs):
+        for _, inp in enumerate(inputs):
             resp = requests.post(f"{URL}/tick", json={"inputs": inp})
-            assert resp.status_code == 200, (
-                f"{resp.status_code}, Tick {i} failed for {self.name}: {resp.text}"
-            )
+
             output.append(resp.json())
+            if resp.status_code == 200:
+                output[-1]["status"] = "fine"
+            elif resp.status_code == 500:
+                output[-1]["status"] = "error"
+                break
+            else:
+                output[-1]["status"] = "unknown"
 
             if resp.json().get("terminated"):
                 break
 
         return output
+
+    def reset(self):
+        resp = requests.get(f"{URL}/reset")
+        assert resp.status_code == 200, (
+            f"{resp.status_code}, Reset failed for {self.name}: {resp.text}"
+        )
+
+
+def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) -> None:
+    """Assert actual matches expected as a subset (extra fields in actual ignored)."""
+    assert len(actual) == len(expected), (
+        f"Length mismatch: {len(actual)} != {len(expected)}"
+    )
+    for i, (a, e) in enumerate(zip(actual, expected)):
+        assert set(e.keys()).issubset(set(a.keys())), (
+            f"Step {i}: expected keys not subset of actual: {e.keys()}"
+        )
+        for k, v in e.items():
+            if isinstance(v, dict):
+                assert isinstance(a[k], dict), f"Step {i}: {k} is not a dict"
+                _assert_subset_dict(a[k], v, f"step {i}.{k}")
+            else:
+                assert a[k] == v, f"Step {i}.{k}: expected {v!r}, got {a[k]!r}"
+
+
+def _assert_subset_dict(
+    actual: dict[str, Any], expected: dict[str, Any], prefix: str
+) -> None:
+    for k, v in expected.items():
+        full_key = f"{prefix}.{k}"
+        assert k in actual, f"{full_key}: key missing"
+        if isinstance(v, dict):
+            assert isinstance(actual[k], dict), f"{full_key} is not a dict"
+            _assert_subset_dict(actual[k], v, full_key)
+        else:
+            assert actual[k] == v, f"{full_key}: expected {v!r}, got {actual[k]!r}"
 
 
 def generate_expected(

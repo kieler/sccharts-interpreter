@@ -7,7 +7,8 @@
 - [x] Hierarchy
 - [x] Weak and Strong Abort
 	- Testing still required, but implemented
-- [ ] Connectors
+- [x] Connectors
+	- very basic, the one thing is we want to impliicitly consider all outgoind connections as immediate, even if they aren't explicitly set to immediate.
 - [x] Concurrency (logial) 
 - [x] Actions
 	- [x] Transition
@@ -37,6 +38,15 @@ for the PoC, these should probably be left out unless it is easy.
 	- [x] basic via terminal
 	- [x] something better
 		- take stdin like the kico simulation
+- [ ] exceptions
+	- some states of the interpreter should raise and expection and throw and error.
+	- [x] basic structure for that 
+	- Explicitly what should throw an error: 
+		- [x] Ending a tick in a connector
+		- [ ] multiple inital stated
+		- [ ] ...
+	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
+
 
 ### webui
 I already want to create a basic web ui prototype to see what it could look like in the future, that I can get started on improving it an gathering feed back. For now we upload sctx or json and they get iterpreted and we have an interactive simulation on the webpage.

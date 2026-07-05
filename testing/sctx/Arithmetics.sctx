@@ -1,0 +1,12 @@
+scchart Arithmetics {
+  int A=1
+  int B, C=5
+
+	initial state Init {
+	  during do A*=2 ;B++
+		during if B>5 do C--
+	}
+	if C==0 go to End
+
+	final state End
+}

@@ -1,4 +1,4 @@
-from base import TestRunner, generate_expected
+from base import TestRunner, assert_subset, generate_expected
 
 
 def test_abo_Afirst():
@@ -16,7 +16,7 @@ def test_abo_Afirst():
 
     expected = generate_expected("ABO", inputs, ["A", "B", "O1", "O2"])
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)
 
 
 def test_abo_Bfirst():
@@ -34,4 +34,4 @@ def test_abo_Bfirst():
 
     expected = generate_expected("ABO", inputs, ["A", "B", "O1", "O2"])
 
-    assert runner.run(inputs) == expected
+    assert_subset(runner.run(inputs), expected)

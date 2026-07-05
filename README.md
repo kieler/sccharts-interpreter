@@ -32,6 +32,8 @@ It reads inputs in JSON format from stdin every tick and prints the state of all
 
 
 ### tests
+For the tests to work properly a version of the Kieler Compiler has to be downloaded (currently from this branch https://github.com/kieler/semantics/tree/dam/json) and its location configured in the `testing/config.json`. It is used to compare the results of the interpreter against that of the compiler.
+
 The tests are written in python and require `uv` to be installed.  
 Run all or specific tests with
 ```bash
