@@ -3,7 +3,8 @@
   margin: 0;
   padding: 0;
 }
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
 }
@@ -211,4 +212,126 @@ button:disabled {
   color: #aaa;
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+#variables-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+#variables-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.variable-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: #1e1e2e;
+  border: 1px solid #334;
+}
+
+.variable-name {
+  min-width: 90px;
+  font-weight: bold;
+  color: #cfd8dc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.variable-type-label {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.variable-value {
+  flex: 1;
+  background: #0a0a1a;
+  border: 1px solid #334;
+  border-radius: 3px;
+  padding: 0.25rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: #e0e0e0;
+  outline: none;
+}
+
+.variable-value:focus {
+  border-color: #a0e0ff;
+}
+
+.variable-value.readonly {
+  background: #151525;
+  color: #888;
+  cursor: default;
+  border-style: dashed;
+}
+
+.variable-row.type-input {
+  border-left: 3px solid #4caf50;
+}
+
+.variable-row.type-input .variable-type-label {
+  background: #1b6b30;
+  color: #fff;
+}
+
+.variable-row.type-output {
+  border-left: 3px solid #2196f3;
+}
+
+.variable-row.type-output .variable-type-label {
+  background: #1565c0;
+  color: #fff;
+}
+
+.variable-row.type-internal {
+  border-left: 3px solid #666;
+  opacity: 0.6;
+}
+
+.variable-row.type-internal .variable-type-label {
+  background: #444;
+  color: #aaa;
+}
+
+.variable-row .variable-type-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.variable-row.type-input .variable-type-badge {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.variable-row.type-output .variable-type-badge {
+  background: #1565c0;
+  color: #fff;
+}
+
+.variable-row.type-internal .variable-type-badge {
+  background: #444;
+  color: #aaa;
+}
+
+#raw-input-section summary:hover {
+  color: #e0e0e0;
+}
+
+#raw-input-section[open] {
+  padding-bottom: 0.3rem;
 }

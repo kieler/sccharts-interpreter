@@ -34,7 +34,8 @@ if (setupResp.status !== 200) {
   process.exit(1);
 }
 
-console.log("Setup done");
+const respJson = await setupResp.json();
+console.log("Setup done. Model", respJson.model, "loaded.");
 
 if (inputsOrMode === "-i") {
   const rl = readline.createInterface({

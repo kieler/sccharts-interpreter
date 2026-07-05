@@ -26,9 +26,22 @@ core.post("/setup", (req, res) => {
     globalContext = constructStateGraph(chartModel);
     globalContext.graph.activeNode = globalContext.graph.initalNode;
 
+    let variables: any = [];
+
+    for (const variable of globalContext.variables) {
+      variables.push({
+        name: variable[0],
+        type: globalContext.variableTypes.get(variable[0]) ?? "unknown",
+        value: variable[1],
+        isInput: globalContext.inputVariables.includes(variable[0]),
+        isOutput: globalContext.outputVariables.includes(variable[0]),
+      });
+    }
+
     return res.status(200).json({
       message: "Setup successful",
       model: globalContext.model[0].label,
+      variables: variables,
     });
   } catch (error) {
     return res
