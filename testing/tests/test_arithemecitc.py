@@ -1,7 +1,7 @@
 from base import TestRunner, assert_subset, generate_expected
 
 
-def test_actions():
+def test_arithmetics():
     """Test Arithmetics of Actions"""
     runner = TestRunner("Arithmetics")
     runner.setup()

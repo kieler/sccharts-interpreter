@@ -430,36 +430,32 @@ export function parseAction(
   // PostfixExpr -> Primary ('++' | '--')*
   function parsePostfixExpr(): Result {
     const primary = parsePrimary();
-    let val: number;
-
-    if (typeof primary.value !== "number") {
-      throw new Error("Postfix operators require a numeric expression");
-    }
-    val = primary.value as number;
     let lvar = primary.lvar;
-    let oldVal: number | undefined;
 
-    while (peek() && (peek()!.type === "INC" || peek()!.type === "DEC")) {
-      const incToken = consume();
-
-      if (oldVal === undefined) {
-        oldVal = val; // capture the original value for post- semantics
+    if (lvar !== null && peek() && (peek()!.type === "INC" || peek()!.type === "DEC")) {
+      if (typeof primary.value !== "number") {
+        throw new Error("Postfix operators require a numeric expression");
       }
+      let val = primary.value as number;
+      let oldVal: number | undefined;
 
-      const newVal: number = incToken.type === "INC" ? val + 1 : val - 1;
+      while (peek() && (peek()!.type === "INC" || peek()!.type === "DEC")) {
+        const incToken = consume();
 
-      if (lvar !== null) {
+        if (oldVal === undefined) {
+          oldVal = val; // capture the original value for post- semantics
+        }
+
+        const newVal: number = incToken.type === "INC" ? val + 1 : val - 1;
+
         variables.set(lvar, newVal);
-      } else {
-        throw new Error(
-          `Cannot apply postfix operator to non-variable expression`,
-        );
+        val = newVal; // for chaining like X++++, continue from incremented value
       }
 
-      val = newVal; // for chaining like X++++, continue from incremented value
+      return { value: oldVal ?? val, lvar: null };
     }
 
-    return { value: oldVal ?? val, lvar: null };
+    return primary;
   }
 
   // Primary -> NUMBER | STRING | BOOL | '(' ValueExpr ')' | VAR
