@@ -1,5 +1,5 @@
 import express from "express";
-import { convertSCTX } from "./api/kico.js";
+import { convertSCTX, generateDiagram } from "./api/kico.js";
 
 const webui = express();
 webui.use(express.json());
@@ -9,7 +9,11 @@ const CORE_URL = process.env.CORE_URL ?? "http://localhost:19339";
 
 webui.use(express.static("public"));
 
-async function proxyRequest(method: string, targetPath: string, data?: unknown) {
+async function proxyRequest(
+  method: string,
+  targetPath: string,
+  data?: unknown,
+) {
   const url = `${CORE_URL}${targetPath}`;
   try {
     const fetchBody = data !== undefined ? JSON.stringify(data) : undefined;
@@ -28,7 +32,10 @@ async function proxyRequest(method: string, targetPath: string, data?: unknown) 
     const result = await resp.json();
     return { status: resp.status, body: result };
   } catch (err: unknown) {
-    if ((err as Error).name === "TimeoutError" || (err as DOMException).code === 20) {
+    if (
+      (err as Error).name === "TimeoutError" ||
+      (err as DOMException).code === 20
+    ) {
       return { status: 504, body: { error: "Core server timed out (10s)" } };
     }
     return { status: 503, body: { error: "Core server not reachable" } };
@@ -52,7 +59,10 @@ webui.get("/api/reset", async (_, res) => {
 
 webui.get("/api/status", async (_, res) => {
   try {
-    const resp = await fetch(`${CORE_URL}/setup`, { method: "GET", signal: AbortSignal.timeout(5_000) });
+    const resp = await fetch(`${CORE_URL}/setup`, {
+      method: "GET",
+      signal: AbortSignal.timeout(5_000),
+    });
     if (resp.ok || resp.status === 404 || resp.status === 405) {
       return res.json({ status: "connected" });
     }
@@ -80,4 +90,21 @@ webui.post("/api/convert-scr", async (req, res) => {
 const server = webui.listen(WEBUI_PORT, () => {
   console.log(`Web UI running on http://localhost:${WEBUI_PORT}`);
   console.log(`Proxying to core at ${CORE_URL}`);
+});
+
+webui.post("/api/create-diagram", async (req, res) => {
+  const { file, filename } = req.body as { file?: string; filename?: string };
+  if (!file || !filename) {
+    return res
+      .status(400)
+      .json({ type: "error", message: "Missing file or filename" });
+  }
+
+  const result = await generateDiagram(file, filename);
+
+  if (result.type === "png") {
+    return res.json({ type: "png", data: result.data });
+  } else {
+    return res.status(500).json({ type: "error", message: result.message });
+  }
 });

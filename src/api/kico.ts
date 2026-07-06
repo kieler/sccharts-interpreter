@@ -17,16 +17,34 @@ export interface ConvertResult {
   outputPath?: string;
 }
 
+export interface DiagramResult {
+  type: "png" | "error";
+  data?: string;
+  message?: string;
+  inputPath?: string;
+  outputPath?: string;
+}
+
 function readConfig() {
   if (!fs.existsSync(KICO_CONFIG_PATH)) return null;
   const raw = fs.readFileSync(KICO_CONFIG_PATH, "utf-8");
-  return JSON.parse(raw) as { java_jar_path: string };
+  return JSON.parse(raw) as {
+    java_jar_path: string;
+    java_jar_dia_path?: string;
+  };
 }
 
-export async function convertSCTX(sctxBase64: string, filename: string): Promise<ConvertResult> {
+export async function convertSCTX(
+  sctxBase64: string,
+  filename: string,
+): Promise<ConvertResult> {
   const config = readConfig();
   if (!config?.java_jar_path) {
-    return { type: "error", message: "Kico.jar not configured — set java_jar_path in kico_config.json" };
+    return {
+      type: "error",
+      message:
+        "Kico.jar not configured — set java_jar_path in kico_config.json",
+    };
   }
 
   let jarPath = config.java_jar_path;
@@ -69,14 +87,18 @@ export async function convertSCTX(sctxBase64: string, filename: string): Promise
 
         if (err || stderr) {
           cleanup(inputPath, outputPath);
-          const msg = stderr || err?.message || "Compilation failed with unknown error";
+          const msg =
+            stderr || err?.message || "Compilation failed with unknown error";
           resolve({ type: "error", message: msg });
           return;
         }
 
         if (!fs.existsSync(outputPath)) {
           cleanup(inputPath, outputPath);
-          resolve({ type: "error", message: "kico.jar produced no output file" });
+          resolve({
+            type: "error",
+            message: "kico.jar produced no output file",
+          });
           return;
         }
 
@@ -86,11 +108,19 @@ export async function convertSCTX(sctxBase64: string, filename: string): Promise
           parsed = JSON.parse(outputRaw);
         } catch (e) {
           cleanup(inputPath, outputPath);
-          resolve({ type: "error", message: `Invalid JSON output from kico.jar:\n${outputRaw}` });
+          resolve({
+            type: "error",
+            message: `Invalid JSON output from kico.jar:\n${outputRaw}`,
+          });
           return;
         }
 
-        const result: ConvertResult = { type: "json", data: parsed, inputPath, outputPath };
+        const result: ConvertResult = {
+          type: "json",
+          data: parsed,
+          inputPath,
+          outputPath,
+        };
         console.log(`kico convert: ${filename} → ${outputPath}`);
         resolve(result);
       },
@@ -98,8 +128,85 @@ export async function convertSCTX(sctxBase64: string, filename: string): Promise
   });
 }
 
+export async function generateDiagram(
+  sctxBase64: string,
+  filename: string,
+): Promise<DiagramResult> {
+  const config = readConfig();
+  if (!config?.java_jar_dia_path) {
+    return {
+      type: "error",
+      message:
+        "Diagram JAR not configured — set java_jar_dia_path in kico_config.json",
+    };
+  }
+
+  let jarPath = config.java_jar_dia_path;
+  if (!path.isAbsolute(jarPath)) {
+    jarPath = path.join(PROJECT_ROOT, jarPath);
+  }
+
+  if (!fs.existsSync(jarPath)) {
+    return { type: "error", message: `Diagram JAR not found: ${jarPath}` };
+  }
+
+  const id = crypto.randomUUID();
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  const inputPath = path.join(OUTPUT_DIR, `${id}.sctx`);
+  const outputPath = path.join(OUTPUT_DIR, `${id}.png`);
+
+  const decoded = Buffer.from(sctxBase64, "base64");
+  fs.writeFileSync(inputPath, decoded);
+
+  return new Promise<DiagramResult>((resolve) => {
+    const timeout = setTimeout(() => {
+      cleanup(inputPath, outputPath);
+      resolve({
+        type: "error",
+        message: `Diagram generation timed out after 60s`,
+      });
+    }, 60_000);
+
+    execFile(
+      "java",
+      ["-jar", jarPath, "-d", "--only-diagram", inputPath, "-o", outputPath],
+      { timeout: 60_000 },
+      (err, stdout, stderr) => {
+        clearTimeout(timeout);
+
+        if (err || stderr) {
+          cleanup(inputPath, outputPath);
+          const msg =
+            stderr ||
+            err?.message ||
+            "Diagram generation failed with unknown error";
+          resolve({ type: "error", message: msg });
+          return;
+        }
+
+        if (!fs.existsSync(outputPath)) {
+          cleanup(inputPath, outputPath);
+          resolve({
+            type: "error",
+            message: "Diagram JAR produced no output file",
+          });
+          return;
+        }
+
+        const pngBuffer = fs.readFileSync(outputPath);
+        const base64PNG = pngBuffer.toString("base64");
+
+        console.log(`diagram generate: ${filename} → ${outputPath}`);
+        resolve({ type: "png", data: base64PNG, inputPath, outputPath });
+      },
+    );
+  });
+}
+
 function cleanup(...files: string[]) {
   for (const f of files) {
-    try { fs.rmSync(f, { force: true }); } catch {}
+    try {
+      fs.rmSync(f, { force: true });
+    } catch {}
   }
 }

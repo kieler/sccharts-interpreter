@@ -8,6 +8,7 @@ const variablesList = document.getElementById("variables-list");
 const rawInputSection = document.getElementById("raw-input-section");
 const sctxTextInput = document.getElementById("sctx-text-input");
 const compileModelBtn = document.getElementById("compile-model-btn");
+const generateDiagramBtn = document.getElementById("generate-diagram-btn");
 const textCompileStatus = document.getElementById("text-compile-status");
 const tickInput = document.getElementById("tick-input");
 const advanceTickBtn = document.getElementById("advance-tick-btn");
@@ -17,6 +18,10 @@ const resetBtn = document.getElementById("reset-btn");
 const clearOutputBtn = document.getElementById("clear-output-btn");
 const tickOutput = document.getElementById("tick-output");
 const consoleLogs = document.getElementById("console-logs");
+const diagramContainer = document.getElementById("diagram-container");
+const diagramImage = document.getElementById("diagram-image");
+const diagramLoadingOverlay = document.getElementById("diagram-loading-overlay");
+const diagramGenerateStatus = document.getElementById("diagram-generate-status");
 
 let modelData = null;
 let isConfigured = false;
@@ -25,6 +30,7 @@ let stopRequested = false;
 let currentTickIndex = -1;
 let inputList = [];
 let variableDefs = [];
+let sctxModelText = "";
 
 function log(msg) {
   const time = new Date().toLocaleTimeString();
@@ -347,7 +353,9 @@ async function doSetup(data) {
 checkConnection();
 
 sctxTextInput.addEventListener("input", () => {
-  compileModelBtn.disabled = sctxTextInput.value.trim() === "";
+  const hasContent = sctxTextInput.value.trim() !== "";
+  compileModelBtn.disabled = !hasContent;
+  generateDiagramBtn.disabled = !hasContent;
 });
 
 async function compileAndLoadModel(text) {
@@ -390,6 +398,7 @@ async function compileAndLoadModel(text) {
 
     const result = await resp.json();
     log("Text model compiled successfully!");
+    sctxModelText = text;  // store for diagram generation
     modelData = result.data;
     isConfigured = true;
 
@@ -404,6 +413,8 @@ async function compileAndLoadModel(text) {
       outputSection.style.display = "block";
       advanceTickBtn.disabled = false;
       autoRunBtn.disabled = false;
+
+      generateDiagram(text);
     }
   } catch (err) {
     logError("Compilation failed: " + err.message);
@@ -420,11 +431,71 @@ async function compileAndLoadModel(text) {
   return true;
 }
 
+async function generateDiagram(text) {
+  if (!text || !text.trim()) return;
+
+  diagramGenerateStatus.style.display = "block";
+  showStatus(diagramGenerateStatus, "Generating diagram...", "checking");
+  generateDiagramBtn.disabled = true;
+  generateDiagramBtn.textContent = "Generating...";
+
+  diagramContainer.style.display = "flex";
+  diagramLoadingOverlay.classList.add("active");
+
+  try {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
+    const base64 = arrayBufferToBase64(bytes.buffer);
+
+    const resp = await fetch("/api/create-diagram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: base64, filename: "model.sctx" }),
+    });
+
+    if (!resp.ok) {
+      const errBody = await resp.json().catch(() => ({}));
+      logWarn("Diagram generation failed");
+      showStatus(
+        diagramGenerateStatus,
+        "Diagram failed: " + toErrorString(errBody.message || errBody),
+        "error",
+      );
+      return;
+    }
+
+    const result = await resp.json();
+    if (result.type === "png" && result.data) {
+      diagramImage.src = "data:image/png;base64," + result.data;
+      diagramLoadingOverlay.classList.remove("active");
+      showStatus(diagramGenerateStatus, "Diagram generated successfully", "success");
+      log("Diagram generated successfully");
+    }
+  } catch (err) {
+    logWarn("Diagram generation error: " + err.message);
+    showStatus(
+      diagramGenerateStatus,
+      "Diagram failed: " + toErrorString(err),
+      "error",
+    );
+  }
+
+  generateDiagramBtn.disabled = false;
+  generateDiagramBtn.textContent = "Generate Diagram";
+}
+
 compileModelBtn.addEventListener("click", async () => {
   const text = sctxTextInput.value;
   if (!text.trim()) return;
 
   await compileAndLoadModel(text);
+});
+
+generateDiagramBtn.addEventListener("click", async () => {
+  const text = sctxTextInput.value;
+  if (!text.trim()) return;
+
+  generateDiagram(text);
 });
 
 resetBtn.addEventListener("click", async () => {

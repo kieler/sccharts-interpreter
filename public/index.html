@@ -32,6 +32,14 @@
         <div class="btn-row">
           <button id="compile-model-btn" disabled>Compile &amp; Load</button>
         </div>
+        <div class="btn-row">
+          <button id="generate-diagram-btn" disabled>Generate Diagram</button>
+        </div>
+        <div
+          id="diagram-generate-status"
+          class="status"
+          style="display: none"
+        ></div>
         <div
           id="text-compile-status"
           class="status"
@@ -40,6 +48,16 @@
       </div>
 
       <div class="right-panel">
+        <div id="diagram-container" style="display: none">
+          <label>Diagram</label>
+          <div id="diagram-wrapper" style="position: relative; width: 100%;">
+            <img id="diagram-image" />
+            <div id="diagram-loading-overlay" class="diagram-loading-indicator">
+              <div class="diagram-spinner"></div>
+              <span class="diagram-loading-text">Generating...</span>
+            </div>
+          </div>
+        </div>
         <div id="tick-section">
           <div id="variables-section" style="display: none">
             <label>Variables</label>

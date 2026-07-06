@@ -8,11 +8,8 @@ uv.lock
 .venv
 .pytest_cache
 __pycache__
-kico.jar
-<<<<<<< HEAD
-=======
+*.jar
 testing/config.json
->>>>>>> main
 kico_config.json
 testing/json/*.json
 testing/exe/*.exe
