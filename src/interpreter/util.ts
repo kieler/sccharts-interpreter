@@ -70,5 +70,28 @@ export function emptyContext(model: SCChartModel): Context {
     nodeMap: new Map(),
     errorMode: "strict" as const,
     messages: [],
+    activeNodes: new Set(),
   };
+}
+
+export function assignInputVariables(context: Context, inputs: any): void {
+  for (const variable of context.inputVariables) {
+    if (inputs[variable] !== undefined) {
+      context.variables.set(variable, inputs[variable]);
+    } else {
+      switch (context.variableTypes.get(variable)) {
+        case "int":
+          context.variables.set(variable, 0);
+          break;
+        case "string":
+          context.variables.set(variable, "");
+          break;
+        case "bool":
+          context.variables.set(variable, false);
+          break;
+        default:
+          context.variables.set(variable, 0);
+      }
+    }
+  }
 }

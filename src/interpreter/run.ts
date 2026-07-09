@@ -3,6 +3,7 @@ import { raise } from "./errors.js";
 import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
+import { assignInputVariables } from "./util.js";
 
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
@@ -57,10 +58,13 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
     parseAction(edge.transition.action, context.variables);
 
   edge.to.graph.activeNode = edge.to;
+  context.activeNodes.delete(edge.from);
 
   if (edge.to.state.isFinal) {
     edge.to.graph.terminated = true;
   } else {
+    context.activeNodes.add(edge.to);
+
     addRegionsToRuntime(
       edge.to.subgraphs,
       context,
@@ -82,81 +86,61 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
 }
 
 function processNode(node: StateNode, context: Context): void {
-  function helper(node: StateNode, context: Context): void {
-    if (node.state.isFinal) node.graph.terminated = true;
-    if (node.graph.terminated) return;
+  if (node.state.isFinal) node.graph.terminated = true;
+  if (node.graph.terminated) {
+    context.activeNodes.delete(node);
+    return;
+  }
 
-    console.log("Processing Node: ", node.id);
+  console.log("Processing Node: ", node.id);
+  context.activeNodes.add(node);
 
-    for (const edge of node.strongEdges) {
-      // If the guard passes for a strong abort, the inner behaviour is not executed
-      if (walkEdge(edge, context)) return;
-    }
-
-    for (const action of node.duringActions) {
-      if (!action.guard || parseGuard(action.guard, context.variables)) {
-        parseAction(action.action, context.variables);
-      }
-    }
-
-    if (node.subgraphs) {
-      for (const subgraph of node.subgraphs) {
-        if (subgraph.activeNode) {
-          processNode(subgraph.activeNode, context);
-        } else if (subgraph.initalNode) {
-          // If no activeNode exists, the graph has not been initialised
-          processNode(subgraph.initalNode, context);
-        }
-      }
-    }
-
-    for (const edge of node.weakEdges) {
-      if (walkEdge(edge, context)) return;
-    }
-
-    for (const edge of node.joinEdges) {
-      if (walkEdge(edge, context)) return;
+  for (const edge of node.strongEdges) {
+    // If the guard passes for a strong abort, the inner behaviour is not executed
+    if (walkEdge(edge, context)) return;
+  }
+  for (const action of node.duringActions) {
+    if (!action.guard || parseGuard(action.guard, context.variables)) {
+      parseAction(action.action, context.variables);
     }
   }
 
-  helper(node, context);
-  if (node.graph.activeNode?.state.isConnector) {
-    raise(
-      context,
-      Severity.Error,
-      `Ending a tick in a connector is not allowed. Connector: ${node.graph.activeNode.id}`,
-    );
-  }
-}
-
-function assignInputVariables(context: Context, inputs: any): void {
-  for (const variable of context.inputVariables) {
-    if (inputs[variable] !== undefined) {
-      context.variables.set(variable, inputs[variable]);
-    } else {
-      switch (context.variableTypes.get(variable)) {
-        case "int":
-          context.variables.set(variable, 0);
-          break;
-        case "string":
-          context.variables.set(variable, "");
-          break;
-        case "bool":
-          context.variables.set(variable, false);
-          break;
-        default:
-          context.variables.set(variable, 0);
+  if (node.subgraphs) {
+    for (const subgraph of node.subgraphs) {
+      if (subgraph.activeNode) {
+        processNode(subgraph.activeNode, context);
+      } else if (subgraph.initalNode) {
+        // If no activeNode exists, the graph has not been initialised
+        processNode(subgraph.initalNode, context);
       }
     }
+  }
+
+  for (const edge of node.weakEdges) {
+    if (walkEdge(edge, context)) return;
+  }
+
+  for (const edge of node.joinEdges) {
+    if (walkEdge(edge, context)) return;
   }
 }
 
 export function tick(context: Context, inputs: any): void {
   if (!context.graph.activeNode) return;
-
   assignInputVariables(context, inputs);
 
   processNode(context.graph.activeNode, context);
+
+  context.activeNodes.forEach(function (node: StateNode) {
+    if (node.state.isConnector) {
+      raise(
+        context,
+        Severity.Error,
+        `Ending a tick in a connector is not allowed. Connector: ${node.id}`,
+      );
+    }
+  });
+
   console.log(context.variables);
   console.log();
 }

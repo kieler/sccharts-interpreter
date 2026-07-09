@@ -1,6 +1,9 @@
 import { Action, SCChartModel, State, Transition } from "../schema/types.js";
 
-export enum Severity { Error, Warning }
+export enum Severity {
+  Error,
+  Warning,
+}
 
 export interface Message {
   severity: Severity;
@@ -47,4 +50,5 @@ export interface Context {
   nodeMap: Map<string, StateNode>;
   errorMode: "strict" | "warnings-only";
   messages: Message[];
+  activeNodes: Set<StateNode>;
 }
