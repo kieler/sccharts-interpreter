@@ -1,6 +1,6 @@
 import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
 import type { Region, SCChartModel } from "../schema/types.js";
-import { createFakeRootRegion, emptyContext } from "./util.js";
+import { createFakeRootRegion, emptyContext } from "./utils.js";
 
 function constructRegion(region: Region, context: Context): StateGraph {
   let graph: StateGraph = {

@@ -1,9 +1,9 @@
-import { Severity } from "./types.js";
-import { raise } from "./errors.js";
+import { Severity, TickResult } from "./types.js";
+import { clearMessages, raise } from "./errors.js";
 import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
-import { assignInputVariables } from "./util.js";
+import { assignInputVariables } from "./utils.js";
 
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
@@ -125,8 +125,14 @@ function processNode(node: StateNode, context: Context): void {
   }
 }
 
-export function tick(context: Context, inputs: any): void {
-  if (!context.graph.activeNode) return;
+export function tick(context: Context, inputs: any): TickResult {
+  if (!context.graph.activeNode)
+    return {
+      terminated: false,
+      variables: {},
+      messages: [],
+    };
+
   assignInputVariables(context, inputs);
 
   processNode(context.graph.activeNode, context);
@@ -141,6 +147,15 @@ export function tick(context: Context, inputs: any): void {
     }
   });
 
-  console.log(context.variables);
-  console.log();
+  // console.log(context.variables);
+  // console.log();
+
+  const messages = context.messages;
+  clearMessages();
+  context.messages = [];
+  return {
+    terminated: context.graph.terminated,
+    variables: Object.fromEntries(context.variables),
+    messages,
+  };
 }

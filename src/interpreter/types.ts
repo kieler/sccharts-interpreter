@@ -52,3 +52,9 @@ export interface Context {
   messages: Message[];
   activeNodes: Set<StateNode>;
 }
+
+export interface TickResult {
+  terminated: boolean;
+  variables: Record<string, unknown>;
+  messages: Message[];
+}

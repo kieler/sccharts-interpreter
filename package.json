@@ -8,10 +8,9 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"start": "",
+		"start": "node dist/server.js",
 		"core": "node dist/core.js",
 		"simulation": "node dist/simulation.js",
-		"webui": "node dist/webui.js",
 		"compiler-server": "node dist/compiler-server.js",
 		"web-dev": "vite --port 5173",
 		"web-build": "vite build",
