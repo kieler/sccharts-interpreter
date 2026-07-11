@@ -92,7 +92,6 @@ function processNode(node: StateNode, context: Context): void {
     return;
   }
 
-  console.log("Processing Node: ", node.id);
   context.activeNodes.add(node);
 
   for (const edge of node.strongEdges) {
@@ -156,6 +155,6 @@ export function tick(context: Context, inputs: any): TickResult {
   return {
     terminated: context.graph.terminated,
     variables: Object.fromEntries(context.variables),
-    messages,
+    messages: messages,
   };
 }

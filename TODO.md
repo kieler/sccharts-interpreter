@@ -51,4 +51,4 @@ for the PoC, these should probably be left out unless it is easy.
 ### webui
 I already want to create a basic web ui prototype to see what it could look like in the future, that I can get started on improving it an gathering feed back. For now we upload sctx or json and they get iterpreted and we have an interactive simulation on the webpage.
 
-## later
+## v1

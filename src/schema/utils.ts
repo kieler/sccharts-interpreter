@@ -1,5 +1,5 @@
 import { Ajv } from "ajv";
-import sctxSchema from "../../sctx_schema.json" with { type: "json" };
+import sctxSchema from "./json-schema.json" with { type: "json" };
 import type { SCChartModel, State, Variable } from "./types.js";
 
 const ajv = new Ajv({ strict: false, validateSchema: false });

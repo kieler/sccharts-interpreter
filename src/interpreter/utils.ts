@@ -1,5 +1,7 @@
+import { findInitalState, validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
-import { Context, Message, Severity, StateNode } from "./types.js";
+import { Context, StateNode } from "./types.js";
+import { constructStateGraph } from "./constructor.js";
 
 export function isSuper(stateNode: StateNode): boolean {
   return stateNode.subgraphs !== undefined;
@@ -94,4 +96,19 @@ export function assignInputVariables(context: Context, inputs: any): void {
       }
     }
   }
+}
+
+export function setupContext(model: SCChartModel, wonly: boolean): Context {
+  const valid = validateSCChart(model);
+  if (!valid) throw new Error("Invalid SCChart Model JSON");
+
+  const chartModel = model as SCChartModel;
+
+  if (!findInitalState(chartModel)) throw new Error("No inital state in model");
+
+  const context = constructStateGraph(chartModel);
+  context.graph.activeNode = context.graph.initalNode;
+  context.errorMode = wonly ? "warnings-only" : "strict";
+
+  return context;
 }

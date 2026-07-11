@@ -1,21 +1,19 @@
 {
 	"name": "sccharts-interpreter",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Interpreter for the synchronous language SCChart",
 	"type": "module",
 	"bin": {
 		"sccharts-interpreter": "./bin/sccharts-interpreter"
 	},
 	"scripts": {
-		"build": "tsc",
-		"start": "node dist/server.js",
-		"core": "node dist/core.js",
-		"simulation": "node dist/simulation.js",
+		"build": "tsc && vite build",
+		"start": "node dist/web_server.js",
+		"cli": "node dist/cli.js",
 		"compiler-server": "node dist/compiler-server.js",
 		"web-dev": "vite --port 5173",
 		"web-build": "vite build",
-		"all": "concurrently \"npm run core\" \"npm run webui\" \"npm run compiler-server\"",
-		"test": "cd testing && uv run run_tests.py"
+		"test": "concurrently -k \"node dist/test_server.js >/dev/null 2>&1\" \"wait-on http://localhost:19339/ping && cd testing && uv run run_tests.py\""
 	},
 	"dependencies": {
 		"@types/cors": "^2.8.19",

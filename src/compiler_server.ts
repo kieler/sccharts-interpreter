@@ -1,3 +1,5 @@
+// TODO: fix for new version
+
 import cors from "cors";
 import express from "express";
 import { convertSCTX } from "./api/kico.js";
@@ -14,17 +16,17 @@ compiler.get("/health", (_req, res) => {
 // Compile endpoint - receives base64 sctx file and returns JSON model
 compiler.post("/api/compile", async (req, res) => {
   const { sctx_base64, filename } = req.body;
-  
+
   if (!sctx_base64 || typeof sctx_base64 !== "string") {
     return res.status(400).json({ message: "Missing 'sctx_base64' field" });
   }
-  
+
   const result = await convertSCTX(sctx_base64, filename || "unknown.sctx");
-  
+
   if (result.type === "error") {
     return res.status(500).json({ type: "error", message: result.message });
   }
-  
+
   return res.json({ type: "json", data: result.data });
 });
 
