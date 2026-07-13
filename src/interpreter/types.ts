@@ -41,6 +41,7 @@ export interface StateGraph {
 }
 
 export interface Context {
+  label: string;
   model: SCChartModel;
   graph: StateGraph;
   variables: Map<string, unknown>;

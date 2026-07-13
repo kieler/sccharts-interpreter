@@ -146,9 +146,6 @@ export function tick(context: Context, inputs: any): TickResult {
     }
   });
 
-  // console.log(context.variables);
-  // console.log();
-
   const messages = context.messages;
   clearMessages();
   context.messages = [];

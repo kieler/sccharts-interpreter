@@ -13,7 +13,8 @@
 		"compiler-server": "node dist/compiler-server.js",
 		"web-dev": "vite --port 5173",
 		"web-build": "vite build",
-		"test": "concurrently -k \"node dist/test_server.js >/dev/null 2>&1\" \"wait-on http://localhost:19339/ping && cd testing && uv run run_tests.py\""
+		"api": "node dist/api_server.js",
+		"test": "concurrently -k \"node dist/api_server.js >/dev/null 2>&1\" \"wait-on http://localhost:19339/ping && cd testing && uv run run_tests.py\""
 	},
 	"dependencies": {
 		"@types/cors": "^2.8.19",

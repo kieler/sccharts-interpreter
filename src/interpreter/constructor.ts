@@ -136,6 +136,8 @@ export function constructStateGraph(model: SCChartModel): Context {
   // Go over all States once and add them and the transitions to the graph
   context.graph = constructRegion(rootRegion, context);
 
+  if (context.model[0].label) context.label = context.model[0].label;
+
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
 

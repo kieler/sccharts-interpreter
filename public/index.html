@@ -4,149 +4,87 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SCChart Interpreter</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div id="top-bar">
-      <h1>SCChart Interpreter</h1>
-      <div id="connection-status" class="status checking">
-        Ready — JSON models load locally
-      </div>
-      <button id="upload-json-btn" style="display: none">Upload JSON</button>
-      <button id="show-editor-btn" style="display: none">
-        ⊕ Show Text Editor
-      </button>
-      <input
-        type="file"
-        id="json-file-input"
-        accept=".json"
-        style="display: none"
-      />
-      <input
-        type="file"
-        id="sctx-file-input"
-        accept=".sctx"
-        style="display: none"
-      />
+    <div id="header">
+      <h1>SCChart Interpreter v1</h1>
+      <label for="json-file" id="load-json-label" class="button"
+        >Load JSON Model</label
+      >
+      <input id="json-file" type="file" accept=".json" style="display: none" />
+
+      <a href="https://github.com/kieler/sccharts-interpreter" id="github-link">
+        <svg
+          data-component="Octicon"
+          aria-hidden="true"
+          focusable="false"
+          class="octicon octicon-mark-github"
+          viewBox="0 0 24 24"
+          width="30"
+          height="30"
+          fill="currentColor"
+          display="inline-block"
+          overflow="visible"
+          style="vertical-align: text-bottom"
+        >
+          <path
+            d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"
+          ></path>
+        </svg>
+      </a>
     </div>
 
     <div class="main-area">
-      <div id="model-panel" class="panel">
-        <button id="upload-sctx-btn" style="display: none; color: #ff6b6b">
-          Upload SCTX
-        </button>
-        <div class="editor-content">
-          <div id="editor-container">
-            <textarea
-              id="sctx-text-input"
-              class="sctx-input"
-              placeholder="Paste SCCharts model code here..."
-            ></textarea>
-            <div class="btn-row">
-              <button id="compile-model-btn" disabled>
-                Compile &amp; Load
-              </button>
-            </div>
-            <div
-              id="text-compile-status"
-              class="status"
-              style="display: none"
-            ></div>
-          </div>
+      <div id="model-status">
+        <h3 class="panel-header">Controlls</h3>
+        <div id="model-control" class="panel-content control-panel">
+          <h4 id="model-name">No Model loaded yet</h4>
+          <button id="advance-tick" class="control-button button" disabled>
+            Tick
+          </button>
+          <button id="auto-run" class="control-button button" disabled>
+            Auto Run
+          </button>
+          <button id="" class="control-button button" disabled>
+            Placeholder
+          </button>
+          <button id="" class="control-button button" disabled>
+            Placeholder
+          </button>
+          <button id="" class="control-button button" disabled>
+            Placeholder
+          </button>
         </div>
-        <div class="btn-row">
-          <button id="generate-diagram-btn" disabled>Generate Diagram</button>
-        </div>
-        <div
-          id="diagram-generate-status"
-          class="status"
-          style="display: none"
-        ></div>
-        <div
-          id="text-compile-status"
-          class="status"
-          style="display: none"
-        ></div>
+
+        <h3 class="panel-header">Inputs</h3>
+        <div id="model-input" class="panel-content inputs-panel"></div>
+        <textarea
+          id="input-json"
+          class="input-textarea"
+          placeholder="Inputs as JSON"
+        ></textarea>
+
+        <h3 class="panel-header">Other Variables</h3>
+        <div id="model-variables" class="panel-content"></div>
       </div>
-
-      <div class="right-panel">
-        <div id="diagram-container" style="display: none">
-          <label>Diagram</label>
-          <div id="diagram-wrapper" style="position: relative; width: 100%">
-            <img id="diagram-image" />
-            <div id="diagram-loading-overlay" class="diagram-loading-indicator">
-              <div class="diagram-spinner"></div>
-              <span class="diagram-loading-text">Generating...</span>
-            </div>
-          </div>
-        </div>
-        <div id="tick-section">
-          <div id="variables-section" style="display: none">
-            <label>Variables</label>
-            <div id="variables-list"></div>
-          </div>
-          <details id="raw-input-section" style="display: none">
-            <summary style="font-size: 0.8rem; color: #aaa; cursor: pointer">
-              Show raw input editor
-            </summary>
-            <label for="tick-input">Input (JSON or array)</label>
-            <textarea
-              class="small"
-              id="tick-input"
-              placeholder='{"A": true}'
-            ></textarea>
-          </details>
-          <div class="btn-row">
-            <button id="advance-tick-btn" disabled>Advance Tick</button>
-            <button id="auto-run-btn" disabled>Auto Run</button>
-            <label for="auto-interval" style="font-size: 0.8rem; color: #aaa"
-              >Interval:</label
-            >
-            <input
-              type="number"
-              id="auto-interval"
-              value="300"
-              min="50"
-              max="10000"
-              step="50"
-              style="
-                width: 70px;
-                padding: 0.4rem;
-                background: #0a0a1a;
-                color: #e0e0e0;
-                border: 1px solid #334;
-                border-radius: 4px;
-                font-family: inherit;
-                font-size: 0.8rem;
-              "
-            />
-            <span style="font-size: 0.8rem; color: #aaa">ms</span>
-            <button id="reset-btn">Reset Model</button>
-            <button id="clear-output-btn">Clear Output</button>
-          </div>
-        </div>
-
-        <div id="output-section">
-          <label>Output Log</label>
-          <pre id="tick-output">No output yet.</pre>
-        </div>
+      <div id="model-output">
+        <h3 class="panel-header">Outputs</h3>
+        <div id="model-output-list" class="panel-content"></div>
+        <textarea
+          id="output-history"
+          class="output-textarea"
+          readonly
+          placeholder="Output history will appear here."
+          disabled
+        ></textarea>
       </div>
     </div>
 
-    <details id="logs-section">
-      <summary
-        style="
-          font-family: ui-monospace, monospace;
-          font-size: 0.85rem;
-          color: #80cbc4;
-          cursor: pointer;
-        "
-      >
-        Logs
-      </summary>
-      <pre id="console-logs"></pre>
-    </details>
-
-    <script type="module" src="./app.ts"></script>
+    <div id="log-div">
+      <button id="toggle-log">Show Log</button>
+      <pre id="log" style="display: none"></pre>
+    </div>
+    <script type="module" src="/app.ts"></script>
   </body>
 </html>

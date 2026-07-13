@@ -58,6 +58,7 @@ export function createFakeRootRegion(model: SCChartModel): Region {
 export function emptyContext(model: SCChartModel): Context {
   return {
     model: model,
+    label: "",
     graph: {
       edges: [],
       nodes: [],
