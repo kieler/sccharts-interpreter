@@ -1,0 +1,21 @@
+scchart HistoryTransition {
+    input bool A, R1, R2
+    output bool O
+
+    initial state init {
+        entry do O = false
+        
+        initial state wait {
+        initial state wA
+        if A go to dA
+
+        final state dA}
+    do O = true join to done
+    state done
+    }
+    if R1 go to A
+
+    state A
+    if R2 go to init history
+
+}

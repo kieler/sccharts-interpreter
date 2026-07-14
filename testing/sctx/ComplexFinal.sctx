@@ -1,0 +1,14 @@
+scchart ComplexFinal{
+    input bool A, B
+    output int C=0
+    initial state Init {
+        initial state wB
+        if B go to dB
+        final state dB {
+            during do C++
+        } 
+    }
+    if A  join to B
+
+    final state B
+}

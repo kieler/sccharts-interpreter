@@ -1,8 +1,5 @@
 # todo
-## proof of concept
-(PoC)
-
-### must
+## must
 - [x] Transitions
 - [x] Hierarchy
 - [x] Weak and Strong Abort
@@ -18,18 +15,19 @@
 - [x] Final + Initial States
 	- I think they are done?
 
-### mabybe
+## mabybe
 for the PoC, these should probably be left out unless it is easy.
 
-- [ ] Complex Final States
+- [/] Complex Final States
+	- There is something working, the question is just if it is correct. I need to see some examples, because all except for actions can't be scheduled.
 - [x] Entrance, Exit, During Actions
 - [ ] Reference SCCharts
-- [ ] History Transitions
-	- Only deep?
+- [ ] Deep History Transitions
+	- The JSON exportter needs support for them first
 - [ ] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
 
-### other
+## other
 - [x] testing
 	- [x] framework
 	- [x] comparrison with hardcoded expected outputs
@@ -47,8 +45,5 @@ for the PoC, these should probably be left out unless it is easy.
 		- [ ] ...
 	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
-
-### webui
-I already want to create a basic web ui prototype to see what it could look like in the future, that I can get started on improving it an gathering feed back. For now we upload sctx or json and they get iterpreted and we have an interactive simulation on the webpage.
 
 ## v1

@@ -21,6 +21,17 @@ function addRegionsToRuntime(
   }
 }
 
+function resetNode(node: StateNode, context: Context) {
+  node.subgraphs?.forEach((graph) => {
+    graph.activeNode = undefined;
+    graph.terminated = false;
+
+    for (const subNode of graph.nodes) {
+      resetNode(subNode, context);
+    }
+  });
+}
+
 function walkEdge(edge: TransitionEdge, context: Context): boolean {
   // Returns true if edge was walked.
 
@@ -41,12 +52,9 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
     if (!subGraphDone) return false;
   }
 
-  // Clear the current activeNode incase we come back
-  // History Transotions?
-  edge.from.subgraphs?.forEach((graph) => {
-    graph.activeNode = undefined;
-    graph.terminated = false;
-  });
+  // Clear the history of the state upon entry and all subgraphs
+  // TODO: For history transitions, skip this. This has to wait until the JSON exporter supports history transitions
+  resetNode(edge.to, context);
 
   for (const action of edge.from.exitActions) {
     if (!action.guard || parseGuard(action.guard, context.variables)) {
@@ -57,6 +65,7 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
   if (edge.transition.action)
     parseAction(edge.transition.action, context.variables);
 
+  if (!edge.to.state.isFinal) edge.to.graph.terminated = false;
   edge.to.graph.activeNode = edge.to;
   context.activeNodes.delete(edge.from);
 
@@ -87,10 +96,11 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
 
 function processNode(node: StateNode, context: Context): void {
   if (node.state.isFinal) node.graph.terminated = true;
-  if (node.graph.terminated) {
-    context.activeNodes.delete(node);
-    return;
-  }
+
+  // if (node.graph.terminated) {
+  //   context.activeNodes.delete(node);
+  //   return;
+  // }
 
   context.activeNodes.add(node);
 
