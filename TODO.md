@@ -23,7 +23,7 @@ for the PoC, these should probably be left out unless it is easy.
 - [x] Entrance, Exit, During Actions
 - [ ] Reference SCCharts
 - [ ] Deep History Transitions
-	- The JSON exportter needs support for them first
+	- The JSON exporter needs support for them first
 - [ ] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
 
