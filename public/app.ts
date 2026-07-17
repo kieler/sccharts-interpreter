@@ -36,6 +36,8 @@ import { setupContext, tick } from "web-interpreter";
 import type { Context, TickResult } from "web-interpreter";
 
 const fileInput = document.getElementById("json-file") as HTMLInputElement;
+const sctxTabButton = document.getElementById("sctx-tab") as HTMLButtonElement;
+
 const toggleBtn = document.getElementById("toggle-log") as HTMLButtonElement;
 const variablesPanel = document.getElementById(
   "model-variables",
@@ -56,6 +58,35 @@ const modelNameEl = document.getElementById("model-name") as HTMLHeadingElement;
 let logVisible = false;
 let tickCount = 0;
 let context: Context | unknown;
+let compilerAvailable: boolean = await checkCompilerAvailability();
+
+async function checkCompilerAvailability() {
+  log("[Compiler] Checking connection...");
+  try {
+    const resp = await fetch("http://localhost:8080/ping", {
+      signal: AbortSignal.timeout(5000),
+    });
+    const data = await resp.json();
+    if (data.message === "pong") {
+      log("[Compiler] connected");
+      return true;
+    }
+    throw new Error("not connected: " + JSON.stringify(data));
+  } catch (err: any) {
+    log("[Compiler] Connection failed");
+    return false;
+  }
+}
+
+if (compilerAvailable) {
+  sctxTabButton.disabled = false;
+} else {
+  sctxTabButton.disabled = true;
+}
+
+sctxTabButton.addEventListener("click", () => {
+  if (!compilerAvailable) return;
+});
 
 function createVarCard(
   name: string,

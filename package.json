@@ -10,7 +10,7 @@
 		"build": "tsc",
 		"start": "node dist/web_server.js",
 		"cli": "node dist/cli.js",
-		"compiler-server": "node dist/compiler-server.js",
+		"compiler-server": "node dist/compiler_server.js",
 		"web-dev": "vite --port 5173",
 		"web-build": "vite build",
 		"api": "node dist/api_server.js",

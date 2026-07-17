@@ -171,7 +171,7 @@ body {
   flex: 1;
 }
 
-#load-json-label {
+.load-file {
   float: right;
   padding: 8px 20px;
 }
@@ -196,11 +196,19 @@ body {
   border-radius: 4px;
   cursor: pointer;
   background: var(--button-color);
+  margin: 0 5px;
 }
 
 .button:disabled {
   background-color: var(--button-disabled-color);
   text-shadow: none;
+  cursor: not-allowed;
+}
+
+.disabled {
+  background: var(--button-disabled-color);
+  text-shadow: none;
+  cursor: not-allowed;
 }
 
 #github-link {
@@ -208,4 +216,13 @@ body {
   color: white;
   margin: 5px;
   margin-left: 35px;
+}
+
+#version-hash {
+  font-size: 0.4em;
+  font-weight: 100;
+}
+
+#sctx-tab {
+  padding: 0 50px;
 }
