@@ -33,7 +33,7 @@ console.error = (...args: unknown[]) => {
 log("[System] Ready.");
 
 import { setupContext, tick } from "web-interpreter";
-import type { Context, TickResult } from "web-interpreter";
+import type { Context, TickResult, SCChartModel } from "web-interpreter";
 
 const fileInput = document.getElementById("json-file") as HTMLInputElement;
 const sctxTabButton = document.getElementById("sctx-tab") as HTMLButtonElement;
@@ -54,6 +54,24 @@ const inputHistory = document.getElementById(
   "input-json",
 ) as HTMLTextAreaElement;
 const modelNameEl = document.getElementById("model-name") as HTMLHeadingElement;
+
+const sctxPanel = document.getElementById("model-sctx") as HTMLDivElement;
+
+const sctxUploadButton = document.getElementById(
+  "sctx-file",
+) as HTMLButtonElement;
+const sctxTextInput = document.getElementById(
+  "scchart-textarea",
+) as HTMLTextAreaElement;
+const compileButton = document.getElementById(
+  "compile-button",
+) as HTMLButtonElement;
+const diagramButton = document.getElementById(
+  "diagram-button",
+) as HTMLButtonElement;
+const diagramImage = document.getElementById(
+  "diagram-image",
+) as HTMLImageElement;
 
 let logVisible = false;
 let tickCount = 0;
@@ -85,7 +103,8 @@ if (compilerAvailable) {
 }
 
 sctxTabButton.addEventListener("click", () => {
-  if (!compilerAvailable) return;
+  sctxPanel.style.display =
+    sctxPanel.style.display === "none" ? "flex" : "none";
 });
 
 function createVarCard(
@@ -202,18 +221,7 @@ fileInput.addEventListener("change", (e: Event) => {
   reader.onload = () => {
     try {
       const model = JSON.parse(reader.result as string);
-      if (!Array.isArray(model)) throw new Error("Expected array");
-      log("[Init] Setting up context...");
-
-      context = setupContext(model, false) as Context;
-
-      log(`[OK] Model "${context.label}" loaded successfully.`);
-      modelNameEl.textContent = `Model: ${context.label}`;
-
-      renderModel(context as Context);
-      logVariables(Object.fromEntries(context.variables), 0);
-
-      tickButton.disabled = false;
+      loadModel(model);
     } catch (err) {
       log(`${(err as Error).message}`, "error");
       console.error(err);
@@ -221,6 +229,129 @@ fileInput.addEventListener("change", (e: Event) => {
   };
   outputHistory.textContent = "";
   reader.readAsText(file);
+});
+
+function loadModel(model: SCChartModel) {
+  outputHistory.textContent = "";
+
+  if (!Array.isArray(model)) throw new Error("Expected array");
+  log("[Init] Setting up context...");
+
+  context = setupContext(model, false) as Context;
+
+  log(`[OK] Model "${context.label}" loaded successfully.`);
+  modelNameEl.textContent = `Model: ${context.label}`;
+
+  renderModel(context as Context);
+  logVariables(Object.fromEntries(context.variables), 0);
+
+  tickButton.disabled = false;
+}
+
+sctxUploadButton.addEventListener("change", (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  log(`[File] Loading: ${file.name}`);
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      sctxTextInput.value = reader.result as string;
+      log(`[OK] File "${file.name}" loaded successfully.`);
+    } catch (err) {
+      log(`${(err as Error).message}`, "error");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+});
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+compileButton.addEventListener("click", async () => {
+  log("[Compiler] Compiling model...");
+  const text = sctxTextInput.value;
+
+  try {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
+    const base64 = arrayBufferToBase64(bytes.buffer);
+
+    const resp = await fetch("http://localhost:8080/compile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sctx_base64: base64, filename: "model.sctx" }),
+    });
+
+    if (!resp.ok) {
+      log(`[Compiler] ${await resp.text()}`, "error");
+      return false;
+    }
+
+    const result = (await resp.json()) as {
+      type: string;
+      data?: unknown;
+      message?: string;
+    };
+
+    if (result.type === "error") {
+      log(`[Compiler] ${result.message}`, "error");
+      return false;
+    }
+
+    const model = result.data;
+    loadModel(model);
+  } catch (err: any) {
+    log(`[Compiler] Compilation failed: ${(err as Error).message}`, "error");
+    return false;
+  }
+});
+
+diagramButton.addEventListener("click", async () => {
+  log("[Compiler] Creating Diagram...");
+  const text = sctxTextInput.value;
+
+  try {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
+    const base64 = arrayBufferToBase64(bytes.buffer);
+
+    const resp = await fetch("http://localhost:8080/diagram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sctx_base64: base64, filename: "model.sctx" }),
+    });
+
+    if (!resp.ok) {
+      log(`[Compiler] ${await resp.text()}`, "error");
+      return false;
+    }
+
+    const result = (await resp.json()) as {
+      type: string;
+      data?: unknown;
+      message?: string;
+    };
+
+    if (result.type === "error") {
+      log(`[Compiler] ${result.message}`, "error");
+      return false;
+    }
+
+    diagramImage.src = `data:image/png;base64,${result.data}`;
+  } catch (err: any) {
+    log(`[Compiler] Compilation failed: ${(err as Error).message}`, "error");
+    return false;
+  }
 });
 
 function getInputJson(): string {

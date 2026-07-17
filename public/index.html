@@ -14,11 +14,6 @@
         SCChart Interpreter v1 <span id="version-hash">(__GIT_HASH__)</span>
       </h1>
 
-      <!--<label for="sctx-file" id="load-sctx-label" class="button load-file"
-        >Use SCTX File</label
-      >
-      <input id="sctx-file" type="file" accept=".sctx" style="display: none" />-->
-
       <button id="sctx-tab" class="button" disabled>Use SCTX</button>
 
       <label for="json-file" id="load-json-label" class="button load-file"
@@ -48,6 +43,39 @@
     </div>
 
     <div class="main-area">
+      <div id="model-sctx" style="display: none">
+        <h3 class="panel-header">SCChart Model</h3>
+        <div id="sctx-text-input" class="panel-content"></div>
+        <div id="model-control" class="panel-content control-panel">
+          <label for="sctx-file" id="load-sctx-label" class="button load-file">
+            Upload SCTX
+          </label>
+          <input
+            id="sctx-file"
+            type="file"
+            accept=".sctx"
+            style="display: none"
+          />
+
+          <button id="compile-button" class="control-button button">
+            Compile
+          </button>
+          <button id="diagram-button" class="control-button button">
+            Generate Diagram
+          </button>
+        </div>
+        <textarea
+          id="scchart-textarea"
+          class="input-textarea"
+          placeholder="Your SCChart Model"
+        ></textarea>
+
+        <h3 class="panel-header">Diagram</h3>
+        <div id="sctx-diagram" class="panel-content"></div>
+        <div id="diagram-div">
+          <img id="diagram-image" src="" alt="" />
+        </div>
+      </div>
       <div id="model-status">
         <h3 class="panel-header">Controlls</h3>
         <div id="model-control" class="panel-content control-panel">

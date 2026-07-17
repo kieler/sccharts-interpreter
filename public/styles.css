@@ -32,18 +32,16 @@ body {
 }
 
 #model-status,
+#model-sctx,
 #model-output {
   display: flex;
   flex-direction: column;
   height: 100%;
-}
-
-#model-status {
-  width: 50%;
-}
-
-#model-output {
   flex: 1;
+}
+
+#model-sctx {
+  display: none;
 }
 
 .panel-header {
@@ -171,11 +169,6 @@ body {
   flex: 1;
 }
 
-.load-file {
-  float: right;
-  padding: 8px 20px;
-}
-
 .control-button {
   flex: 1 1 0;
   min-width: 100px;
@@ -197,6 +190,15 @@ body {
   cursor: pointer;
   background: var(--button-color);
   margin: 0 5px;
+}
+
+.load-file {
+  font-size: 12pt;
+  margin: 0 5px;
+  min-height: 2em;
+  padding: 0 25px;
+  align-items: center;
+  display: flex;
 }
 
 .button:disabled {
@@ -224,5 +226,9 @@ body {
 }
 
 #sctx-tab {
-  padding: 0 50px;
+  padding: 0 25px;
+}
+
+textarea {
+  tab-size: 2;
 }

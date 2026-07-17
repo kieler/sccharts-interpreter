@@ -1,5 +1,3 @@
-// TODO: fix for new version
-
 import cors from "cors";
 import express from "express";
 import { convertSCTX, generateDiagram } from "./api/kico.js";
