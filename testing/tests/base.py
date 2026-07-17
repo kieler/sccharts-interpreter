@@ -1,4 +1,5 @@
 import json
+import random
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -74,7 +75,9 @@ class TestRunner:
         self.name = name
         self.model = load_model(name)
 
-    def setup(self, wonly=False) -> requests.Response:
+    def setup(self, wonly=False, seed: int = 42) -> requests.Response:
+        self.random = random.Random(seed)
+
         resp = requests.post(
             f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
         )
@@ -82,6 +85,52 @@ class TestRunner:
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
         )
         return resp
+
+    def add_random_inputs(
+        self,
+        inputs: list[dict[str, Any]],
+        type: str,
+        name: str,
+        n: int,
+        number_range: tuple[int, int] | tuple[float, float] | None = None,
+    ) -> list[dict[str, Any]]:
+        if len(inputs) < n:
+            inputs.extend([{} for _ in range(n - len(inputs))])
+        temp = self.__random_input(type, name, n, number_range=number_range)
+        for i in range(n):
+            inputs[i][name] = temp[i][name]
+        return inputs
+
+    def __random_input(
+        self,
+        type: str,
+        name: str,
+        n: int,
+        number_range: tuple[int, int] | tuple[float, float] | None = None,
+    ) -> list[dict[str, Any]]:
+        match type:
+            case "int":
+                if number_range is None:
+                    raise ValueError("number_range must be specified for int type")
+                return [
+                    {
+                        name: self.random.randint(
+                            int(number_range[0]), int(number_range[1])
+                        )
+                    }
+                    for _ in range(n)
+                ]
+            case "float":
+                if number_range is None:
+                    raise ValueError("number_range must be specified for float type")
+                return [
+                    {name: self.random.uniform(number_range[0], number_range[1])}
+                    for _ in range(n)
+                ]
+            case "bool":
+                return [{name: self.random.choice([True, False])} for _ in range(n)]
+            case _:
+                return []
 
     def run(self, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         output = []
@@ -123,7 +172,7 @@ def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) 
                 assert isinstance(a[k], dict), f"Step {i}: {k} is not a dict"
                 _assert_subset_dict(a[k], v, f"step {i}.{k}")
             else:
-                assert a[k] == v, f"Step {i}.{k}: expected {v!r}, got {a[k]!r}"
+                assert a[k] == v, f"Step {i}.{k}: expected {v}, got {a[k]}"
 
 
 def _assert_subset_dict(
@@ -136,7 +185,7 @@ def _assert_subset_dict(
             assert isinstance(actual[k], dict), f"{full_key} is not a dict"
             _assert_subset_dict(actual[k], v, full_key)
         else:
-            assert actual[k] == v, f"{full_key}: expected {v!r}, got {actual[k]!r}"
+            assert actual[k] == v, f"{full_key}: expected {v}, got {actual[k]}"
 
 
 def generate_expected(

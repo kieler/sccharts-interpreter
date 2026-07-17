@@ -1,0 +1,6 @@
+scchart SimpleArray {
+	output int O[2]
+
+	initial state init
+	do O[0]++; O[1]-- go to init
+}

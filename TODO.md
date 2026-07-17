@@ -45,5 +45,8 @@ for the PoC, these should probably be left out unless it is easy.
 		- [ ] ...
 	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
-
-## v1
+## missing
+- [ ] varible types
+	- [ ] arrays
+		- They need to be implmented in the json converter first
+	- [ ] enums

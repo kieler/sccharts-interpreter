@@ -1,0 +1,44 @@
+scchart ComplexFinalState2 {
+	input bool T1
+	input bool T2
+	input bool T3
+	output bool A1 = false
+	output int R1S = 0
+	output int R2S = 0
+
+	region " " {
+		initial state M {
+			region "Region 1" {
+				initial state S1 {
+					entry do R1S = 1
+				}
+				if T1 go to S2
+
+				final state S2 {
+					entry do R1S = 2
+				}
+			}
+
+			region "Region 2" {
+				initial state S3 {
+					entry do R2S = 3
+				}
+				if T2 go to S4
+
+				final state S4 {
+					entry do R2S = 4
+				}
+				if T2 go to S3
+				if T3 go to S5
+
+				final state S5 {
+					entry do R2S = 5
+				}
+				if T3 go to S3
+			}
+		}
+		do A1 = true join to F
+
+		final state F
+	}
+}

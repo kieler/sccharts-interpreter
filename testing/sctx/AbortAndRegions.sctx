@@ -1,0 +1,44 @@
+scchart AbortAndRegions {
+	input int I
+	output int O
+
+	initial state M {
+		region A {
+			initial state A1
+			go to A2
+
+			state A2
+			immediate go to A3
+
+			final state A3
+		}
+
+		region B {
+			initial state B1
+			immediate go to B2
+
+			state B2
+			go to B3
+
+			final state B3
+		}
+	}
+	if I == 1 do O = 1 abort to S1
+	immediate if I == 2 do O = 2 abort to S2
+	if I == 3 do O = 3 go to W1
+	immediate if I == 4 do O = 4 go to W2
+	if I == 5 do O = 5 join to T1
+	immediate if I == 6 do O = 6 join to T2
+
+	state S1
+
+	state S2
+
+	state W1
+
+	state W2
+
+	state T1
+
+	state T2
+}

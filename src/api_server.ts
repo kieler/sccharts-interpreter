@@ -66,6 +66,10 @@ core.get("/ping", (_, res) => {
   return res.status(200).json({ message: "pong" });
 });
 
+core.get("/shutdown", (_, res) => {
+  process.exit(0);
+});
+
 const PORT = process.env.PORT ?? 19339;
 
 const server = core.listen(PORT, () => {

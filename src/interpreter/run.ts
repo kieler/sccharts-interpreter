@@ -8,7 +8,6 @@ import { assignInputVariables } from "./utils.js";
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
   context: Context,
-  currentIsImmediate: boolean,
 ) {
   if (!graphs) return;
 
@@ -17,7 +16,7 @@ function addRegionsToRuntime(
     if (!graph.initalNode) return;
 
     graph.activeNode = graph.initalNode;
-    if (currentIsImmediate) processNode(graph.activeNode, context);
+    processNode(graph.activeNode, context, true);
   }
 }
 
@@ -32,8 +31,13 @@ function resetNode(node: StateNode, context: Context) {
   });
 }
 
-function walkEdge(edge: TransitionEdge, context: Context): boolean {
+function walkEdge(
+  edge: TransitionEdge,
+  context: Context,
+  immediateOnly: boolean,
+): boolean {
   // Returns true if edge was walked.
+  if (immediateOnly && !edge.transition.isImmediate) return false;
 
   const guardPass =
     !edge.transition.guard ||
@@ -73,48 +77,52 @@ function walkEdge(edge: TransitionEdge, context: Context): boolean {
     edge.to.graph.terminated = true;
   } else {
     context.activeNodes.add(edge.to);
-
-    addRegionsToRuntime(
-      edge.to.subgraphs,
-      context,
-      edge.transition.isImmediate,
-    );
   }
 
-  for (const action of edge.to.entryActions) {
-    if (!action.guard || parseGuard(action.guard, context.variables)) {
-      parseAction(action.action, context.variables);
-    }
-  }
+  processNode(edge.to, context, true);
 
-  if (edge.transition.isImmediate) processNode(edge.to, context);
-  // Also implicitly consider all edges from a connector to be immediate for now.
-  else if (edge.to.state.isConnector) processNode(edge.to, context);
+  // Implicitly consider all edges from a connector to be immediate for now.
+  if (edge.to.state.isConnector) processNode(edge.to, context);
 
   return true;
 }
 
-function processNode(node: StateNode, context: Context): void {
+function processNode(
+  node: StateNode,
+  context: Context,
+  entering: boolean = false,
+): void {
+  // If entering only do immediate outgoing transitions and entering actions
+
   if (node.state.isFinal) node.graph.terminated = true;
-
-  // if (node.graph.terminated) {
-  //   context.activeNodes.delete(node);
-  //   return;
-  // }
-
   context.activeNodes.add(node);
 
-  for (const edge of node.strongEdges) {
-    // If the guard passes for a strong abort, the inner behaviour is not executed
-    if (walkEdge(edge, context)) return;
-  }
-  for (const action of node.duringActions) {
-    if (!action.guard || parseGuard(action.guard, context.variables)) {
-      parseAction(action.action, context.variables);
+  if (entering) {
+    for (const action of node.entryActions) {
+      if (!action.guard || parseGuard(action.guard, context.variables)) {
+        parseAction(action.action, context.variables);
+      }
     }
   }
 
-  if (node.subgraphs) {
+  for (const edge of node.strongEdges) {
+    // If the guard passes for a strong abort, the inner behaviour is not executed
+    if (walkEdge(edge, context, entering)) return;
+  }
+
+  if (!entering) {
+    for (const action of node.duringActions) {
+      if (!action.guard || parseGuard(action.guard, context.variables)) {
+        parseAction(action.action, context.variables);
+      }
+    }
+  }
+
+  if (entering) {
+    addRegionsToRuntime(node.subgraphs, context);
+  }
+
+  if (node.subgraphs && !entering) {
     for (const subgraph of node.subgraphs) {
       if (subgraph.activeNode) {
         processNode(subgraph.activeNode, context);
@@ -126,11 +134,11 @@ function processNode(node: StateNode, context: Context): void {
   }
 
   for (const edge of node.weakEdges) {
-    if (walkEdge(edge, context)) return;
+    if (walkEdge(edge, context, entering)) return;
   }
 
   for (const edge of node.joinEdges) {
-    if (walkEdge(edge, context)) return;
+    if (walkEdge(edge, context, entering)) return;
   }
 }
 
