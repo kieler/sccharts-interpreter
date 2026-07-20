@@ -49,7 +49,15 @@ const outputsPanel = document.getElementById(
 const outputHistory = document.getElementById(
   "output-history",
 ) as HTMLTextAreaElement;
+
 const tickButton = document.getElementById("advance-tick") as HTMLButtonElement;
+const autoRunButton = document.getElementById("auto-run") as HTMLButtonElement;
+const loopInputsToggle = document.getElementById(
+  "loop-inputs",
+) as HTMLInputElement;
+const timerSlider = document.getElementById("auto-timer") as HTMLInputElement;
+const resetButton = document.getElementById("reset") as HTMLButtonElement;
+
 const inputHistory = document.getElementById(
   "input-json",
 ) as HTMLTextAreaElement;
@@ -75,7 +83,9 @@ const diagramImage = document.getElementById(
 
 let logVisible = false;
 let tickCount = 0;
+let loopInputs = false;
 let context: Context | unknown;
+let scchartModel: SCChartModel | undefined;
 let compilerAvailable: boolean = await checkCompilerAvailability();
 
 async function checkCompilerAvailability() {
@@ -220,8 +230,8 @@ fileInput.addEventListener("change", (e: Event) => {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const model = JSON.parse(reader.result as string);
-      loadModel(model);
+      scchartModel = JSON.parse(reader.result as string);
+      loadModel(scchartModel);
     } catch (err) {
       log(`${(err as Error).message}`, "error");
       console.error(err);
@@ -246,6 +256,10 @@ function loadModel(model: SCChartModel) {
   logVariables(Object.fromEntries(context.variables), 0);
 
   tickButton.disabled = false;
+  autoRunButton.disabled = false;
+  loopInputsToggle.disabled = false;
+  timerSlider.disabled = false;
+  resetButton.disabled = false;
 }
 
 sctxUploadButton.addEventListener("change", (e: Event) => {
@@ -359,20 +373,76 @@ function getInputJson(): string {
   return inputHistory.value;
 }
 
+function doTick(input: any): TickResult {
+  tickCount += 1;
+
+  const result: TickResult = tick(context, input);
+
+  logVariables(result.variables, tickCount);
+  updateVariables(context);
+  if (result.terminated) {
+    tickButton.disabled = true;
+    autoRunButton.disabled = true;
+    timerSlider.disabled = true;
+    loopInputsToggle.disabled = true;
+    logTermination(tickCount);
+  }
+  return result;
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+autoRunButton.addEventListener("click", async () => {
+  if (context.terminated) return;
+
+  async function loopHelper() {
+    let inputs = JSON.parse(getInputJson());
+    if (!Array.isArray(inputs)) {
+      inputs = [inputs];
+    }
+
+    for (let i = 0; i < inputs.length; i++) {
+      const result = doTick(inputs[i]);
+      if (result.terminated) return;
+      await sleep(Number(timerSlider.value));
+    }
+  }
+
+  do {
+    await loopHelper();
+  } while (loopInputs && !context.terminated);
+});
+
 tickButton.addEventListener("click", () => {
   if (context.terminated) return;
 
-  tickCount += 1;
   try {
-    const inputs = getInputJson();
-    const result: TickResult = tick(context, JSON.parse(inputs));
-
-    logVariables(result.variables, tickCount);
-    updateVariables(context);
-    if (result.terminated) {
-      tickButton.disabled = true;
-      logTermination(tickCount);
+    const inputs = JSON.parse(getInputJson());
+    let input;
+    if (Array.isArray(inputs)) {
+      input = inputs[tickCount % inputs.length];
+    } else {
+      input = inputs;
     }
+
+    doTick(input);
+  } catch (err) {
+    log(`${(err as Error).message}`, "error");
+    console.error(err);
+  }
+});
+
+loopInputsToggle.addEventListener("click", () => {
+  loopInputs = !loopInputs;
+  loopInputsToggle.innerHTML = loopInputs ? "✓ Loop Inputs" : "✖ Loop Inputs";
+});
+
+resetButton.addEventListener("click", () => {
+  tickCount = 0;
+  try {
+    loadModel(scchartModel);
   } catch (err) {
     log(`${(err as Error).message}`, "error");
     console.error(err);

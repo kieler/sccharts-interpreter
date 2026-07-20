@@ -86,14 +86,22 @@
           <button id="auto-run" class="control-button button" disabled>
             Auto Run
           </button>
-          <button id="" class="control-button button" disabled>
-            Placeholder
+          <button id="loop-inputs" class="control-button button" disabled>
+            ✖ Loop Inputs
           </button>
-          <button id="" class="control-button button" disabled>
-            Placeholder
-          </button>
-          <button id="" class="control-button button" disabled>
-            Placeholder
+          <input
+            type="range"
+            id="auto-timer"
+            min="0"
+            max="1000"
+            step="50"
+            value="300"
+            oninput="this.nextElementSibling.value = this.value + ' ms'"
+            disabled
+          />
+          <output id="timer-value">300 ms</output>
+          <button id="reset" class="control-button button" disabled>
+            Reset Model
           </button>
         </div>
 
