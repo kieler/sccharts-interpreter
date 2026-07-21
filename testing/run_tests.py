@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,18 @@ def main() -> None:
         default=["all"],
         help='Test names (e.g. "abo ao im") or "all"',
     )
+    parser.add_argument(
+        "-r",
+        "--reset",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Always recompile the JSON and EXE",
+    )
     args = parser.parse_args()
+
+    if args.reset:
+        os.environ["FORCE_RESET"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 

@@ -4,14 +4,16 @@ scchart HistoryTransition {
 
     initial state init {
         entry do O = false
-        
+
         initial state wait {
         initial state wA
         if A go to dA
 
         final state dA}
-    do O = true join to done
-    state done
+    join to done
+    state done {
+      immediate during do O = true
+    }
     }
     if R1 go to A
 

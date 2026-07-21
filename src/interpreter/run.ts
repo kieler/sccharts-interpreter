@@ -15,7 +15,7 @@ function addRegionsToRuntime(
     if (graph.terminated) return;
     if (!graph.initalNode) return;
 
-    graph.activeNode = graph.initalNode;
+    if (!graph.activeNode) graph.activeNode = graph.initalNode;
     processNode(graph.activeNode, context, true);
   }
 }
@@ -58,7 +58,7 @@ function walkEdge(
 
   // Clear the history of the state upon entry and all subgraphs
   // TODO: For history transitions, skip this. This has to wait until the JSON exporter supports history transitions
-  resetNode(edge.to, context);
+  if (!edge.transition.history) resetNode(edge.to, context);
 
   for (const action of edge.from.exitActions) {
     if (!action.guard || parseGuard(action.guard, context.variables)) {

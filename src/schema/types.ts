@@ -10,6 +10,7 @@ export interface Transition {
   label?: string;
   targetID: string;
   isImmediate: boolean;
+  history: boolean;
   preemption: "strong" | "weak" | "termination";
   guard?: string;
   action?: string;

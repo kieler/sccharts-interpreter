@@ -20,6 +20,7 @@ export function createFakeRootRegion(model: SCChartModel): Region {
         targetID: rootState(model).id,
         isImmediate: false,
         preemption: "weak",
+        history: false,
       },
     ],
     variables: [],
@@ -35,6 +36,7 @@ export function createFakeRootRegion(model: SCChartModel): Region {
       targetID: "fake_final",
       isImmediate: false,
       preemption: "termination",
+      history: false,
     },
   ];
 

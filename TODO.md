@@ -21,9 +21,9 @@ for the PoC, these should probably be left out unless it is easy.
 - [/] Complex Final States
 	- There is something working, the question is just if it is correct. I need to see some examples, because all except for actions can't be scheduled.
 - [x] Entrance, Exit, During Actions
+- [x] Deep History Transitions
+	- ~~The JSON exporter needs support for them first~~
 - [ ] Reference SCCharts
-- [ ] Deep History Transitions
-	- The JSON exporter needs support for them first
 - [ ] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
 

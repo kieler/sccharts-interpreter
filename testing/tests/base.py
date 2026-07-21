@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import subprocess
 from pathlib import Path
@@ -28,7 +29,7 @@ def get_java_jar_path() -> str:
 def load_model(name: str) -> list[dict[str, Any]]:
     json_path = BASE_DIR / "json" / f"{name}.json"
 
-    if json_path.exists():
+    if not os.environ.get("FORCE_RESET") and json_path.exists():
         with open(json_path) as f:
             return json.load(f)
 
@@ -214,7 +215,7 @@ def generate_expected(
 
     sctx_file = (sctx_dir or (BASE_DIR / "sctx")) / f"{name}.sctx"
 
-    if not (exe_path.exists() and sctx_file.exists()):
+    if not exe_path.exists() or os.environ.get("FORCE_RESET"):
         if not jar_path:
             raise FileNotFoundError(
                 f"Java JAR not configured in {CONFIG_FILE}. "
