@@ -7,7 +7,7 @@ from typing import Any
 
 import requests
 
-URL = "http://localhost:19339"
+URL = "http://localhost:3001"
 BASE_DIR = Path(__file__).parent.parent.resolve()
 PROJECT_ROOT = BASE_DIR.parent
 CONFIG_FILE = PROJECT_ROOT / "kico_config.json"

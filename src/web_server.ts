@@ -9,7 +9,8 @@ if (wonly) {
 const server = express();
 server.use(express.json());
 
-const WEBUI_PORT = parseInt(process.env.WEBUI_PORT ?? "3001");
+const WEBUI_PORT = process.env.WEBUI_PORT ?? 3001;
+
 server.use(express.static("dist/web"));
 
 const webui = server.listen(WEBUI_PORT, () => {

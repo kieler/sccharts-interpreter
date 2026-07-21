@@ -70,7 +70,7 @@ api.get("/shutdown", (_, res) => {
   process.exit(0);
 });
 
-const PORT = process.env.PORT ?? 19339;
+const PORT = process.env.PORT ?? 3001;
 
 const server = api.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
