@@ -70,7 +70,11 @@ Also see the blocklist for models that have unsupported features.
 - [x] ssm/statebased/RBLS/DFT-abro4-exp: a bool is set to 0?
 	- js + kico weirdness: false | false = 0 instead of false
 - [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
+- [ ] als/abort_regions/timed_signal_immediate_test: No expression parsing during assignments
 
+
+### featurs
+- [ ] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
 
 ### schduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here

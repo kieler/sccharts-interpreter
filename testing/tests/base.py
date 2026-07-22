@@ -20,7 +20,7 @@ def get_java_jar_path() -> str:
     with open(CONFIG_FILE) as f:
         config = json.load(f)
     jar_path = config.get("java_jar_path", "")
-    # Resolve relative paths against the project root
+
     if jar_path and not Path(jar_path).is_absolute():
         jar_path = str(PROJECT_ROOT / jar_path)
     return jar_path
@@ -29,26 +29,22 @@ def get_java_jar_path() -> str:
 def load_model_name(name: str) -> list[dict[str, Any]]:
     json_path = BASE_DIR / "json" / f"{name}.json"
 
-    return load_model(json_path)
+    return load_model(json_path, "sctx")
 
 
-def load_model(path: Path) -> list[dict[str, Any]]:
+def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
     if not os.environ.get("FORCE_RESET") and path.exists():
         with open(path) as f:
             return json.load(f)
 
-    sctx_path = Path(str(path).replace(".json", ".sctx"))
+    if sctx_dir != "":
+        sctx_path = path.parent.parent / sctx_dir / f"{path.stem}.sctx"
+    else:
+        sctx_path = path.parent / f"{path.stem}.sctx"
     jar_path = get_java_jar_path()
 
     if not jar_path:
         raise FileNotFoundError("KiCo Jar not found\n")
-
-    if not sctx_path.exists():
-        raise FileNotFoundError(
-            f"Model file not found: {path}\n"
-            f"No source .sctx file found at {sctx_path} and no JAR configured.\n"
-            f"Set 'java_jar_path' in {CONFIG_FILE} to enable auto-generation."
-        )
 
     result = subprocess.run(
         [

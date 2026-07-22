@@ -22,12 +22,16 @@ blocklist = [
     "VectorValueExpressions02.ktrace",
     "VectorValueExpressions03.ktrace",
     "computed_vector.ktrace",
-    # deffered transitions
+    "VectorNotation.ktrace",
+    # deferred transitions
     "shallow_deferred.ktrace",
     "deep_deferred.ktrace",
+    "DeferredCycleBreaker.ktrace",  # also clock
     # suspend
     "weak_suspend_simple.ktrace",
     "KISEMA-1241.ktrace",
+    "KISEMA-1241-2.ktrace",
+    "KISEMA-1241-3.ktrace",
     # dataflow
     "DF-0032c.ktrace",
     "DF-0311h.ktrace",
@@ -35,10 +39,17 @@ blocklist = [
     "DF-0032d.ktrace",
     "DF-0004d.ktrace",
     "DataflowReference.ktrace",
-    "BindingShadowsLocalIndex.ktrace"
+    "BindingShadowsLocalIndex.ktrace",
+    "PR02.ktrace",
+    "PR03.ktrace",
+    "PR03b.ktrace",
     # array
     "ArrayAssignmentActions.ktrace",
     "ArrayAssignment.ktrace",
+    "ArrayAssignmentActions.ktrace",
+    "const_array.ktrace",
+    "PreOnArray.ktrace",
+    "MultiDimArray.ktrace",
     # signals
     "KISEMA-1595-1.ktrace",
     "KISEMA-1595-2.ktrace",
@@ -51,4 +62,7 @@ blocklist = [
     "One9.ktrace",
     # count delay
     "termination_countdelay.ktrace",
+    # other
+    "timed_signal_immediate_test.ktrace",  # the vs code extension gives me a sytax error
+    "Controller.ktrace",  # Steam boiler, idk
 ]

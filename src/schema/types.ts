@@ -40,6 +40,13 @@ export interface State {
   isFinal: boolean;
   isConnector: boolean;
   regions: Region[];
+  references: Reference;
+}
+
+export interface Reference {
+  targetID: string;
+  targetFile: string;
+  parameters: string[];
 }
 
 export type SCChartModel = State[];
