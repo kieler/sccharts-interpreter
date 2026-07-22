@@ -26,14 +26,18 @@ def get_java_jar_path() -> str:
     return jar_path
 
 
-def load_model(name: str) -> list[dict[str, Any]]:
+def load_model_name(name: str) -> list[dict[str, Any]]:
     json_path = BASE_DIR / "json" / f"{name}.json"
 
-    if not os.environ.get("FORCE_RESET") and json_path.exists():
-        with open(json_path) as f:
+    return load_model(json_path)
+
+
+def load_model(path: Path) -> list[dict[str, Any]]:
+    if not os.environ.get("FORCE_RESET") and path.exists():
+        with open(path) as f:
             return json.load(f)
 
-    sctx_path = BASE_DIR / "sctx" / f"{name}.sctx"
+    sctx_path = Path(str(path).replace(".json", ".sctx"))
     jar_path = get_java_jar_path()
 
     if not jar_path:
@@ -41,7 +45,7 @@ def load_model(name: str) -> list[dict[str, Any]]:
 
     if not sctx_path.exists():
         raise FileNotFoundError(
-            f"Model file not found: {json_path}\n"
+            f"Model file not found: {path}\n"
             f"No source .sctx file found at {sctx_path} and no JAR configured.\n"
             f"Set 'java_jar_path' in {CONFIG_FILE} to enable auto-generation."
         )
@@ -54,7 +58,7 @@ def load_model(name: str) -> list[dict[str, Any]]:
             "-s",
             "de.cau.cs.kieler.sccharts.SCTXToJSON",
             "-o",
-            str(json_path),
+            str(path),
             str(sctx_path),
         ],
         capture_output=True,
@@ -62,19 +66,22 @@ def load_model(name: str) -> list[dict[str, Any]]:
     )
     if result.returncode != 0:
         raise RuntimeError(
-            f"Failed to generate {json_path} using JAR at {jar_path}:\n{result.stderr}"
+            f"Failed to generate {path} using JAR at {jar_path}:\n{result.stderr}"
         )
 
-    with open(json_path) as f:
+    with open(path) as f:
         return json.load(f)
 
 
 class TestRunner:
     __test__ = False
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, path: Path | None = None):
         self.name = name
-        self.model = load_model(name)
+        if path is not None:
+            self.model = load_model(path)
+        else:
+            self.model = load_model_name(name)
 
     def setup(self, wonly=False, seed: int = 42) -> requests.Response:
         self.random = random.Random(seed)
@@ -160,10 +167,18 @@ class TestRunner:
 
 
 def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) -> None:
-    """Assert actual matches expected as a subset (extra fields in actual ignored)."""
-    assert len(actual) == len(expected), (
-        f"Length mismatch: {len(actual)} != {len(expected)}"
-    )
+    """Assert actual matches expected as a subset (extra fields in actual ignored).
+    Extra trailing empty dicts in either list are silently allowed.
+    This is because of the differing behaviour of the interpreter cli and the KiCo simulation cli, which continues even if the model is terminated.
+    """
+    for item in actual[len(expected) :]:
+        assert item["variables"] == {}, (
+            f"Length mismatch: extra step(s) in actual with content: {item}"
+        )
+    for item in expected[len(actual) :]:
+        assert item["variables"] == {}, (
+            f"Length mismatch: extra step(s) in expected with content: {item}"
+        )
     for i, (a, e) in enumerate(zip(actual, expected)):
         assert set(e.keys()).issubset(set(a.keys())), (
             f"Step {i}: expected keys not subset of actual: {e.keys()}"

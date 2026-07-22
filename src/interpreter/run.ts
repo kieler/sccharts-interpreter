@@ -37,7 +37,13 @@ function walkEdge(
   immediateOnly: boolean,
 ): boolean {
   // Returns true if edge was walked.
-  if (immediateOnly && !edge.transition.isImmediate) return false;
+  if (
+    immediateOnly &&
+    !(
+      edge.transition.isImmediate || edge.transition.preemption == "termination"
+    )
+  )
+    return false;
 
   const guardPass =
     !edge.transition.guard ||

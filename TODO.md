@@ -24,6 +24,7 @@ for the PoC, these should probably be left out unless it is easy.
 - [x] Deep History Transitions
 	- ~~The JSON exporter needs support for them first~~
 - [ ] Reference SCCharts
+	- They are now in the KiCo JSON exporter
 - [ ] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
 
@@ -45,8 +46,31 @@ for the PoC, these should probably be left out unless it is easy.
 		- [ ] ...
 	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
+- Clocks?
+
 ## missing
 - [ ] varible types
 	- [ ] arrays
 		- They need to be implmented in the json converter first
 	- [ ] enums
+
+
+## issues
+Also see the blocklist for models that have unsupported features.
+
+### bugs
+- [ ] issues/ISSUE-GH14: final state should cause exit actions in super state
+- [ ] aas/pre/FinalPre: pre() function for actions?
+- [x] ssm/statebased/lean/SBLoop: entering state should also allow immediate transitions in subgraphs to run
+- [ ] ssm/actions/ImmediateDuringRoot, ssm/actions/DuringRoot: If the root now doesn't have any nodes it srashes because of no initial node
+- [x] als/various/null_check: str should have default initial value of null instead of ""
+- [ ] als/various/null_check: In string assignments letters can be replaced by variable values
+- [x] als/various/null_check: null != None (js v Python)
+
+### schduling differences
+- ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here
+-
+
+### other
+- The KiCO Simulation (and compiled code, due to how it works) doesnt set non inputed variables as their 0-value but keeps the last, should i do that as well? It would be in interpreter/utils.py removing the default assignment in asignVariables.
+	- If we do want to do signals, this would just be signals?

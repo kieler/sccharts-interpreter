@@ -73,7 +73,7 @@ function constructRegion(region: Region, context: Context): StateGraph {
         } else if (variable.type == "bool") {
           context.variables.set(variable.id, false);
         } else if (variable.type == "string") {
-          context.variables.set(variable.id, "");
+          context.variables.set(variable.id, null),
         } else if (variable.type == "float") {
           context.variables.set(variable.id, 0.0);
         }
