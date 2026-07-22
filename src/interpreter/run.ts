@@ -68,12 +68,11 @@ function walkEdge(
 
   for (const action of edge.from.exitActions) {
     if (!action.guard || parseGuard(action.guard, context.variables)) {
-      parseAction(action.action, context.variables);
+      parseAction(action.action, context);
     }
   }
 
-  if (edge.transition.action)
-    parseAction(edge.transition.action, context.variables);
+  if (edge.transition.action) parseAction(edge.transition.action, context);
 
   if (!edge.to.state.isFinal) edge.to.graph.terminated = false;
   edge.to.graph.activeNode = edge.to;
@@ -106,7 +105,7 @@ function processNode(
   if (entering) {
     for (const action of node.entryActions) {
       if (!action.guard || parseGuard(action.guard, context.variables)) {
-        parseAction(action.action, context.variables);
+        parseAction(action.action, context);
       }
     }
   }
@@ -119,7 +118,7 @@ function processNode(
   if (!entering) {
     for (const action of node.duringActions) {
       if (!action.guard || parseGuard(action.guard, context.variables)) {
-        parseAction(action.action, context.variables);
+        parseAction(action.action, context);
       }
     }
   }
@@ -156,8 +155,8 @@ export function tick(context: Context, inputs: any): TickResult {
       messages: [],
     };
 
+  context.preVariables = new Map(context.variables);
   assignInputVariables(context, inputs);
-
   processNode(context.graph.activeNode, context);
 
   context.activeNodes.forEach(function (node: StateNode) {

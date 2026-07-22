@@ -68,14 +68,24 @@ def parse_var_type(value_str: str):
     except ValueError:
         pass
 
-    return lowered  # str as fallback
+    return value_str  # str as fallback
 
 
 def parse_side(side: str) -> dict:
     result = {}
-    # Matches VAR=VALUE or VAR = VALUE or VAR  =  VALUE etc.
-    for var_name, value_str in re.findall(r"(\S+)\s*=\s*(\S+)", side):
-        result[var_name] = parse_var_type(value_str)
-        if result[var_name] == "null":
-            result[var_name] = None
+    for match in re.finditer(r"(\S+?)\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|(\S+))", side):
+        var_name = match.group(1)
+        value_str = (
+            match.group(2)
+            if match.group(2) is not None
+            else (match.group(3) if match.group(3) is not None else match.group(4))
+        )
+
+        if any(match.group(i) is not None for i in [2, 3]):
+            result[var_name] = (
+                value_str  # quoted values used as-is (no type conversion)
+            )
+        else:
+            parsed = parse_var_type(value_str)
+            result[var_name] = None if parsed == "null" else parsed
     return result

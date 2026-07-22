@@ -60,12 +60,17 @@ Also see the blocklist for models that have unsupported features.
 
 ### bugs
 - [ ] issues/ISSUE-GH14: final state should cause exit actions in super state
-- [ ] aas/pre/FinalPre: pre() function for actions?
+- [x] aas/pre/FinalPre: pre() function for actions?
 - [x] ssm/statebased/lean/SBLoop: entering state should also allow immediate transitions in subgraphs to run
-- [ ] ssm/actions/ImmediateDuringRoot, ssm/actions/DuringRoot: If the root now doesn't have any nodes it srashes because of no initial node
+- [x] ssm/actions/ImmediateDuringRoot, ssm/actions/DuringRoot: If the root now doesn't have any nodes it srashes because of no initial node
 - [x] als/various/null_check: str should have default initial value of null instead of ""
-- [ ] als/various/null_check: In string assignments letters can be replaced by variable values
+- [x] als/various/null_check: In string assignments letters can be replaced by variable values
+- [x] aas/other/DataTypes: als/various/null_check, but it also applies to other literals like "false"
 - [x] als/various/null_check: null != None (js v Python)
+- [x] ssm/statebased/RBLS/DFT-abro4-exp: a bool is set to 0?
+	- js + kico weirdness: false | false = 0 instead of false
+- [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
+
 
 ### schduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here

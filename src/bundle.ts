@@ -1,4 +1,4 @@
-export { validateSCChart, findInitalState } from "./schema/utils.js";
+export { validateSCChart } from "./schema/utils.js";
 export { constructStateGraph } from "./interpreter/constructor.js";
 export { tick } from "./interpreter/run.js";
 export type {

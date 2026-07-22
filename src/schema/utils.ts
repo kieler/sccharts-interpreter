@@ -23,15 +23,6 @@ export function validateSCChart(data: unknown): data is SCChartModel {
   return valid;
 }
 
-export function findInitalState(states: State[]): State | undefined {
-  for (const state of states) {
-    if (state.isInitial) return state;
-    const found = findInitalState(state.regions.flatMap((r) => r.states));
-    if (found) return found;
-  }
-  return undefined;
-}
-
 export function findInputVariables(states: State[]): Variable[] {
   let inputVariables: Variable[] = [];
 

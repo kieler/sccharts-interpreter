@@ -73,7 +73,7 @@ function constructRegion(region: Region, context: Context): StateGraph {
         } else if (variable.type == "bool") {
           context.variables.set(variable.id, false);
         } else if (variable.type == "string") {
-          context.variables.set(variable.id, null),
+          context.variables.set(variable.id, null);
         } else if (variable.type == "float") {
           context.variables.set(variable.id, 0.0);
         }
@@ -140,6 +140,8 @@ export function constructStateGraph(model: SCChartModel): Context {
 
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
+
+  context.preVariables = new Map(context.variables);
 
   return context;
 }

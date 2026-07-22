@@ -1,4 +1,4 @@
-import { findInitalState, validateSCChart } from "../schema/utils.js";
+import { validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
 import { Context, StateNode } from "./types.js";
 import { constructStateGraph } from "./constructor.js";
@@ -69,6 +69,7 @@ export function emptyContext(model: SCChartModel): Context {
       terminated: false,
     },
     variables: new Map(),
+    preVariables: new Map(),
     variableTypes: new Map(),
     outputVariables: [],
     inputVariables: [],
@@ -107,11 +108,14 @@ export function setupContext(model: SCChartModel, wonly: boolean): Context {
 
   const chartModel = model as SCChartModel;
 
-  if (!findInitalState(chartModel)) throw new Error("No inital state in model");
-
   const context = constructStateGraph(chartModel);
   context.graph.activeNode = context.graph.initalNode;
   context.errorMode = wonly ? "warnings-only" : "strict";
 
   return context;
+}
+
+export function pre(context: Context, variable: string): unknown {
+  console.log(variable, context.preVariables.get(variable));
+  return context.preVariables.get(variable);
 }
