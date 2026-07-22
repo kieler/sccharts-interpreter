@@ -32,18 +32,16 @@ def pytest_generate_tests(metafunc):
         ):
             continue
 
-        model = Path(str(ktrace)[:-7] + ".sctx")
+        name = str(ktrace)[:-7]
+
+        # For stuff where we have a model.sctx and model.1.ktrace or model-a.ktrace
+        if name[-2] == "." or name[-2] == "-":
+            name = name[:-2]
+
+        model = Path(name + ".sctx")
 
         if model.exists():
             model_trace.append((model, ktrace))
-
-        models = Path(str(ktrace)[:-7]).glob(".[0-9].sctx")
-        for model in models:
-            model_trace.append((model.resolve(), ktrace))
-
-        models = Path(str(ktrace)[:-7]).glob("-[0-9].sctx")
-        for model in models:
-            model_trace.append((model.resolve(), ktrace))
 
     ids = [os.path.relpath(f[1], MODEL_PATH) for f in model_trace]
     metafunc.parametrize("test_model", model_trace, ids=ids)

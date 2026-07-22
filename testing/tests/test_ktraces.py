@@ -1,7 +1,6 @@
-import os
 from pathlib import Path
 
-from base import TestRunner, assert_subset, generate_expected
+from base import TestRunner, assert_subset
 from utils import parse_ktrace
 
 
