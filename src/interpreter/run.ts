@@ -138,6 +138,18 @@ function processNode(
     }
   }
 
+  if (node.referencedContext && node.referencedVarMap) {
+    for (const [outer, inner] of node.referencedVarMap.entries()) {
+      node.referencedContext.variables.set(inner, context.variables.get(outer));
+    }
+
+    const results = tick(node.referencedContext, {}, false);
+
+    for (const [outer, inner] of node.referencedVarMap.entries()) {
+      context.variables.set(outer, node.referencedContext.variables.get(inner));
+    }
+  }
+
   for (const edge of node.weakEdges) {
     if (walkEdge(edge, context, entering)) return;
   }
@@ -147,7 +159,11 @@ function processNode(
   }
 }
 
-export function tick(context: Context, inputs: any): TickResult {
+export function tick(
+  context: Context,
+  inputs: any,
+  assignInputs: boolean = true,
+): TickResult {
   if (!context.graph.activeNode)
     return {
       terminated: false,
@@ -156,7 +172,7 @@ export function tick(context: Context, inputs: any): TickResult {
     };
 
   context.preVariables = new Map(context.variables);
-  assignInputVariables(context, inputs);
+  if (assignInputs) assignInputVariables(context, inputs);
   processNode(context.graph.activeNode, context);
 
   context.activeNodes.forEach(function (node: StateNode) {

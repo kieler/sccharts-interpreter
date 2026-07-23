@@ -30,6 +30,9 @@ export interface StateNode {
   subgraphs?: StateGraph[];
   graph: StateGraph;
   state: State;
+
+  referencedContext?: Context;
+  referencedVarMap?: Map<string, string>;
 }
 
 export interface StateGraph {
@@ -44,11 +47,13 @@ export interface Context {
   label: string;
   model: SCChartModel;
   graph: StateGraph;
+
   variables: Map<string, unknown>;
   preVariables: Map<string, unknown>;
   variableTypes: Map<string, string>;
   outputVariables: string[];
   inputVariables: string[];
+
   nodeMap: Map<string, StateNode>;
   errorMode: "strict" | "warnings-only";
   messages: Message[];

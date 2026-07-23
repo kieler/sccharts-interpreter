@@ -41,6 +41,14 @@ def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
         sctx_path = path.parent.parent / sctx_dir / f"{path.stem}.sctx"
     else:
         sctx_path = path.parent / f"{path.stem}.sctx"
+
+    compile_sctx_to_json(sctx_path, path)
+
+    with open(path) as f:
+        return json.load(f)
+
+
+def compile_sctx_to_json(sctx_path: Path, output_path: Path | None = None):
     jar_path = get_java_jar_path()
 
     if not jar_path:
@@ -54,7 +62,9 @@ def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
             "-s",
             "de.cau.cs.kieler.sccharts.SCTXToJSON",
             "-o",
-            str(path),
+            str(sctx_path.with_suffix(".json"))
+            if output_path is None
+            else output_path.with_suffix(".json"),
             str(sctx_path),
         ],
         capture_output=True,
@@ -62,11 +72,8 @@ def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
     )
     if result.returncode != 0:
         raise RuntimeError(
-            f"Failed to generate {path} using JAR at {jar_path}:\n{result.stderr}"
+            f"Failed to compile {sctx_path} using JAR at {jar_path}:\n{result.stderr}"
         )
-
-    with open(path) as f:
-        return json.load(f)
 
 
 class TestRunner:
@@ -85,6 +92,21 @@ class TestRunner:
         resp = requests.post(
             f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
         )
+
+        if resp.status_code == 500 and resp.json()["reference"]:
+            compile_sctx_to_json(
+                Path(resp.json()["reference"][5:])
+            )  # string starts with file:
+
+            resp2 = requests.post(
+                f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+            )
+
+            assert resp2.status_code == 200, (
+                f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
+            )
+            return resp2
+
         assert resp.status_code == 200, (
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
         )

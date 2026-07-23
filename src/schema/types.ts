@@ -40,7 +40,7 @@ export interface State {
   isFinal: boolean;
   isConnector: boolean;
   regions: Region[];
-  references: Reference;
+  reference?: Reference;
 }
 
 export interface Reference {

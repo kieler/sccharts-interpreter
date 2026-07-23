@@ -31,9 +31,18 @@ api.post("/setup", (req, res) => {
       model: globalContext.model[0].label,
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ error: error instanceof Error ? error.message : String(error) });
+    if (!(error instanceof Error)) {
+      return res.status(500).json({ error: String(error) });
+    }
+
+    if (error.message.startsWith("Reference missing")) {
+      return res.status(500).json({
+        error: error.message,
+        reference: error.message.split(" - ")[2],
+      });
+    }
+
+    return res.status(500).json({ error: error.message });
   }
 });
 

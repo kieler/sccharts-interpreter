@@ -7,7 +7,7 @@
 		"sccharts-interpreter": "./bin/sccharts-interpreter"
 	},
 	"scripts": {
-		"build": "tsc && vite build",
+		"build": "tsc",
 		"start": "node dist/web_server.js",
 		"cli": "node dist/cli.js",
 		"compiler-server": "node dist/compiler_server.js",

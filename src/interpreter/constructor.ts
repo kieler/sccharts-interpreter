@@ -1,6 +1,7 @@
 import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
 import type { Region, SCChartModel } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext } from "./utils.js";
+import { readFileSync } from "./fs-adapter.js";
 
 function constructRegion(region: Region, context: Context): StateGraph {
   let graph: StateGraph = {
@@ -107,9 +108,45 @@ function constructRegion(region: Region, context: Context): StateGraph {
           break;
       }
     }
+
+    if (state.reference) {
+      if (!readFileSync) {
+        throw new Error("File loading not supported");
+      }
+
+      let refModel;
+      try {
+        const jsonPath = state.reference.targetFile
+          .replace(".sctx", ".json")
+          .replace("file:", "");
+        refModel = JSON.parse(readFileSync(jsonPath));
+      } catch (e) {
+        throw new Error(
+          `Reference missing - ${e} - ${state.reference.targetFile}`,
+        );
+      }
+      stateNode.referencedContext = constructStateGraph(refModel);
+      stateNode.referencedContext.graph.activeNode =
+        stateNode.referencedContext.graph.initalNode;
+
+      stateNode.referencedVarMap = mapReferenceVariables(
+        state.reference.parameters,
+      );
+    }
   }
 
   return graph;
+}
+
+function mapReferenceVariables(parameters: string[]): Map<string, string> {
+  // "in to I", "out to O"
+  const map = new Map<string, string>();
+  for (const param of parameters) {
+    const [inName, outName] = param.trim().split("to");
+    map.set(outName.trim(), inName.trim());
+  }
+
+  return map;
 }
 
 function finishEdges(graph: StateGraph, context: Context): void {

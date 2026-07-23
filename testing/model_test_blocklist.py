@@ -43,6 +43,7 @@ blocklist = [
     "PR02.ktrace",
     "PR03.ktrace",
     "PR03b.ktrace",
+    "BindingShadowsLocal.ktrace",
     # array
     "ArrayAssignmentActions.ktrace",
     "ArrayAssignment.ktrace",

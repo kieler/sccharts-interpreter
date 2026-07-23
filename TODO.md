@@ -75,6 +75,7 @@ Also see the blocklist for models that have unsupported features.
 
 ### featurs
 - [ ] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
+    - It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword. I have not yet found a good solution to this.
 
 ### schduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here
