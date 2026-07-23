@@ -59,7 +59,7 @@ for the PoC, these should probably be left out unless it is easy.
 Also see the blocklist for models that have unsupported features.
 
 ### bugs
-- [ ] issues/ISSUE-GH14: final state should cause exit actions in super state
+- [x] issues/ISSUE-GH14: final state should cause exit actions in super state
 - [x] aas/pre/FinalPre: pre() function for actions?
 - [x] ssm/statebased/lean/SBLoop: entering state should also allow immediate transitions in subgraphs to run
 - [x] ssm/actions/ImmediateDuringRoot, ssm/actions/DuringRoot: If the root now doesn't have any nodes it srashes because of no initial node
@@ -70,12 +70,14 @@ Also see the blocklist for models that have unsupported features.
 - [x] ssm/statebased/RBLS/DFT-abro4-exp: a bool is set to 0?
 	- js + kico weirdness: false | false = 0 instead of false
 - [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
-- [ ] als/abort_regions/timed_signal_immediate_test: No expression parsing during assignments
+- [ ] als/various/const_float_computation: No expression parsing during assignments
+- [ ] ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.
+- [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
 
 
 ### featurs
-- [ ] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
-    - It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword. I have not yet found a good solution to this.
+- [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
+    - [x] It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword.
 
 ### schduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here

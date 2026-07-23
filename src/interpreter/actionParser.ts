@@ -1,5 +1,6 @@
 import { pre } from "./utils.js";
 import { Context } from "./types.js";
+import { sanitizeKeysAndExpr } from "./jsKeywords.js";
 
 function infixToAssignment(expr: string): string {
   // Turns something like A+=1 into A=A+1 for the eval() function
@@ -60,7 +61,8 @@ export function parseAction(action: string, context: Context): void {
     }
 
     const [variable, expression] = part.split("=")!;
-    const fn = new Function(...keys, `return (${expression})`);
+    const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, expression);
+    const fn = new Function(...safeKeys, `return (${safeExpr})`);
     let result = fn(...values);
 
     // This is here because sometimes the models in the test suite use | instead of || and js says false | false = 0

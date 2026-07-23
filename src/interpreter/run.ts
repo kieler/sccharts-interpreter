@@ -3,6 +3,7 @@ import { clearMessages, raise } from "./errors.js";
 import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
+import { Action } from "../schema/types.js";
 import { assignInputVariables } from "./utils.js";
 
 function addRegionsToRuntime(
@@ -66,11 +67,7 @@ function walkEdge(
   // TODO: For history transitions, skip this. This has to wait until the JSON exporter supports history transitions
   if (!edge.transition.history) resetNode(edge.to, context);
 
-  for (const action of edge.from.exitActions) {
-    if (!action.guard || parseGuard(action.guard, context.variables)) {
-      parseAction(action.action, context);
-    }
-  }
+  doActions(edge.from.exitActions, context);
 
   if (edge.transition.action) parseAction(edge.transition.action, context);
 
@@ -92,6 +89,14 @@ function walkEdge(
   return true;
 }
 
+function doActions(actions: Action[], context: Context) {
+  for (const action of actions) {
+    if (!action.guard || parseGuard(action.guard, context.variables)) {
+      parseAction(action.action, context);
+    }
+  }
+}
+
 function processNode(
   node: StateNode,
   context: Context,
@@ -103,11 +108,7 @@ function processNode(
   context.activeNodes.add(node);
 
   if (entering) {
-    for (const action of node.entryActions) {
-      if (!action.guard || parseGuard(action.guard, context.variables)) {
-        parseAction(action.action, context);
-      }
-    }
+    doActions(node.entryActions, context);
   }
 
   for (const edge of node.strongEdges) {
@@ -116,11 +117,7 @@ function processNode(
   }
 
   if (!entering) {
-    for (const action of node.duringActions) {
-      if (!action.guard || parseGuard(action.guard, context.variables)) {
-        parseAction(action.action, context);
-      }
-    }
+    doActions(node.duringActions, context);
   }
 
   if (entering) {
@@ -136,17 +133,28 @@ function processNode(
         processNode(subgraph.initalNode, context);
       }
     }
+
+    const subGraphDone = node.subgraphs
+      ?.flatMap((graph) => graph.terminated)
+      .every((x) => x);
+    if (subGraphDone) {
+      doActions(node.exitActions, context);
+    }
   }
 
   if (node.referencedContext && node.referencedVarMap) {
     for (const [outer, inner] of node.referencedVarMap.entries()) {
-      node.referencedContext.variables.set(inner, context.variables.get(outer));
+      for (const i of inner) {
+        node.referencedContext.variables.set(i, context.variables.get(outer));
+      }
     }
 
     const results = tick(node.referencedContext, {}, false);
 
     for (const [outer, inner] of node.referencedVarMap.entries()) {
-      context.variables.set(outer, node.referencedContext.variables.get(inner));
+      for (const i of inner) {
+        context.variables.set(outer, node.referencedContext.variables.get(i));
+      }
     }
   }
 

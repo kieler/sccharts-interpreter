@@ -32,7 +32,7 @@ export interface StateNode {
   state: State;
 
   referencedContext?: Context;
-  referencedVarMap?: Map<string, string>;
+  referencedVarMap?: Map<string, string[]>;
 }
 
 export interface StateGraph {

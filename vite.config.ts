@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "web-interpreter": path.resolve(__dirname, "src/bundle.ts"),
+      "node:fs": path.resolve(__dirname, "src/interpreter/node-fs-browser.ts"),
     },
   },
   build: {

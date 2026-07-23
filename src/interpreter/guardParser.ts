@@ -1,3 +1,5 @@
+import { sanitizeKeysAndExpr } from "./jsKeywords.js";
+
 export function parseGuard(
   guard: string,
   variables: Map<string, unknown>,
@@ -7,6 +9,8 @@ export function parseGuard(
   const keys = Array.from(variables.keys());
   const values = Array.from(variables.values());
 
-  const fn = new Function(...keys, `return (${guard})`);
+  const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
+
+  const fn = new Function(...safeKeys, `return (${safeExpr})`);
   return fn(...values);
 }

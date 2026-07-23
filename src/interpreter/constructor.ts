@@ -1,7 +1,7 @@
 import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
 import type { Region, SCChartModel } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext } from "./utils.js";
-import { readFileSync } from "./fs-adapter.js";
+import { readFileSync } from "node:fs";
 
 function constructRegion(region: Region, context: Context): StateGraph {
   let graph: StateGraph = {
@@ -119,7 +119,7 @@ function constructRegion(region: Region, context: Context): StateGraph {
         const jsonPath = state.reference.targetFile
           .replace(".sctx", ".json")
           .replace("file:", "");
-        refModel = JSON.parse(readFileSync(jsonPath));
+        refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
       } catch (e) {
         throw new Error(
           `Reference missing - ${e} - ${state.reference.targetFile}`,
@@ -138,12 +138,15 @@ function constructRegion(region: Region, context: Context): StateGraph {
   return graph;
 }
 
-function mapReferenceVariables(parameters: string[]): Map<string, string> {
+function mapReferenceVariables(parameters: string[]): Map<string, string[]> {
   // "in to I", "out to O"
-  const map = new Map<string, string>();
+  const map = new Map<string, string[]>();
   for (const param of parameters) {
     const [inName, outName] = param.trim().split("to");
-    map.set(outName.trim(), inName.trim());
+    if (!map.has(outName.trim())) {
+      map.set(outName.trim(), []);
+    }
+    map.get(outName.trim())!.push(inName.trim());
   }
 
   return map;
