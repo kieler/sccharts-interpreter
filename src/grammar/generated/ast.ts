@@ -7,10 +7,12 @@
 import * as langium from 'langium';
 
 export const SCChartsTerminals = {
-    BuiltinType: /bool|int|float/,
-    Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)/,
-    WS: /\s+/,
+    AllOP: / ?(?:&&|\|\||==|>=|>|<=|<)|(?:--|\+\+|\+=|-=|\*=|\/=|\+|-|\*|\/|=) ?/,
+    BooleanOP: /&&|\|\||==|>=|>|<=|</,
+    VarType: /bool|int|float/,
+    Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)|(?:"[^"]*"|'[^']*')/,
     ID: /[_a-zA-Z0-9][\w_]*/,
+    WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,
     SL_COMMENT: /\/\/[^\n\r]*/,
 };
@@ -18,20 +20,11 @@ export const SCChartsTerminals = {
 export type SCChartsTerminalNames = keyof typeof SCChartsTerminals;
 
 export type SCChartsKeywordNames =
-    | "*="
-    | "++"
-    | "+="
+    | "("
+    | ")"
     | ","
-    | "--"
-    | "-="
-    | "/="
     | ";"
-    | "<"
-    | "<="
     | "="
-    | "=="
-    | ">"
-    | ">="
     | "abort"
     | "connector"
     | "do"
@@ -40,6 +33,7 @@ export type SCChartsKeywordNames =
     | "exit"
     | "final"
     | "go"
+    | "history"
     | "if"
     | "immediate"
     | "initial"
@@ -58,8 +52,8 @@ export type SCChartsTokenNames = SCChartsTerminalNames | SCChartsKeywordNames;
 export interface Action extends langium.AstNode {
     readonly $container: State;
     readonly $type: 'Action';
-    action: Expression;
-    guard?: Expression;
+    action: ActionExpression;
+    guard?: GuardExpression;
     isImmediate: boolean;
     type: 'during' | 'entry' | 'exit';
 }
@@ -76,6 +70,21 @@ export function isAction(item: unknown): item is Action {
     return reflection.isInstance(item, Action.$type);
 }
 
+export interface ActionExpression extends langium.AstNode {
+    readonly $container: Action | Transition;
+    readonly $type: 'ActionExpression';
+    actions: Array<Expression>;
+}
+
+export const ActionExpression = {
+    $type: 'ActionExpression',
+    actions: 'actions'
+} as const;
+
+export function isActionExpression(item: unknown): item is ActionExpression {
+    return reflection.isInstance(item, ActionExpression.$type);
+}
+
 export type Element = Region | State | Transition | Variable;
 
 export const Element = {
@@ -87,18 +96,35 @@ export function isElement(item: unknown): item is Element {
 }
 
 export interface Expression extends langium.AstNode {
-    readonly $container: Action | Transition;
-    readonly $type: 'Expression';
-    var: string;
+    readonly $container: ActionExpression | Expression | GuardExpression | SimpleExpression;
+    readonly $type: 'Expression' | 'SimpleExpression';
+    op: string;
+    right?: SimpleExpression;
 }
 
 export const Expression = {
     $type: 'Expression',
-    var: 'var'
+    op: 'op',
+    right: 'right'
 } as const;
 
 export function isExpression(item: unknown): item is Expression {
     return reflection.isInstance(item, Expression.$type);
+}
+
+export interface GuardExpression extends langium.AstNode {
+    readonly $container: Action | Transition;
+    readonly $type: 'GuardExpression';
+    guards: Array<Expression>;
+}
+
+export const GuardExpression = {
+    $type: 'GuardExpression',
+    guards: 'guards'
+} as const;
+
+export function isGuardExpression(item: unknown): item is GuardExpression {
+    return reflection.isInstance(item, GuardExpression.$type);
 }
 
 export interface Region extends langium.AstNode {
@@ -134,6 +160,29 @@ export function isSCTX(item: unknown): item is SCTX {
     return reflection.isInstance(item, SCTX.$type);
 }
 
+export interface SimpleExpression extends Expression {
+    readonly $container: Expression;
+    readonly $type: 'SimpleExpression';
+    inner1?: Expression;
+    inner2?: Expression;
+    op2?: string;
+    value?: string;
+}
+
+export const SimpleExpression = {
+    $type: 'SimpleExpression',
+    inner1: 'inner1',
+    inner2: 'inner2',
+    op: 'op',
+    op2: 'op2',
+    right: 'right',
+    value: 'value'
+} as const;
+
+export function isSimpleExpression(item: unknown): item is SimpleExpression {
+    return reflection.isInstance(item, SimpleExpression.$type);
+}
+
 export interface State extends langium.AstNode {
     readonly $container: Region | SCTX | State;
     readonly $type: 'State';
@@ -160,8 +209,9 @@ export function isState(item: unknown): item is State {
 export interface Transition extends langium.AstNode {
     readonly $container: Region | SCTX | State;
     readonly $type: 'Transition';
-    action?: Expression;
-    guard?: Expression;
+    action?: ActionExpression;
+    guard?: GuardExpression;
+    history: boolean;
     isImmediate: boolean;
     target: langium.Reference<State>;
     type: 'abort' | 'go' | 'join';
@@ -171,6 +221,7 @@ export const Transition = {
     $type: 'Transition',
     action: 'action',
     guard: 'guard',
+    history: 'history',
     isImmediate: 'isImmediate',
     target: 'target',
     type: 'type'
@@ -183,19 +234,17 @@ export function isTransition(item: unknown): item is Transition {
 export interface Variable extends langium.AstNode {
     readonly $container: Region | SCTX | State;
     readonly $type: 'Variable';
-    initialValue: Array<string>;
+    assignments: Array<VariableAssignment>;
     isInput: boolean;
     isOutput: boolean;
-    name: Array<string>;
     type: string;
 }
 
 export const Variable = {
     $type: 'Variable',
-    initialValue: 'initialValue',
+    assignments: 'assignments',
     isInput: 'isInput',
     isOutput: 'isOutput',
-    name: 'name',
     type: 'type'
 } as const;
 
@@ -203,15 +252,36 @@ export function isVariable(item: unknown): item is Variable {
     return reflection.isInstance(item, Variable.$type);
 }
 
+export interface VariableAssignment extends langium.AstNode {
+    readonly $container: Variable;
+    readonly $type: 'VariableAssignment';
+    initialValue?: string;
+    name: string;
+}
+
+export const VariableAssignment = {
+    $type: 'VariableAssignment',
+    initialValue: 'initialValue',
+    name: 'name'
+} as const;
+
+export function isVariableAssignment(item: unknown): item is VariableAssignment {
+    return reflection.isInstance(item, VariableAssignment.$type);
+}
+
 export type SCChartsAstType = {
     Action: Action
+    ActionExpression: ActionExpression
     Element: Element
     Expression: Expression
+    GuardExpression: GuardExpression
     Region: Region
     SCTX: SCTX
+    SimpleExpression: SimpleExpression
     State: State
     Transition: Transition
     Variable: Variable
+    VariableAssignment: VariableAssignment
 }
 
 export class SCChartsAstReflection extends langium.AbstractAstReflection {
@@ -237,6 +307,16 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
             },
             superTypes: []
         },
+        ActionExpression: {
+            name: ActionExpression.$type,
+            properties: {
+                actions: {
+                    name: ActionExpression.actions,
+                    defaultValue: []
+                }
+            },
+            superTypes: []
+        },
         Element: {
             name: Element.$type,
             properties: {
@@ -246,8 +326,22 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
         Expression: {
             name: Expression.$type,
             properties: {
-                var: {
-                    name: Expression.var
+                op: {
+                    name: Expression.op
+                },
+                right: {
+                    name: Expression.right,
+                    optional: true
+                }
+            },
+            superTypes: []
+        },
+        GuardExpression: {
+            name: GuardExpression.$type,
+            properties: {
+                guards: {
+                    name: GuardExpression.guards,
+                    defaultValue: []
                 }
             },
             superTypes: []
@@ -280,6 +374,35 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                 }
             },
             superTypes: []
+        },
+        SimpleExpression: {
+            name: SimpleExpression.$type,
+            properties: {
+                inner1: {
+                    name: SimpleExpression.inner1,
+                    optional: true
+                },
+                inner2: {
+                    name: SimpleExpression.inner2,
+                    optional: true
+                },
+                op: {
+                    name: SimpleExpression.op
+                },
+                op2: {
+                    name: SimpleExpression.op2,
+                    optional: true
+                },
+                right: {
+                    name: SimpleExpression.right,
+                    optional: true
+                },
+                value: {
+                    name: SimpleExpression.value,
+                    optional: true
+                }
+            },
+            superTypes: [Expression.$type]
         },
         State: {
             name: State.$type,
@@ -320,6 +443,11 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     name: Transition.guard,
                     optional: true
                 },
+                history: {
+                    name: Transition.history,
+                    defaultValue: false,
+                    optional: true
+                },
                 isImmediate: {
                     name: Transition.isImmediate,
                     defaultValue: false,
@@ -338,8 +466,8 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
         Variable: {
             name: Variable.$type,
             properties: {
-                initialValue: {
-                    name: Variable.initialValue,
+                assignments: {
+                    name: Variable.assignments,
                     defaultValue: [],
                     optional: true
                 },
@@ -353,15 +481,24 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     defaultValue: false,
                     optional: true
                 },
-                name: {
-                    name: Variable.name,
-                    defaultValue: []
-                },
                 type: {
                     name: Variable.type
                 }
             },
             superTypes: [Element.$type]
+        },
+        VariableAssignment: {
+            name: VariableAssignment.$type,
+            properties: {
+                initialValue: {
+                    name: VariableAssignment.initialValue,
+                    optional: true
+                },
+                name: {
+                    name: VariableAssignment.name
+                }
+            },
+            superTypes: []
         }
     } as const satisfies langium.AstMetaData
 }

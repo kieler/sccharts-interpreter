@@ -7,35 +7,53 @@ entry SCTX:
 
 
 State:
-    isConnector?='connector'? type=('final' | 'initial')? 'state' name=ID ('{' (actions+=Action)* (elements+=Element)* '}')?;
+    isConnector?='connector'? type=('final'|'initial')? 'state' name=ID ('{' (actions+=Action)* (elements+=Element)* '}')?;
 
 Variable:
-    isInput?='input'? isOutput?='output'? type=BuiltinType name+=ID ('=' initialValue+=Literal)? (',' name+=ID ('=' initialValue+=Literal)?)*;
+    isInput?='input'? isOutput?='output'? type=VarType (assignments+=VariableAssignment ','?)*;
+
+VariableAssignment:
+    name=ID ('=' initialValue=Literal)?;
+
 
 Transition:
-    isImmediate?='immediate'? ('if' guard=Expression)? ('do' action=Expression)? type=('go'|'join'|'abort') 'to' target=[State:ID];
+    isImmediate?='immediate'? ('if' guard=GuardExpression)? ('do' action=ActionExpression)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;
+
+Action:
+    isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=GuardExpression)?  ('do' action=ActionExpression) ;
 
 Region:
     'region' name=ID? ('{' (elements+=Element)* '}')?;
 
-Action:
-    isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=Expression)?  ('do' action=Expression) ;
 
 Element:
     State | Variable |Transition | Region;
 
 Expression:
-    var=ID ('='|'=='|'+='|'-='|'*='|'/='|'>'|'<'|'>='|'<='|'++'|'--')? Literal? ';'? Expression?;
+    SimpleExpression (op=AllOP right=SimpleExpression?);
+SimpleExpression:
+    value=(Literal|ID) | '(' (inner1=Expression op2=AllOP inner2=Expression) ')';
+ActionExpression:
+    actions+=Expression (';' actions+=Expression)*;
+GuardExpression:
+    guards+=Expression (BooleanOP guards+=Expression)*;
 
-terminal BuiltinType : 'bool' | 'int' | 'float';
+terminal AllOP: ' '? BooleanOP|OP ' '?;
+terminal BooleanOP: '&&'|'||'|'=='|'>='|'>'|'<='|'<';
+terminal OP: '--'|'++'|'+='|'-='|'*='|'/='|'+'|'-'|'*'|'/'|'=';
 
-terminal Literal: BOOL | FLOAT |INT ;
+terminal VarType : 'bool' | 'int' | 'float';
+
+terminal Literal: BOOL | FLOAT | INT | STRING;
 terminal BOOL: 'true'|'false';
-terminal INT returns number: /[0-9]+/;
 terminal FLOAT returns number: /[0-9]+\.[0-9]+/;
+terminal INT returns number: /[0-9]+/;
+terminal STRING: /"[^"]*"|'[^']*'/;
+
+terminal ID returns string: /[_a-zA-Z0-9][\w_]*/;
 
 hidden terminal WS: /\s+/;
-terminal ID: /[_a-zA-Z0-9][\w_]*/;
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
+
