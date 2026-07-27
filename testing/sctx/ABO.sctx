@@ -5,12 +5,12 @@ scchart ABO {
   initial state EntryInit
   immediate do O1 = false; O2 = false go to WaitAB
 
-  
+
   state WaitAB {
     region HandleA {
       initial state WaitA
       if A do B = true; O1 = true go to DoneA
-      
+
       final state DoneA
     }
     region HandleB {
@@ -21,8 +21,8 @@ scchart ABO {
     }
 
   }
-  do O1 = false; O2 = true 
+  do O1 = false; O2 = true
   join to GotAB
-  
+
   final state GotAB
   }
