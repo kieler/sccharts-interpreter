@@ -15,12 +15,11 @@ Variable:
 VariableAssignment:
     name=ID ('=' initialValue=Literal)?;
 
-
 Transition:
-    isImmediate?='immediate'? ('if' guard=GuardExpression)? ('do' action=ActionExpression)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;
+    isImmediate?='immediate'? ('if' guard=ExpressionString)? ('do' action=ExpressionString)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;
 
 Action:
-    isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=GuardExpression)?  ('do' action=ActionExpression) ;
+    isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=ExpressionString)?  ('do' action=ExpressionString) ;
 
 Region:
     'region' name=ID? ('{' (elements+=Element)* '}')?;
@@ -29,20 +28,13 @@ Region:
 Element:
     State | Variable |Transition | Region;
 
-Expression:
-    SimpleExpression (op=AllOP right=SimpleExpression?);
-SimpleExpression:
-    value=(Literal|ID) | '(' (inner1=Expression op2=AllOP inner2=Expression) ')';
-ActionExpression:
-    actions+=Expression (';' actions+=Expression)*;
-GuardExpression:
-    guards+=Expression (BooleanOP guards+=Expression)*;
-
-terminal AllOP: ' '? BooleanOP|OP ' '?;
-terminal BooleanOP: '&&'|'||'|'=='|'>='|'>'|'<='|'<';
-terminal OP: '--'|'++'|'+='|'-='|'*='|'/='|'+'|'-'|'*'|'/'|'=';
-
 terminal VarType : 'bool' | 'int' | 'float';
+
+// We need to do some preprocessing
+// add a # after ever if and do and before every go/join/abort and do 
+// and then with actions that dont have a go to at the end of the line.
+// I hate langium or maybe I am too stupid to figure out how parse stuff like this with it...
+terminal ExpressionString returns string: /\<([^\<\>]*)\>/;
 
 terminal Literal: BOOL | FLOAT | INT | STRING;
 terminal BOOL: 'true'|'false';
@@ -56,4 +48,5 @@ hidden terminal WS: /\s+/;
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
+
 
