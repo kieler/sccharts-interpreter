@@ -4,19 +4,11 @@
 		{
 			"id": "sccharts",
 			"grammar": "src/grammar/scchart.langium",
-			"fileExtensions": [".scchart"],
-			"textMate": {
-				"out": "syntaxes/domain-model.tmLanguage.json"
-			},
+			"fileExtensions": [".sctx"],
 			"railroad": {
 				"out": "docs/syntax-diagram.html"
 			}
 		}
 	],
-	"out": "src/grammar/generated",
-	"chevrotainParserConfig": {
-		"recoveryEnabled": true,
-		"nodeLocationTracking": "full",
-		"maxLookahead": 3
-	}
+	"out": "src/grammar/generated"
 }

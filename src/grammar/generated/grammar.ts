@@ -30,7 +30,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@21"
+                "$ref": "#/rules@15"
               },
               "arguments": []
             }
@@ -107,7 +107,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@21"
+                "$ref": "#/rules@15"
               },
               "arguments": []
             }
@@ -191,7 +191,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@15"
+                "$ref": "#/rules@8"
               },
               "arguments": []
             }
@@ -238,7 +238,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@21"
+                "$ref": "#/rules@15"
               },
               "arguments": []
             }
@@ -257,7 +257,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@16"
+                    "$ref": "#/rules@10"
                   },
                   "arguments": []
                 }
@@ -301,7 +301,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@11"
+                    "$ref": "#/rules@9"
                   },
                   "arguments": []
                 }
@@ -323,7 +323,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@9"
                   },
                   "arguments": []
                 }
@@ -369,7 +369,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@21"
+                  "$ref": "#/rules@15"
                 },
                 "arguments": []
               },
@@ -445,7 +445,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@11"
+                    "$ref": "#/rules@9"
                   },
                   "arguments": []
                 }
@@ -467,7 +467,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@9"
                   },
                   "arguments": []
                 }
@@ -497,7 +497,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@21"
+                "$ref": "#/rules@15"
               },
               "arguments": []
             },
@@ -577,548 +577,6 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
       "parameters": []
     },
     {
-      "$type": "ParserRule",
-      "name": "Expression",
-      "definition": {
-        "$type": "Group",
-        "elements": [
-          {
-            "$type": "RuleCall",
-            "rule": {
-              "$ref": "#/rules@9"
-            },
-            "arguments": []
-          },
-          {
-            "$type": "Group",
-            "elements": [
-              {
-                "$type": "Assignment",
-                "feature": "op",
-                "operator": "=",
-                "terminal": {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@12"
-                  },
-                  "arguments": []
-                }
-              },
-              {
-                "$type": "Assignment",
-                "feature": "right",
-                "operator": "=",
-                "terminal": {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@9"
-                  },
-                  "arguments": []
-                },
-                "cardinality": "?"
-              }
-            ]
-          }
-        ]
-      },
-      "entry": false,
-      "fragment": false,
-      "parameters": []
-    },
-    {
-      "$type": "ParserRule",
-      "name": "SimpleExpression",
-      "definition": {
-        "$type": "Alternatives",
-        "elements": [
-          {
-            "$type": "Assignment",
-            "feature": "value",
-            "operator": "=",
-            "terminal": {
-              "$type": "Alternatives",
-              "elements": [
-                {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@16"
-                  },
-                  "arguments": []
-                },
-                {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@21"
-                  },
-                  "arguments": []
-                }
-              ]
-            }
-          },
-          {
-            "$type": "Group",
-            "elements": [
-              {
-                "$type": "Keyword",
-                "value": "("
-              },
-              {
-                "$type": "Group",
-                "elements": [
-                  {
-                    "$type": "Assignment",
-                    "feature": "inner1",
-                    "operator": "=",
-                    "terminal": {
-                      "$type": "RuleCall",
-                      "rule": {
-                        "$ref": "#/rules@8"
-                      },
-                      "arguments": []
-                    }
-                  },
-                  {
-                    "$type": "Assignment",
-                    "feature": "op2",
-                    "operator": "=",
-                    "terminal": {
-                      "$type": "RuleCall",
-                      "rule": {
-                        "$ref": "#/rules@12"
-                      },
-                      "arguments": []
-                    }
-                  },
-                  {
-                    "$type": "Assignment",
-                    "feature": "inner2",
-                    "operator": "=",
-                    "terminal": {
-                      "$type": "RuleCall",
-                      "rule": {
-                        "$ref": "#/rules@8"
-                      },
-                      "arguments": []
-                    }
-                  }
-                ]
-              },
-              {
-                "$type": "Keyword",
-                "value": ")"
-              }
-            ]
-          }
-        ]
-      },
-      "entry": false,
-      "fragment": false,
-      "parameters": []
-    },
-    {
-      "$type": "ParserRule",
-      "name": "ActionExpression",
-      "definition": {
-        "$type": "Group",
-        "elements": [
-          {
-            "$type": "Assignment",
-            "feature": "actions",
-            "operator": "+=",
-            "terminal": {
-              "$type": "RuleCall",
-              "rule": {
-                "$ref": "#/rules@8"
-              },
-              "arguments": []
-            }
-          },
-          {
-            "$type": "Group",
-            "elements": [
-              {
-                "$type": "Keyword",
-                "value": ";"
-              },
-              {
-                "$type": "Assignment",
-                "feature": "actions",
-                "operator": "+=",
-                "terminal": {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@8"
-                  },
-                  "arguments": []
-                }
-              }
-            ],
-            "cardinality": "*"
-          }
-        ]
-      },
-      "entry": false,
-      "fragment": false,
-      "parameters": []
-    },
-    {
-      "$type": "ParserRule",
-      "name": "GuardExpression",
-      "definition": {
-        "$type": "Group",
-        "elements": [
-          {
-            "$type": "Assignment",
-            "feature": "guards",
-            "operator": "+=",
-            "terminal": {
-              "$type": "RuleCall",
-              "rule": {
-                "$ref": "#/rules@8"
-              },
-              "arguments": []
-            }
-          },
-          {
-            "$type": "Group",
-            "elements": [
-              {
-                "$type": "RuleCall",
-                "rule": {
-                  "$ref": "#/rules@13"
-                },
-                "arguments": []
-              },
-              {
-                "$type": "Assignment",
-                "feature": "guards",
-                "operator": "+=",
-                "terminal": {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@8"
-                  },
-                  "arguments": []
-                }
-              }
-            ],
-            "cardinality": "*"
-          }
-        ]
-      },
-      "entry": false,
-      "fragment": false,
-      "parameters": []
-    },
-    {
-      "$type": "TerminalRule",
-      "name": "AllOP",
-      "definition": {
-        "$type": "TerminalAlternatives",
-        "elements": [
-          {
-            "$type": "TerminalGroup",
-            "elements": [
-              {
-                "$type": "CharacterRange",
-                "left": {
-                  "$type": "Keyword",
-                  "value": " "
-                },
-                "parenthesized": false,
-                "cardinality": "?"
-              },
-              {
-                "$type": "TerminalRuleCall",
-                "rule": {
-                  "$ref": "#/rules@13"
-                },
-                "parenthesized": false
-              }
-            ],
-            "parenthesized": false
-          },
-          {
-            "$type": "TerminalGroup",
-            "elements": [
-              {
-                "$type": "TerminalRuleCall",
-                "rule": {
-                  "$ref": "#/rules@14"
-                },
-                "parenthesized": false
-              },
-              {
-                "$type": "CharacterRange",
-                "left": {
-                  "$type": "Keyword",
-                  "value": " "
-                },
-                "parenthesized": false,
-                "cardinality": "?"
-              }
-            ],
-            "parenthesized": false
-          }
-        ],
-        "parenthesized": false
-      },
-      "fragment": false,
-      "hidden": false
-    },
-    {
-      "$type": "TerminalRule",
-      "name": "BooleanOP",
-      "definition": {
-        "$type": "TerminalAlternatives",
-        "elements": [
-          {
-            "$type": "TerminalAlternatives",
-            "elements": [
-              {
-                "$type": "TerminalAlternatives",
-                "elements": [
-                  {
-                    "$type": "TerminalAlternatives",
-                    "elements": [
-                      {
-                        "$type": "TerminalAlternatives",
-                        "elements": [
-                          {
-                            "$type": "TerminalAlternatives",
-                            "elements": [
-                              {
-                                "$type": "CharacterRange",
-                                "left": {
-                                  "$type": "Keyword",
-                                  "value": "&&"
-                                },
-                                "parenthesized": false
-                              },
-                              {
-                                "$type": "CharacterRange",
-                                "left": {
-                                  "$type": "Keyword",
-                                  "value": "||"
-                                },
-                                "parenthesized": false
-                              }
-                            ],
-                            "parenthesized": false
-                          },
-                          {
-                            "$type": "CharacterRange",
-                            "left": {
-                              "$type": "Keyword",
-                              "value": "=="
-                            },
-                            "parenthesized": false
-                          }
-                        ],
-                        "parenthesized": false
-                      },
-                      {
-                        "$type": "CharacterRange",
-                        "left": {
-                          "$type": "Keyword",
-                          "value": ">="
-                        },
-                        "parenthesized": false
-                      }
-                    ],
-                    "parenthesized": false
-                  },
-                  {
-                    "$type": "CharacterRange",
-                    "left": {
-                      "$type": "Keyword",
-                      "value": ">"
-                    },
-                    "parenthesized": false
-                  }
-                ],
-                "parenthesized": false
-              },
-              {
-                "$type": "CharacterRange",
-                "left": {
-                  "$type": "Keyword",
-                  "value": "<="
-                },
-                "parenthesized": false
-              }
-            ],
-            "parenthesized": false
-          },
-          {
-            "$type": "CharacterRange",
-            "left": {
-              "$type": "Keyword",
-              "value": "<"
-            },
-            "parenthesized": false
-          }
-        ],
-        "parenthesized": false
-      },
-      "fragment": false,
-      "hidden": false
-    },
-    {
-      "$type": "TerminalRule",
-      "name": "OP",
-      "definition": {
-        "$type": "TerminalAlternatives",
-        "elements": [
-          {
-            "$type": "TerminalAlternatives",
-            "elements": [
-              {
-                "$type": "TerminalAlternatives",
-                "elements": [
-                  {
-                    "$type": "TerminalAlternatives",
-                    "elements": [
-                      {
-                        "$type": "TerminalAlternatives",
-                        "elements": [
-                          {
-                            "$type": "TerminalAlternatives",
-                            "elements": [
-                              {
-                                "$type": "TerminalAlternatives",
-                                "elements": [
-                                  {
-                                    "$type": "TerminalAlternatives",
-                                    "elements": [
-                                      {
-                                        "$type": "TerminalAlternatives",
-                                        "elements": [
-                                          {
-                                            "$type": "TerminalAlternatives",
-                                            "elements": [
-                                              {
-                                                "$type": "CharacterRange",
-                                                "left": {
-                                                  "$type": "Keyword",
-                                                  "value": "--"
-                                                },
-                                                "parenthesized": false
-                                              },
-                                              {
-                                                "$type": "CharacterRange",
-                                                "left": {
-                                                  "$type": "Keyword",
-                                                  "value": "++"
-                                                },
-                                                "parenthesized": false
-                                              }
-                                            ],
-                                            "parenthesized": false
-                                          },
-                                          {
-                                            "$type": "CharacterRange",
-                                            "left": {
-                                              "$type": "Keyword",
-                                              "value": "+="
-                                            },
-                                            "parenthesized": false
-                                          }
-                                        ],
-                                        "parenthesized": false
-                                      },
-                                      {
-                                        "$type": "CharacterRange",
-                                        "left": {
-                                          "$type": "Keyword",
-                                          "value": "-="
-                                        },
-                                        "parenthesized": false
-                                      }
-                                    ],
-                                    "parenthesized": false
-                                  },
-                                  {
-                                    "$type": "CharacterRange",
-                                    "left": {
-                                      "$type": "Keyword",
-                                      "value": "*="
-                                    },
-                                    "parenthesized": false
-                                  }
-                                ],
-                                "parenthesized": false
-                              },
-                              {
-                                "$type": "CharacterRange",
-                                "left": {
-                                  "$type": "Keyword",
-                                  "value": "/="
-                                },
-                                "parenthesized": false
-                              }
-                            ],
-                            "parenthesized": false
-                          },
-                          {
-                            "$type": "CharacterRange",
-                            "left": {
-                              "$type": "Keyword",
-                              "value": "+"
-                            },
-                            "parenthesized": false
-                          }
-                        ],
-                        "parenthesized": false
-                      },
-                      {
-                        "$type": "CharacterRange",
-                        "left": {
-                          "$type": "Keyword",
-                          "value": "-"
-                        },
-                        "parenthesized": false
-                      }
-                    ],
-                    "parenthesized": false
-                  },
-                  {
-                    "$type": "CharacterRange",
-                    "left": {
-                      "$type": "Keyword",
-                      "value": "*"
-                    },
-                    "parenthesized": false
-                  }
-                ],
-                "parenthesized": false
-              },
-              {
-                "$type": "CharacterRange",
-                "left": {
-                  "$type": "Keyword",
-                  "value": "/"
-                },
-                "parenthesized": false
-              }
-            ],
-            "parenthesized": false
-          },
-          {
-            "$type": "CharacterRange",
-            "left": {
-              "$type": "Keyword",
-              "value": "="
-            },
-            "parenthesized": false
-          }
-        ],
-        "parenthesized": false
-      },
-      "fragment": false,
-      "hidden": false
-    },
-    {
       "$type": "TerminalRule",
       "name": "VarType",
       "definition": {
@@ -1162,6 +620,21 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
     },
     {
       "$type": "TerminalRule",
+      "name": "ExpressionString",
+      "type": {
+        "$type": "ReturnType",
+        "name": "string"
+      },
+      "definition": {
+        "$type": "RegexToken",
+        "regex": "/\\\\#([^\\\\#\\\\#]*)\\\\#/",
+        "parenthesized": false
+      },
+      "fragment": false,
+      "hidden": false
+    },
+    {
+      "$type": "TerminalRule",
       "name": "Literal",
       "definition": {
         "$type": "TerminalAlternatives",
@@ -1175,14 +648,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                   {
                     "$type": "TerminalRuleCall",
                     "rule": {
-                      "$ref": "#/rules@17"
+                      "$ref": "#/rules@11"
                     },
                     "parenthesized": false
                   },
                   {
                     "$type": "TerminalRuleCall",
                     "rule": {
-                      "$ref": "#/rules@18"
+                      "$ref": "#/rules@12"
                     },
                     "parenthesized": false
                   }
@@ -1192,7 +665,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
               {
                 "$type": "TerminalRuleCall",
                 "rule": {
-                  "$ref": "#/rules@19"
+                  "$ref": "#/rules@13"
                 },
                 "parenthesized": false
               }
@@ -1202,7 +675,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
           {
             "$type": "TerminalRuleCall",
             "rule": {
-              "$ref": "#/rules@20"
+              "$ref": "#/rules@14"
             },
             "parenthesized": false
           }

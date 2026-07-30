@@ -31,10 +31,10 @@ Element:
 terminal VarType : 'bool' | 'int' | 'float';
 
 // We need to do some preprocessing
-// add a # after ever if and do and before every go/join/abort and do 
+// add a # after ever if and do and before every go/join/abort and do
 // and then with actions that dont have a go to at the end of the line.
 // I hate langium or maybe I am too stupid to figure out how parse stuff like this with it...
-terminal ExpressionString returns string: /\<([^\<\>]*)\>/;
+terminal ExpressionString returns string: /\#([^\#\#]*)\#/;
 
 terminal Literal: BOOL | FLOAT | INT | STRING;
 terminal BOOL: 'true'|'false';
@@ -48,5 +48,3 @@ hidden terminal WS: /\s+/;
 
 hidden terminal ML_COMMENT: /\/\*[\s\S]*?\*\//;
 hidden terminal SL_COMMENT: /\/\/[^\n\r]*/;
-
-

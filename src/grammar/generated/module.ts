@@ -3,22 +3,16 @@
  * DO NOT EDIT MANUALLY!
  ******************************************************************************/
 
-import type { LangiumSharedCoreServices, LangiumCoreServices, LangiumGeneratedCoreServices, LangiumGeneratedSharedCoreServices, LanguageMetaData, Module, IParserConfig } from 'langium';
+import type { LangiumSharedCoreServices, LangiumCoreServices, LangiumGeneratedCoreServices, LangiumGeneratedSharedCoreServices, LanguageMetaData, Module } from 'langium';
 import { SCChartsAstReflection } from './ast.js';
 import { SCChartGrammar } from './grammar.js';
 
 export const SCChartLanguageMetaData = {
     languageId: 'sccharts',
-    fileExtensions: ['.scchart'],
+    fileExtensions: ['.sctx'],
     caseInsensitive: false,
     mode: 'development'
 } as const satisfies LanguageMetaData;
-
-export const parserConfig: IParserConfig = {
-    recoveryEnabled: true,
-    nodeLocationTracking: 'full',
-    maxLookahead: 3,
-};
 
 export const SCChartsGeneratedSharedModule: Module<LangiumSharedCoreServices, LangiumGeneratedSharedCoreServices> = {
     AstReflection: () => new SCChartsAstReflection()
@@ -27,7 +21,5 @@ export const SCChartsGeneratedSharedModule: Module<LangiumSharedCoreServices, La
 export const SCChartGeneratedModule: Module<LangiumCoreServices, LangiumGeneratedCoreServices> = {
     Grammar: () => SCChartGrammar(),
     LanguageMetaData: () => SCChartLanguageMetaData,
-    parser: {
-        ParserConfig: () => parserConfig
-    }
+    parser: {}
 };

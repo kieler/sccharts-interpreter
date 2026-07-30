@@ -15,7 +15,8 @@
 		"web-build": "vite build",
 		"api": "node dist/api_server.js",
 		"test": "sh ./testing/run_test.sh",
-		"generate-lang": "langium generate"
+		"generate-lang": "langium generate",
+		"convert-sctx": "node dist/sctx_converter.js"
 	},
 	"dependencies": {
 		"@types/cors": "^2.8.19",
