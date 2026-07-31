@@ -7,7 +7,7 @@ entry SCTX:
 
 
 State:
-    isConnector?='connector'? type=('final'|'initial')? 'state' name=ID ('{' (actions+=Action)* (elements+=Element)* '}')?;
+    isConnector?='connector'? type=('final'|'initial')? 'state' name=ID ('{' (actions+=Action)* (elements+=Element)* '}')? (transitions+=Transition)*;
 
 Variable:
     isInput?='input'? isOutput?='output'? type=VarType (assignments+=VariableAssignment ','?)*;
@@ -24,9 +24,8 @@ Action:
 Region:
     'region' name=ID? ('{' (elements+=Element)* '}')?;
 
-
 Element:
-    State | Variable |Transition | Region;
+    State | Variable | Region;
 
 terminal VarType : 'bool' | 'int' | 'float';
 

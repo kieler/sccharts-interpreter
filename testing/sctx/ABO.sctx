@@ -21,8 +21,7 @@ scchart ABO {
     }
 
   }
-  do O1 = false; O2 = true
-  join to GotAB
+  do O1 = false; O2 = true join to GotAB
 
   final state GotAB
-  }
+}

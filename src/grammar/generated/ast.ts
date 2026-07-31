@@ -66,7 +66,7 @@ export function isAction(item: unknown): item is Action {
     return reflection.isInstance(item, Action.$type);
 }
 
-export type Element = Region | State | Transition | Variable;
+export type Element = Region | State | Variable;
 
 export const Element = {
     $type: 'Element'
@@ -116,6 +116,7 @@ export interface State extends langium.AstNode {
     elements: Array<Element>;
     isConnector: boolean;
     name: string;
+    transitions: Array<Transition>;
     type?: 'final' | 'initial';
 }
 
@@ -125,6 +126,7 @@ export const State = {
     elements: 'elements',
     isConnector: 'isConnector',
     name: 'name',
+    transitions: 'transitions',
     type: 'type'
 } as const;
 
@@ -133,7 +135,7 @@ export function isState(item: unknown): item is State {
 }
 
 export interface Transition extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: State;
     readonly $type: 'Transition';
     action?: string;
     guard?: string;
@@ -285,6 +287,11 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                 name: {
                     name: State.name
                 },
+                transitions: {
+                    name: State.transitions,
+                    defaultValue: [],
+                    optional: true
+                },
                 type: {
                     name: State.type,
                     optional: true
@@ -321,7 +328,7 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     name: Transition.type
                 }
             },
-            superTypes: [Element.$type]
+            superTypes: []
         },
         Variable: {
             name: Variable.$type,
