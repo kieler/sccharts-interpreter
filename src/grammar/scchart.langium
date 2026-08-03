@@ -1,3 +1,5 @@
+// TODO: reference charts
+
 grammar SCChart
 
 entry SCTX:
@@ -22,12 +24,12 @@ Action:
     isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=ExpressionString)?  ('do' action=ExpressionString) ;
 
 Region:
-    'region' name=ID? ('{' (elements+=Element)* '}')?;
+    'region' name=(ID|STRING)? ('{' (elements+=Element)* '}')?;
 
 Element:
     State | Variable | Region;
 
-terminal VarType : 'bool' | 'int' | 'float';
+terminal VarType : 'bool' | 'int' | 'float' | 'string';
 
 // We need to do some preprocessing
 // add a # after ever if and do and before every go/join/abort and do

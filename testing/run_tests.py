@@ -22,17 +22,25 @@ def main() -> None:
         action="store_true",
         help="Always recompile the JSON and EXE",
     )
-    args = parser.parse_args()
+    args, extra = parser.parse_known_args()
 
     if args.reset:
         os.environ["FORCE_RESET"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 
+    test_paths = []
+    pytest_extra = ["-v"]
+
+    # Pass through --langium and --no-ktraces as-is for conftest to pick up
+    if "--langium" in extra:
+        pytest_extra.append("--langium")
+    if "--no-ktraces" in extra:
+        pytest_extra.append("--no-ktraces")
+
     if "all" in args.tests:
         test_paths = ["tests/"]
     else:
-        test_paths = []
         for name in args.tests:
             matches = sorted(tests_dir.glob(f"*{name}*.py"))
             if not matches:
@@ -40,7 +48,7 @@ def main() -> None:
                 sys.exit(1)
             test_paths.extend(str(m) for m in matches)
 
-    sys.exit(pytest.main(["-v", *test_paths]))
+    sys.exit(pytest.main([*pytest_extra, *test_paths]))
 
 
 if __name__ == "__main__":

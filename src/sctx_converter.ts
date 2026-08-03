@@ -1,5 +1,7 @@
 // TODO: look this over! it works for now, but a lot of AI coding, so I should check
 
+// TODO: reference charts
+
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { EmptyFileSystem, LangiumSharedCoreServices } from "langium";
@@ -36,6 +38,9 @@ export function preProcess(model: string): string {
   const model_split = model.split("\n");
 
   for (let i = 0; i < model_split.length; i++) {
+    if (model_split[i].trim().startsWith("#")) {
+      model_split[i] = "";
+    }
     model_split[i] = model_split[i].replace("if ", "if#");
     model_split[i] = model_split[i].replace("do ", "do#");
     if (model_split[i].includes("if ") && model_split[i].includes("do ")) {

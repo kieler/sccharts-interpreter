@@ -13,6 +13,10 @@ PROJECT_ROOT = BASE_DIR.parent
 CONFIG_FILE = PROJECT_ROOT / "kico_config.json"
 
 
+def _get_langium_mode() -> bool:
+    return os.environ.get("USE_LANGIUM", "false").lower() == "true"
+
+
 def get_java_jar_path() -> str:
     """Read the configured Java JAR path from kico_config.json."""
     if not CONFIG_FILE.exists():
@@ -27,22 +31,49 @@ def get_java_jar_path() -> str:
 
 
 def load_model_name(name: str) -> list[dict[str, Any]]:
-    json_path = BASE_DIR / "json" / f"{name}.json"
+    if _get_langium_mode():
+        json_path = BASE_DIR / "json" / f"langium_{name}.json"
+    else:
+        json_path = BASE_DIR / "json" / f"{name}.json"
 
     return load_model(json_path, "sctx")
 
 
+def _resolve_sctx(path: Path, sctx_dir: str) -> Path:
+    """Derive the .sctx file path from a JSON cache file path."""
+    stem = path.stem
+    # Strip langium_ prefix if present
+    base_stem = stem[len("langium_"):] if stem.startswith("langium_") else stem
+
+    if sctx_dir:
+        return path.parent.parent / sctx_dir / f"{base_stem}.sctx"
+    else:
+        return path.parent / f"{base_stem}.sctx"
+
+
+def _derive_json_path(sctx_path: Path, langium_mode: bool) -> Path:
+    """Derive the expected JSON cache path next to the .sctx file."""
+    stem = sctx_path.stem
+    if langium_mode:
+        json_name = f"langium_{stem}.json"
+    else:
+        json_name = f"{stem}.json"
+    return sctx_path.parent / json_name
+
+
 def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
+    langium_mode = _get_langium_mode()
+
     if not os.environ.get("FORCE_RESET") and path.exists():
         with open(path) as f:
             return json.load(f)
 
-    if sctx_dir != "":
-        sctx_path = path.parent.parent / sctx_dir / f"{path.stem}.sctx"
-    else:
-        sctx_path = path.parent / f"{path.stem}.sctx"
+    sctx_path = _resolve_sctx(path, sctx_dir)
 
-    compile_sctx_to_json(sctx_path, path)
+    if langium_mode:
+        compile_sctx_to_langium(sctx_path, path)  # caches as langium_<stem>.json next to sctx
+    else:
+        compile_sctx_to_json(sctx_path, path)
 
     with open(path) as f:
         return json.load(f)
@@ -76,13 +107,39 @@ def compile_sctx_to_json(sctx_path: Path, output_path: Path | None = None):
         )
 
 
+def compile_sctx_to_langium(sctx_path: Path, output_path: Path | None = None):
+    if output_path is not None:
+        out_path = output_path
+    else:
+        out_path = _derive_json_path(sctx_path, langium_mode=True)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    result = subprocess.run(
+        [
+            "npm",
+            "run",
+            "convert-sctx",
+            str(sctx_path),
+            str(out_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Failed to compile {sctx_path} using langium converter:\n{result.stderr}"
+        )
+
+
 class TestRunner:
     __test__ = False
 
     def __init__(self, name: str, path: Path | None = None):
         self.name = name
         if path is not None:
-            self.model = load_model(path)
+            json_path = path  # e.g. BindingShadowsLocalExpanded.json or langium_BindingShadowsLocalExpanded.json
+            self.model = load_model(json_path)
         else:
             self.model = load_model_name(name)
 
@@ -94,9 +151,11 @@ class TestRunner:
         )
 
         if resp.status_code == 500 and resp.json()["reference"]:
-            compile_sctx_to_json(
-                Path(resp.json()["reference"][5:])
-            )  # string starts with file:
+            sctx_ref = Path(resp.json()["reference"][5:])
+            if _get_langium_mode():
+                compile_sctx_to_langium(sctx_ref)
+            else:
+                compile_sctx_to_json(sctx_ref)
 
             resp2 = requests.post(
                 f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}

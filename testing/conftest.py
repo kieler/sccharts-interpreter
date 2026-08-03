@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 
+import pytest
+
 from model_test_blocklist import blocked_dirs, blocklist
 
 BASE_DIR = Path(__file__).resolve()
@@ -15,33 +17,58 @@ with open(CONFIG_FILE) as f:
 MODEL_PATH = Path(config.get("model_path", ""))
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--langium",
+        action="store_true",
+        default=False,
+        help="Use langium-based converter instead of KiCo JSON compiler",
+    )
+    parser.addoption(
+        "--no-ktraces",
+        action="store_true",
+        default=False,
+        help="Skip ktrace tests",
+    )
+
+
+def pytest_configure(config):
+    os.environ["USE_LANGIUM"] = str(config.getoption("--langium")).lower()
+
+
 def pytest_generate_tests(metafunc):
     if "test_model" not in metafunc.fixturenames:
         return
 
-    model_trace = []
+    # Skip ktrace tests if --no-ktraces is set
+    no_ktraces = metafunc.config.getoption("--no-ktraces")
+    if no_ktraces:
+        model_trace = []
+        ids = []
+    else:
+        model_trace = []
 
-    ktraces = [f.resolve() for f in MODEL_PATH.glob("**/*.ktrace")]
-    for ktrace in ktraces:
-        if ktrace.name in blocklist:
-            continue
-        elif (
-            os.path.relpath(ktrace.parent, MODEL_PATH) in blocked_dirs
-            or os.path.relpath(ktrace.parent.parent, MODEL_PATH) in blocked_dirs
-            or os.path.relpath(ktrace.parent.parent.parent, MODEL_PATH) in blocked_dirs
-        ):
-            continue
+        ktraces = [f.resolve() for f in MODEL_PATH.glob("**/*.ktrace")]
+        for ktrace in ktraces:
+            if ktrace.name in blocklist or (
+                os.path.relpath(ktrace.parent, MODEL_PATH) in blocked_dirs
+                or os.path.relpath(ktrace.parent.parent, MODEL_PATH) in blocked_dirs
+                or os.path.relpath(ktrace.parent.parent.parent, MODEL_PATH)
+                in blocked_dirs
+            ):
+                continue
 
-        name = str(ktrace)[:-7]
+            name = str(ktrace)[:-7]
 
-        # For stuff where we have a model.sctx and model.1.ktrace or model-a.ktrace
-        if name[-2] == "." or name[-2] == "-":
-            name = name[:-2]
+            # For stuff where we have a model.sctx and model.1.ktrace or model-a.ktrace
+            if name[-2] == "." or name[-2] == "-":
+                name = name[:-2]
 
-        model = Path(name + ".sctx")
+            model = Path(name + ".sctx")
 
-        if model.exists():
-            model_trace.append((model, ktrace))
+            if model.exists():
+                model_trace.append((model, ktrace))
 
-    ids = [os.path.relpath(f[1], MODEL_PATH) for f in model_trace]
+        ids = [os.path.relpath(f[1], MODEL_PATH) for f in model_trace]
+
     metafunc.parametrize("test_model", model_trace, ids=ids)
