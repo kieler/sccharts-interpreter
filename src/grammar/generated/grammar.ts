@@ -210,8 +210,24 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             }
           },
           {
+            "$type": "Assignment",
+            "feature": "assignments",
+            "operator": "+=",
+            "terminal": {
+              "$type": "RuleCall",
+              "rule": {
+                "$ref": "#/rules@3"
+              },
+              "arguments": []
+            }
+          },
+          {
             "$type": "Group",
             "elements": [
+              {
+                "$type": "Keyword",
+                "value": ","
+              },
               {
                 "$type": "Assignment",
                 "feature": "assignments",
@@ -223,11 +239,6 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                   },
                   "arguments": []
                 }
-              },
-              {
-                "$type": "Keyword",
-                "value": ",",
-                "cardinality": "?"
               }
             ],
             "cardinality": "*"
@@ -270,7 +281,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@9"
                   },
                   "arguments": []
                 }

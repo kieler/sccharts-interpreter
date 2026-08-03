@@ -1,6 +1,6 @@
 // TODO: look this over! it works for now, but a lot of AI coding, so I should check
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 import { EmptyFileSystem, LangiumSharedCoreServices } from "langium";
 import { parseHelper } from "langium/test";
@@ -23,13 +23,13 @@ import {
   SCChartModel,
 } from "./schema/types.js";
 
-const filePath = process.argv[2];
-
 function usage_error() {
-  console.error("Usage: npm run convert-sctx <path-to-model.sctx>");
+  console.error(
+    "Usage: npm run convert-sctx <input_path.sctx> [output_path.json]",
+  );
 }
 
-function preProcess(model: string): string {
+export function preProcess(model: string): string {
   // Adds the # needed for the grammar regex, so the expressions can get parsed
   // TODO: if there is a better way to parse the expressions, do that
   // have i mentioned that i strongly dislike langium
@@ -40,6 +40,11 @@ function preProcess(model: string): string {
     model_split[i] = model_split[i].replace("do ", "do#");
     if (model_split[i].includes("if ") && model_split[i].includes("do ")) {
       model_split[i] = model_split[i].replace("do ", "#do");
+    } else if (
+      model_split[i].includes("if#") &&
+      model_split[i].includes("do#")
+    ) {
+      model_split[i] = model_split[i].replace("do#", "#do#");
     }
     if (
       model_split[i].includes("do#") ||
@@ -55,40 +60,21 @@ function preProcess(model: string): string {
         model_split[i] += "#";
       }
     }
+
+    // Variable Assignment ExpressionString
+    if (
+      model_split[i].includes("=") &&
+      (model_split[i].includes("int") ||
+        model_split[i].includes("float") ||
+        model_split[i].includes("bool"))
+    ) {
+      model_split[i] = model_split[i].replaceAll("=", "=#");
+      model_split[i] = model_split[i].replaceAll(",", "#,");
+      model_split[i] += "#";
+    }
   }
 
   return model_split.join("\n");
-}
-
-if (!filePath) {
-  usage_error();
-  process.exit(1);
-}
-
-let model: string;
-try {
-  model = readFileSync(filePath, "utf-8");
-} catch (err) {
-  const e = err as Error;
-  console.error(`Failed to read/parse file: ${e.message}`);
-  process.exit(1);
-}
-
-model = preProcess(model);
-
-const services = createSCChartsServices(EmptyFileSystem);
-const parse = parseHelper<SCTX>(services.SCCharts);
-const document = await parse(model, { validation: true });
-
-if (document.parseResult.lexerErrors.length > 0) {
-  console.error(model);
-  console.error("Lexer errors occurred", document.parseResult.lexerErrors);
-  throw new Error("Lexer errors occurred");
-}
-if (document.parseResult.parserErrors.length > 0) {
-  console.error(model);
-  console.error("Parser errors occurred", document.parseResult.parserErrors);
-  throw new Error("Parser errors occurred");
 }
 
 export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
@@ -166,99 +152,16 @@ function convertVariablesToSchema(
     };
 
     if (assignment.initialValue !== undefined) {
-      varEntry.initialValue = assignment.initialValue;
+      varEntry.initialValue = assignment.initialValue
+        .replaceAll("#", "")
+        .trim();
     }
 
     target.push(varEntry);
   }
 }
 
-function processElementList(
-  elements: Element[],
-  counter: { val: number },
-): State[] {
-  const result: State[] = [];
-
-  for (const element of elements) {
-    if (element.$type === "State") {
-      const schemaState = convertAstStateToSchema(element, counter);
-      result.push(schemaState);
-    } else if (element.$type === "Region") {
-      // Top-level region becomes a wrapper state
-      const regionName = element.name || `_regionR${counter.val++}`;
-      const innerStates: State[] = [];
-
-      for (const el of element.elements) {
-        if (el.$type === "State") {
-          innerStates.push(convertAstStateToSchema(el, counter));
-        } else if (el.$type === "Variable") {
-          // Variables in a top-level region attached to a dummy state
-          const varEntry: Variable = {
-            id: el.assignments[0].name,
-            type: el.type,
-            isInput: el.isInput,
-            isOutput: el.isOutput,
-          };
-          if (el.assignments[0].initialValue !== undefined) {
-            varEntry.initialValue = el.assignments[0].initialValue;
-          }
-          innerStates.push({
-            id: `${regionName}_varholder`,
-            label: "",
-            actions: [],
-            transitions: [],
-            variables: [varEntry],
-            isInitial: false,
-            isFinal: false,
-            isConnector: false,
-            regions: [],
-          });
-        } else if (el.$type === "Region") {
-          const nestedRegion = convertAstRegionToSchema(el, counter);
-          innerStates.push({
-            id: el.name || `_regionR${counter.val++}`,
-            label: "",
-            actions: [],
-            transitions: [],
-            variables: [],
-            isInitial: false,
-            isFinal: false,
-            isConnector: false,
-            regions: [nestedRegion],
-          });
-        }
-      }
-
-      result.push({
-        id: regionName,
-        label: regionName,
-        actions: [],
-        transitions: [],
-        variables: [],
-        isInitial: false,
-        isFinal: false,
-        isConnector: false,
-        regions: [
-          innerStates.length === 1
-            ? {
-                id: `${regionName}_container`,
-                label: regionName,
-                states: innerStates,
-              }
-            : {
-                id: `${regionName}_container`,
-                label: regionName,
-                states: innerStates,
-              },
-        ],
-      });
-    }
-  }
-
-  return result;
-}
-
-function convertAstStateToSchema(
+export function convertAstStateToSchema(
   astState: AstState,
   counter: { val: number },
 ): State {
@@ -451,23 +354,53 @@ function convertTransition(transition: AstTransition): Transition {
 
   if (transition.action !== undefined) {
     tr.action = transition.action.replaceAll("#", "").trim();
+  } else {
+    tr.action = "";
   }
 
   return tr;
 }
 
-if (filePath) {
-  const modelStr = preProcess(readFileSync(filePath, "utf-8"));
-  const doc = await parse(modelStr, { validation: true });
+const inputFilePath = process.argv[2];
+const ourputFilePath = process.argv[3];
 
-  if (
-    doc.parseResult.lexerErrors.length > 0 ||
-    doc.parseResult.parserErrors.length > 0
-  ) {
-    console.error("Parsing errors");
-    process.exit(1);
-  }
+if (!inputFilePath) {
+  usage_error();
+  process.exit(1);
+}
 
-  const result = convertSCTXtoSchema(doc.parseResult.value);
+let model: string;
+try {
+  model = readFileSync(inputFilePath, "utf-8");
+} catch (err) {
+  const e = err as Error;
+  console.error(`Failed to read/parse file: ${e.message}`);
+  process.exit(1);
+}
+
+model = preProcess(model);
+
+const services = createSCChartsServices(EmptyFileSystem);
+const parse = parseHelper<SCTX>(services.SCCharts);
+const document = await parse(model, { validation: true });
+
+if (
+  document.parseResult.lexerErrors.length > 0 ||
+  document.parseResult.parserErrors.length > 0
+) {
+  console.error(model);
+  console.error(
+    "Errors:",
+    document.parseResult.lexerErrors,
+    document.parseResult.parserErrors,
+  );
+  throw new Error("Lexer or Parser errors occurred");
+}
+
+const result = convertSCTXtoSchema(document.parseResult.value);
+
+if (ourputFilePath) {
+  writeFileSync(ourputFilePath, JSON.stringify(result, null, 2));
+} else {
   console.log(JSON.stringify(result, null, 2));
 }

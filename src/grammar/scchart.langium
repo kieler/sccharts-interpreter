@@ -10,10 +10,10 @@ State:
     isConnector?='connector'? type=('final'|'initial')? 'state' name=ID ('{' (actions+=Action)* (elements+=Element)* '}')? (transitions+=Transition)*;
 
 Variable:
-    isInput?='input'? isOutput?='output'? type=VarType (assignments+=VariableAssignment ','?)*;
+    isInput?='input'? isOutput?='output'? type=VarType assignments+=VariableAssignment (',' assignments+=VariableAssignment)*;
 
 VariableAssignment:
-    name=ID ('=' initialValue=Literal)?;
+    name=ID ('=' initialValue=ExpressionString)?;
 
 Transition:
     isImmediate?='immediate'? ('if' guard=ExpressionString)? ('do' action=ExpressionString)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;

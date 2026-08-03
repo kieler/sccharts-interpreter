@@ -9,7 +9,6 @@ import * as langium from 'langium';
 export const SCChartsTerminals = {
     VarType: /bool|int|float/,
     ExpressionString: /\#([^\#\#]*)\#/,
-    Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)|(?:"[^"]*"|'[^']*')/,
     ID: /[_a-zA-Z0-9][\w_]*/,
     WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,
@@ -335,8 +334,7 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
             properties: {
                 assignments: {
                     name: Variable.assignments,
-                    defaultValue: [],
-                    optional: true
+                    defaultValue: []
                 },
                 isInput: {
                     name: Variable.isInput,
