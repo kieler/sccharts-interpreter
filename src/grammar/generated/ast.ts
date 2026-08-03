@@ -10,7 +10,7 @@ export const SCChartsTerminals = {
     VarType: /bool|int|float|string/,
     ExpressionString: /\#([^\#\#]*)\#/,
     STRING: /"[^"]*"|'[^']*'/,
-    ID: /[_a-zA-Z0-9][\w_]*/,
+    ID: /[_a-zA-Z0-9][\w]*/,
     WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,
     SL_COMMENT: /\/\/[^\n\r]*/,

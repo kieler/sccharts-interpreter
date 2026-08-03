@@ -38,7 +38,12 @@ export function preProcess(model: string): string {
   const model_split = model.split("\n");
 
   for (let i = 0; i < model_split.length; i++) {
-    if (model_split[i].trim().startsWith("#")) {
+    model_split[i] = model_split[i].replace("^", "");
+
+    if (
+      model_split[i].trim().startsWith("#") ||
+      model_split[i].trim().startsWith("@")
+    ) {
       model_split[i] = "";
     }
     model_split[i] = model_split[i].replace("if ", "if#");
@@ -106,28 +111,31 @@ export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
   }
 
   // Convert all top-level states
-  const wrapperRegionStates: State[] = [];
+  const topLevelWrapperStates: State[] = [];
   for (const astState of topLevelAstStates) {
-    wrapperRegionStates.push(convertAstStateToSchema(astState, counter));
+    topLevelWrapperStates.push(convertAstStateToSchema(astState, counter));
   }
 
-  // Add explicit top-level regions as sub-states in the root's regions list
+  // Collect explicit top-level regions
+  const topLevelSchemaRegions: Region[] = [];
   for (const astRegion of topLevelAstRegions) {
     const schemaRegion = convertAstRegionToSchema(astRegion, counter);
-    wrapperRegionStates.push({
-      id: schemaRegion.id,
-      label: schemaRegion.label || schemaRegion.id,
-      actions: [],
-      transitions: [],
-      variables: [],
-      isInitial: false,
-      isFinal: false,
-      isConnector: false,
-      regions: [],
-    });
+    if (topLevelAstStates.length > 0) {
+      topLevelWrapperStates.push({
+        id: schemaRegion.id,
+        label: schemaRegion.label || schemaRegion.id,
+        actions: [],
+        transitions: [],
+        variables: [],
+        isInitial: false,
+        isFinal: false,
+        isConnector: false,
+        regions: [schemaRegion],
+      });
+    } else {
+      topLevelSchemaRegions.push(schemaRegion);
+    }
   }
-
-  const dummyRootRegionName = `_regionR${counter.val++}`;
 
   const rootState: State = {
     id: parsed.name,
@@ -138,13 +146,17 @@ export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
     isInitial: false,
     isFinal: false,
     isConnector: false,
-    regions: [
-      {
-        id: dummyRootRegionName,
-        label: dummyRootRegionName,
-        states: wrapperRegionStates.length > 0 ? wrapperRegionStates : [],
-      },
-    ],
+    regions:
+      topLevelAstStates.length > 0
+        ? [
+            {
+              id: `_regionR${counter.val++}`,
+              label: `_regionR${counter.val - 1}`,
+              states:
+                topLevelWrapperStates.length > 0 ? topLevelWrapperStates : [],
+            },
+          ]
+        : topLevelSchemaRegions,
   };
 
   return [rootState];

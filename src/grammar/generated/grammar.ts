@@ -36,6 +36,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             }
           },
           {
+            "$type": "RuleCall",
+            "rule": {
+              "$ref": "#/rules@14"
+            },
+            "arguments": [],
+            "cardinality": "?"
+          },
+          {
             "$type": "Keyword",
             "value": "{"
           },
@@ -806,7 +814,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
       },
       "definition": {
         "$type": "RegexToken",
-        "regex": "/[_a-zA-Z0-9][\\\\w_]*/",
+        "regex": "/[_a-zA-Z0-9][\\\\w]*/",
         "parenthesized": false
       },
       "fragment": false,

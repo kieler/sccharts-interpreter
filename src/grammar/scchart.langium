@@ -3,7 +3,7 @@
 grammar SCChart
 
 entry SCTX:
-  'scchart' name=ID '{'
+  'scchart' name=ID STRING? '{'
    (elements+=Element)*
   '}';
 
@@ -43,7 +43,7 @@ terminal FLOAT returns number: /[0-9]+\.[0-9]+/;
 terminal INT returns number: /[0-9]+/;
 terminal STRING: /"[^"]*"|'[^']*'/;
 
-terminal ID returns string: /[_a-zA-Z0-9][\w_]*/;
+terminal ID returns string: /[_a-zA-Z0-9][\w]*/;
 
 hidden terminal WS: /\s+/;
 
