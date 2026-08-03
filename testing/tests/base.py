@@ -43,7 +43,7 @@ def _resolve_sctx(path: Path, sctx_dir: str) -> Path:
     """Derive the .sctx file path from a JSON cache file path."""
     stem = path.stem
     # Strip langium_ prefix if present
-    base_stem = stem[len("langium_"):] if stem.startswith("langium_") else stem
+    base_stem = stem[len("langium_") :] if stem.startswith("langium_") else stem
 
     if sctx_dir:
         return path.parent.parent / sctx_dir / f"{base_stem}.sctx"
@@ -64,14 +64,14 @@ def _derive_json_path(sctx_path: Path, langium_mode: bool) -> Path:
 def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
     langium_mode = _get_langium_mode()
 
-    if not os.environ.get("FORCE_RESET") and path.exists():
+    if (not os.environ.get("FORCE_RESET") and not os.environ.get("FORCE_RESET_JSON")) and path.exists():
         with open(path) as f:
             return json.load(f)
 
     sctx_path = _resolve_sctx(path, sctx_dir)
 
     if langium_mode:
-        compile_sctx_to_langium(sctx_path, path)  # caches as langium_<stem>.json next to sctx
+        compile_sctx_to_langium(sctx_path, path)
     else:
         compile_sctx_to_json(sctx_path, path)
 
@@ -98,6 +98,7 @@ def compile_sctx_to_json(sctx_path: Path, output_path: Path | None = None):
             else output_path.with_suffix(".json"),
             str(sctx_path),
         ],
+        check=False,
         capture_output=True,
         text=True,
     )
@@ -123,6 +124,7 @@ def compile_sctx_to_langium(sctx_path: Path, output_path: Path | None = None):
             str(sctx_path),
             str(out_path),
         ],
+        check=False,
         capture_output=True,
         text=True,
     )
@@ -138,8 +140,7 @@ class TestRunner:
     def __init__(self, name: str, path: Path | None = None):
         self.name = name
         if path is not None:
-            json_path = path  # e.g. BindingShadowsLocalExpanded.json or langium_BindingShadowsLocalExpanded.json
-            self.model = load_model(json_path)
+            self.model = load_model(path)
         else:
             self.model = load_model_name(name)
 
@@ -329,6 +330,7 @@ def generate_expected(
                 str(exe_path),
                 str(sctx_file),
             ],
+            check=False,
             capture_output=True,
             text=True,
         )

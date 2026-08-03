@@ -2,8 +2,6 @@ import json
 import os
 from pathlib import Path
 
-import pytest
-
 from model_test_blocklist import blocked_dirs, blocklist
 
 BASE_DIR = Path(__file__).resolve()

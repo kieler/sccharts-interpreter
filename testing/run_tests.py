@@ -22,10 +22,19 @@ def main() -> None:
         action="store_true",
         help="Always recompile the JSON and EXE",
     )
+    parser.add_argument(
+        "--reset-json",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Only recompile the JSON (not EXE)",
+    )
     args, extra = parser.parse_known_args()
 
     if args.reset:
         os.environ["FORCE_RESET"] = "1"
+    elif args.reset_json:
+        os.environ["FORCE_RESET_JSON"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 

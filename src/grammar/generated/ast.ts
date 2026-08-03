@@ -7,8 +7,9 @@
 import * as langium from 'langium';
 
 export const SCChartsTerminals = {
-    VarType: /bool|int|float/,
+    VarType: /bool|int|float|string/,
     ExpressionString: /\#([^\#\#]*)\#/,
+    STRING: /"[^"]*"|'[^']*'/,
     ID: /[_a-zA-Z0-9][\w_]*/,
     WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,

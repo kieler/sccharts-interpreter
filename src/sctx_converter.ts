@@ -73,9 +73,15 @@ export function preProcess(model: string): string {
         model_split[i].includes("float") ||
         model_split[i].includes("bool"))
     ) {
-      model_split[i] = model_split[i].replaceAll("=", "=#");
-      model_split[i] = model_split[i].replaceAll(",", "#,");
-      model_split[i] += "#";
+      const vars = model_split[i].split(",");
+      for (let j = 0; j < vars.length; j++) {
+        if (vars[j].includes("=")) {
+          vars[j] = vars[j].replace("=", "=#");
+          vars[j] += "#";
+        }
+      }
+
+      model_split[i] = vars.join(",");
     }
   }
 

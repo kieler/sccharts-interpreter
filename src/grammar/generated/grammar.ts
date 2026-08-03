@@ -519,11 +519,23 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "feature": "name",
             "operator": "=",
             "terminal": {
-              "$type": "RuleCall",
-              "rule": {
-                "$ref": "#/rules@15"
-              },
-              "arguments": []
+              "$type": "Alternatives",
+              "elements": [
+                {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@15"
+                  },
+                  "arguments": []
+                },
+                {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@14"
+                  },
+                  "arguments": []
+                }
+              ]
             },
             "cardinality": "?"
           },
@@ -603,18 +615,32 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "$type": "TerminalAlternatives",
             "elements": [
               {
-                "$type": "CharacterRange",
-                "left": {
-                  "$type": "Keyword",
-                  "value": "bool"
-                },
+                "$type": "TerminalAlternatives",
+                "elements": [
+                  {
+                    "$type": "CharacterRange",
+                    "left": {
+                      "$type": "Keyword",
+                      "value": "bool"
+                    },
+                    "parenthesized": false
+                  },
+                  {
+                    "$type": "CharacterRange",
+                    "left": {
+                      "$type": "Keyword",
+                      "value": "int"
+                    },
+                    "parenthesized": false
+                  }
+                ],
                 "parenthesized": false
               },
               {
                 "$type": "CharacterRange",
                 "left": {
                   "$type": "Keyword",
-                  "value": "int"
+                  "value": "float"
                 },
                 "parenthesized": false
               }
@@ -625,7 +651,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "$type": "CharacterRange",
             "left": {
               "$type": "Keyword",
-              "value": "float"
+              "value": "string"
             },
             "parenthesized": false
           }

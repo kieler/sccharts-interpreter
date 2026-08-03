@@ -1,5 +1,11 @@
 # sccharts-interpreter
 
+## disclaimers
+I put them here so they can't be missed.
+For some reason there is currently a bug that means generating langiuums files from the grammer only works with some versions of node.  
+I tested it with 26.0.0 and 26.5.1. From these two only 26.0.0 works. For all the rest of the code both are perfectly fine, but just for the language generation (which only has to be done once if you set it up new and all the needed files are included as gernerated versions in the git) use 26.0.0.  
+I do not know why this happens.
+
 ## usage
 ### setup
 To set up the project, run:
