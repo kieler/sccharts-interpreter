@@ -10,6 +10,7 @@ export const SCChartsTerminals = {
     VarType: /bool|int|float|string/,
     ExpressionString: /\#([^\#\#]*)\#/,
     STRING: /"[^"]*"|'[^']*'/,
+    Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)|(?:"[^"]*"|'[^']*')/,
     ID: /[_a-zA-Z0-9][\w]*/,
     WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,
@@ -19,10 +20,14 @@ export const SCChartsTerminals = {
 export type SCChartsTerminalNames = keyof typeof SCChartsTerminals;
 
 export type SCChartsKeywordNames =
+    | "("
+    | ")"
     | ","
+    | ":"
     | "="
     | "abort"
     | "connector"
+    | "const"
     | "do"
     | "during"
     | "entry"
@@ -32,21 +37,25 @@ export type SCChartsKeywordNames =
     | "history"
     | "if"
     | "immediate"
+    | "import"
     | "initial"
     | "input"
+    | "is"
     | "join"
     | "output"
     | "region"
     | "scchart"
     | "state"
+    | "strong"
     | "to"
+    | "weak"
     | "{"
     | "}";
 
 export type SCChartsTokenNames = SCChartsTerminalNames | SCChartsKeywordNames;
 
 export interface Action extends langium.AstNode {
-    readonly $container: State;
+    readonly $container: Region | SCTX | State;
     readonly $type: 'Action';
     action: string;
     guard?: string;
@@ -66,7 +75,7 @@ export function isAction(item: unknown): item is Action {
     return reflection.isInstance(item, Action.$type);
 }
 
-export type Element = Region | State | Variable;
+export type Element = Action | State | Variable;
 
 export const Element = {
     $type: 'Element'
@@ -76,10 +85,27 @@ export function isElement(item: unknown): item is Element {
     return reflection.isInstance(item, Element.$type);
 }
 
+export interface RefVariableAssignment extends langium.AstNode {
+    readonly $container: State;
+    readonly $type: 'RefVariableAssignment';
+    from?: string;
+    to: string;
+}
+
+export const RefVariableAssignment = {
+    $type: 'RefVariableAssignment',
+    from: 'from',
+    to: 'to'
+} as const;
+
+export function isRefVariableAssignment(item: unknown): item is RefVariableAssignment {
+    return reflection.isInstance(item, RefVariableAssignment.$type);
+}
+
 export interface Region extends langium.AstNode {
     readonly $container: Region | SCTX | State;
     readonly $type: 'Region';
-    elements: Array<Element>;
+    elements: Array<Element | Region>;
     name?: string;
 }
 
@@ -95,13 +121,15 @@ export function isRegion(item: unknown): item is Region {
 
 export interface SCTX extends langium.AstNode {
     readonly $type: 'SCTX';
-    elements: Array<Element>;
+    elements: Array<Element | Region>;
+    imports: Array<string>;
     name: string;
 }
 
 export const SCTX = {
     $type: 'SCTX',
     elements: 'elements',
+    imports: 'imports',
     name: 'name'
 } as const;
 
@@ -113,11 +141,14 @@ export interface State extends langium.AstNode {
     readonly $container: Region | SCTX | State;
     readonly $type: 'State';
     actions: Array<Action>;
-    elements: Array<Element>;
+    elements: Array<Element | Region>;
     isConnector: boolean;
+    isFinal: boolean;
+    isInitial: boolean;
     name: string;
+    refAssignments: Array<RefVariableAssignment>;
+    reference?: string;
     transitions: Array<Transition>;
-    type?: 'final' | 'initial';
 }
 
 export const State = {
@@ -125,9 +156,12 @@ export const State = {
     actions: 'actions',
     elements: 'elements',
     isConnector: 'isConnector',
+    isFinal: 'isFinal',
+    isInitial: 'isInitial',
     name: 'name',
-    transitions: 'transitions',
-    type: 'type'
+    refAssignments: 'refAssignments',
+    reference: 'reference',
+    transitions: 'transitions'
 } as const;
 
 export function isState(item: unknown): item is State {
@@ -200,6 +234,7 @@ export function isVariableAssignment(item: unknown): item is VariableAssignment 
 export type SCChartsAstType = {
     Action: Action
     Element: Element
+    RefVariableAssignment: RefVariableAssignment
     Region: Region
     SCTX: SCTX
     State: State
@@ -229,11 +264,24 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     name: Action.type
                 }
             },
-            superTypes: []
+            superTypes: [Element.$type]
         },
         Element: {
             name: Element.$type,
             properties: {
+            },
+            superTypes: []
+        },
+        RefVariableAssignment: {
+            name: RefVariableAssignment.$type,
+            properties: {
+                from: {
+                    name: RefVariableAssignment.from,
+                    optional: true
+                },
+                to: {
+                    name: RefVariableAssignment.to
+                }
             },
             superTypes: []
         },
@@ -250,13 +298,18 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     optional: true
                 }
             },
-            superTypes: [Element.$type]
+            superTypes: []
         },
         SCTX: {
             name: SCTX.$type,
             properties: {
                 elements: {
                     name: SCTX.elements,
+                    defaultValue: [],
+                    optional: true
+                },
+                imports: {
+                    name: SCTX.imports,
                     defaultValue: [],
                     optional: true
                 },
@@ -284,16 +337,31 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     defaultValue: false,
                     optional: true
                 },
+                isFinal: {
+                    name: State.isFinal,
+                    defaultValue: false,
+                    optional: true
+                },
+                isInitial: {
+                    name: State.isInitial,
+                    defaultValue: false,
+                    optional: true
+                },
                 name: {
                     name: State.name
+                },
+                refAssignments: {
+                    name: State.refAssignments,
+                    defaultValue: [],
+                    optional: true
+                },
+                reference: {
+                    name: State.reference,
+                    optional: true
                 },
                 transitions: {
                     name: State.transitions,
                     defaultValue: [],
-                    optional: true
-                },
-                type: {
-                    name: State.type,
                     optional: true
                 }
             },

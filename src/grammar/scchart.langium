@@ -3,16 +3,20 @@
 grammar SCChart
 
 entry SCTX:
+  ('import' imports+=(STRING|ID))*
   'scchart' name=ID STRING? '{'
-   (elements+=Element)*
+   (elements+=(Element|Region))*
   '}';
 
 
 State:
-    isConnector?='connector'? type=('final'|'initial')? 'state' name=ID ('{' (actions+=Action)* (elements+=Element)* '}')? (transitions+=Transition)*;
+    isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (('{' (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID'(' (refAssignments+=RefVariableAssignment ','?)* ')')? (transitions+=Transition)*;
+
+RefVariableAssignment:
+    to=(ID|Literal) ('to' from=ID)?;
 
 Variable:
-    isInput?='input'? isOutput?='output'? type=VarType assignments+=VariableAssignment (',' assignments+=VariableAssignment)*;
+    'const'? isInput?='input'? isOutput?='output'? type=VarType assignments+=VariableAssignment (',' assignments+=VariableAssignment)*;
 
 VariableAssignment:
     name=ID ('=' initialValue=ExpressionString)?;
@@ -21,13 +25,16 @@ Transition:
     isImmediate?='immediate'? ('if' guard=ExpressionString)? ('do' action=ExpressionString)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;
 
 Action:
-    isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=ExpressionString)?  ('do' action=ExpressionString) ;
+    ('weak'|'strong')? isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=ExpressionString)?  ('do' action=ExpressionString) ;
 
 Region:
-    'region' name=(ID|STRING)? ('{' (elements+=Element)* '}')?;
+    'final'? 'region' name=(ID|STRING)? (('{' (elements+=(Element|Region))* '}')?|':' (elements+=Element)* );
 
+// Region is separated out because of the "region A:" sytax.
+// It does the region until the next region, so it has to separate,
+// otherwise it can end at forst state in a region
 Element:
-    State | Variable | Region;
+    State | Variable | Action;
 
 terminal VarType : 'bool' | 'int' | 'float' | 'string';
 
@@ -37,13 +44,15 @@ terminal VarType : 'bool' | 'int' | 'float' | 'string';
 // I hate langium or maybe I am too stupid to figure out how parse stuff like this with it...
 terminal ExpressionString returns string: /\#([^\#\#]*)\#/;
 
-terminal Literal: BOOL | FLOAT | INT | STRING;
+// DO NOT MOVE THESE, IT WILL BREAK EVERYTHING! somehow...
 terminal BOOL: 'true'|'false';
 terminal FLOAT returns number: /[0-9]+\.[0-9]+/;
 terminal INT returns number: /[0-9]+/;
-terminal STRING: /"[^"]*"|'[^']*'/;
+terminal STRING returns string: /"[^"]*"|'[^']*'/;
+terminal Literal: BOOL | FLOAT | INT | STRING;
 
 terminal ID returns string: /[_a-zA-Z0-9][\w]*/;
+
 
 hidden terminal WS: /\s+/;
 

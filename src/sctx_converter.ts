@@ -35,17 +35,26 @@ export function preProcess(model: string): string {
   // Adds the # needed for the grammar regex, so the expressions can get parsed
   // TODO: if there is a better way to parse the expressions, do that
   // have i mentioned that i strongly dislike langium
+
   const model_split = model.split("\n");
 
   for (let i = 0; i < model_split.length; i++) {
     model_split[i] = model_split[i].replace("^", "");
 
-    if (
-      model_split[i].trim().startsWith("#") ||
-      model_split[i].trim().startsWith("@")
-    ) {
-      model_split[i] = "";
+    if (model_split[i].includes("@")) {
+      model_split[i] = model_split[i].substring(0, model_split[i].indexOf("@"));
     }
+
+    var j = 1;
+    while (model_split[i].trim().endsWith(";")) {
+      // SCCharts allows multiline expressions as long as they are ended with ;
+      // but the whole regex thing with # doesn't work with that.
+      // so pull them all into one line
+      model_split[i] += model_split[i + j].trim();
+      model_split[i + j] = "";
+      j++;
+    }
+
     model_split[i] = model_split[i].replace("if ", "if#");
     model_split[i] = model_split[i].replace("do ", "do#");
     if (model_split[i].includes("if ") && model_split[i].includes("do ")) {
@@ -99,6 +108,7 @@ export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
 
   const topLevelAstStates: AstState[] = [];
   const topLevelAstRegions: AstRegion[] = [];
+  const topLevelAstActions: AstAction[] = [];
 
   for (const element of parsed.elements) {
     if (element.$type === "Variable") {
@@ -107,6 +117,8 @@ export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
       topLevelAstStates.push(element);
     } else if (element.$type === "Region") {
       topLevelAstRegions.push(element);
+    } else if (element.$type === "Action") {
+      topLevelAstActions.push(element);
     }
   }
 
@@ -137,10 +149,15 @@ export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
     }
   }
 
+  const topLevelWrapperActions: Action[] = [];
+  for (const astAction of topLevelAstActions) {
+    topLevelWrapperActions.push(convertAction(astAction));
+  }
+
   const rootState: State = {
     id: parsed.name,
     label: parsed.name,
-    actions: [],
+    actions: topLevelWrapperActions,
     transitions: [],
     variables: topLevelVars,
     isInitial: false,
@@ -194,11 +211,32 @@ export function convertAstStateToSchema(
     actions: astState.actions.map((a) => convertAction(a)),
     transitions: astState.transitions.map((t) => convertTransition(t)),
     variables: [],
-    isInitial: astState.type === "initial",
-    isFinal: astState.type === "final",
+    isInitial: astState.isInitial,
+    isFinal: astState.isFinal,
     isConnector: astState.isConnector,
     regions: [],
   };
+
+  // Very janky
+  // TODO: do this in a way that it works in the browser
+  // TODO: What about the imports?
+  if (astState.reference) {
+    schemaState.reference = {
+      targetID: astState.reference,
+      targetFile:
+        inputFilePath.substring(0, inputFilePath.lastIndexOf("/")) +
+        "/" +
+        astState.reference +
+        ".json",
+      parameters: [],
+    };
+
+    for (const param of astState.refAssignments) {
+      schemaState.reference.parameters.push(
+        (param.from ?? "null") + " to " + param.to,
+      );
+    }
+  }
 
   // Separate nested elements into categories
   const nestedStates: AstState[] = [];
