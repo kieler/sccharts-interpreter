@@ -1,0 +1,51 @@
+scchart NameDouble {
+	output bool O = false
+	output int x = 0
+	output bool terminated = false
+
+	region A:
+	initial state W {
+		region A {
+			initial state W
+			go to T
+
+			final state T
+		}
+
+		region B {
+			initial state W
+			go to T
+
+			final state T
+		}
+
+		region C {
+			initial state W
+			go to T
+
+			final state T
+		}
+	}
+	do O = true join to T
+
+	final state T
+	
+	region B:
+	initial state Container {
+		during do x++
+
+		initial state Init {
+
+			initial state Init
+			if x > 0 go to Done
+
+			final state Done
+		}
+		join to Done
+
+		final state Done
+	}
+	do terminated = true join to End
+
+	final state End
+}

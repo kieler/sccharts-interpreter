@@ -46,4 +46,8 @@ npm run test
 ```
 
 ## structure
+### interpreter
 ![fig1](docs/img/structure_basic.png)
+
+### sctx2json converter
+<iframe src="docs/syntax-diagram.html"></iframe>
