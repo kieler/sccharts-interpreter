@@ -6,8 +6,20 @@ def test_array_simple():
     runner = TestRunner("SimpleArray")
     runner.setup()
 
-    inputs = [{}, {}, {}, {}, {}, {}, {}]
+    inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
 
     expected = generate_expected("SimpleArray", inputs, [])
+
+    assert_subset(runner.run(inputs), expected)
+
+
+def test_multi_dim_array():
+    """Test multi-dimensional Arrays"""
+    runner = TestRunner("MultiDimArray")
+    runner.setup()
+
+    inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}]
+
+    expected = generate_expected("MultiDimArray", inputs, [])
 
     assert_subset(runner.run(inputs), expected)

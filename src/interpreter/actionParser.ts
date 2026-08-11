@@ -1,15 +1,14 @@
 import { pre } from "./utils.js";
 import { Context } from "./types.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
+import { ValidationError } from "ajv";
 
 function infixToAssignment(expr: string): string {
   // Turns something like A+=1 into A=A+1 for the eval() function
-  // TODO: regex for arrays, should look something like this:
   return expr.replace(
     /([A-Za-z_]\w*(?:\[[^\]]*\])*)\s*([\+\-\*\/\%\&\|\^~\?]+)=\s*(.*)/,
     (match, variable: string, op: string, rhs: string) => {
-      // const baseOp = op.slice(0, -1); // strip '='
-      return `${variable}=${variable}${op} ${rhs}`;
+      return `${variable} = ${variable} ${op} ${rhs}`;
     },
   );
 }
@@ -25,7 +24,6 @@ export function parseAction(action: string, context: Context): void {
     // future: prev: (v) => ..., changed: (v) => ...
   };
 
-  // Walk the expression and replace special function calls with placeholders
   let placeholderIdx = 0;
   const replacers: Record<string, string> = {};
 
@@ -72,6 +70,26 @@ export function parseAction(action: string, context: Context): void {
       else if (result === 1) result = true;
     }
 
-    context.variables.set(variable.trim(), result);
+    if (variable.includes("[") && variable.includes("]")) {
+      const [varName, ...indicesStr] = variable.trim().split("[");
+
+      if (!context.variableTypes.get(varName)?.includes("[]")) {
+        throw new Error(`Variable ${varName} is not an array`);
+      }
+
+      const array = context.variables.get(varName);
+      if (!Array.isArray(array))
+        throw new Error(`Variable ${varName} is not defined`);
+
+      const indices = indicesStr.map((i) => Number(i.replace("]", "")));
+
+      let target = array;
+      for (let i = 0; i < indices.length - 1; i++) {
+        target = target[indices[i]];
+      }
+      target[indices[indices.length - 1]] = result;
+    } else {
+      context.variables.set(variable.trim(), result);
+    }
   }
 }

@@ -39,7 +39,7 @@ def test_strong():
     assert_subset(runner.run(inputs), expected)
 
 
-def test_wak():
+def test_weak():
     """Test Weak Aborts"""
     runner = TestRunner("Abort")
     runner.setup()

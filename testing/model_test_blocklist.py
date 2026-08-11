@@ -1,6 +1,4 @@
 blocked_dirs = [
-    "aas/arrays",  # arrays
-    "aas/referenced/arrays",  # arrays
     "aas/signal",  # signals
     "als/hostcode",  # hostcode
     "als/inheritance",  # inheritance
@@ -17,12 +15,6 @@ blocked_dirs = [
 ]
 
 blocklist = [
-    # Vectors
-    "VectorValueExpressions01.ktrace",
-    "VectorValueExpressions02.ktrace",
-    "VectorValueExpressions03.ktrace",
-    "computed_vector.ktrace",
-    "VectorNotation.ktrace",
     # deferred transitions
     "shallow_deferred.ktrace",
     "deep_deferred.ktrace",
@@ -44,13 +36,6 @@ blocklist = [
     "PR03.ktrace",
     "PR03b.ktrace",
     "BindingShadowsLocal.ktrace",
-    # array
-    "ArrayAssignmentActions.ktrace",
-    "ArrayAssignment.ktrace",
-    "ArrayAssignmentActions.ktrace",
-    "const_array.ktrace",
-    "PreOnArray.ktrace",
-    "MultiDimArray.ktrace",
     # signals
     "KISEMA-1595-1.ktrace",
     "KISEMA-1595-2.ktrace",

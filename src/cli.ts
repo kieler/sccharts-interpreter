@@ -4,6 +4,7 @@ import { tick } from "./interpreter/run.js";
 import { SCChartModel } from "./schema/types.js";
 import { setupContext } from "./interpreter/utils.js";
 import { TickResult } from "./interpreter/types.js";
+import { inspect } from "util";
 
 const filePath = process.argv[2];
 const jsonInputs = process.argv[3];
@@ -67,7 +68,7 @@ if (jsonInputs == undefined) {
       }
 
       const result = tick(globalContext, input);
-      console.log(result);
+      console.log(JSON.stringify(result, null, 2));
 
       if (result.terminated) {
         rl.close();
@@ -95,7 +96,7 @@ if (jsonInputs == undefined) {
 
   for (const input of inputs) {
     const result = tick(globalContext, input);
-    console.log(result);
+    console.log(JSON.stringify(result, null, 2));
 
     if (result.terminated) {
       final_message(result);

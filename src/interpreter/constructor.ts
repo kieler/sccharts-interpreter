@@ -3,27 +3,65 @@ import type { Region, SCChartModel, Variable } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext } from "./utils.js";
 import { readFileSync } from "node:fs";
 
+function initialArrayValues(
+  cardinalities: number[],
+  defaultValue: unknown,
+): unknown[] {
+  if (cardinalities.length == 0) {
+    return [];
+  }
+
+  const [size, ...rest] = cardinalities;
+  const array: any[] = [];
+
+  for (let i = 0; i < size; i++) {
+    if (rest.length == 0) {
+      array.push(defaultValue);
+    } else {
+      array.push(initialArrayValues(rest, defaultValue));
+    }
+  }
+
+  return array;
+}
+
+function parseScalar(value: any, type: string): unknown {
+  if (type === "int") return Number(value);
+  if (type === "float") return Number(value);
+  if (type === "bool") return value === "true";
+  if (type === "string") return value;
+  return value;
+}
+
+function parseArrayValues(valueStr: string): unknown[] {
+  valueStr = valueStr.replaceAll("{", "[").replaceAll("}", "]");
+
+  return eval(valueStr);
+}
+
 function variableDefaults(
   context: Context,
   variable: Variable,
   isArray: boolean,
 ) {
+  const defaultValues: Record<string, unknown> = {
+    int: 0,
+    bool: false,
+    string: null,
+    float: 0.0,
+  };
+
   if (isArray) {
-    // TODO: Ararys
-    context.variables.set(variable.id, new Array(variable.cardinalities[0]));
+    const array = initialArrayValues(
+      variable.cardinalities,
+      defaultValues[variable.type],
+    );
+    context.variables.set(variable.id, array);
 
     return;
   }
 
-  if (variable.type == "int") {
-    context.variables.set(variable.id, 0);
-  } else if (variable.type == "bool") {
-    context.variables.set(variable.id, false);
-  } else if (variable.type == "string") {
-    context.variables.set(variable.id, null);
-  } else if (variable.type == "float") {
-    context.variables.set(variable.id, 0.0);
-  }
+  context.variables.set(variable.id, defaultValues[variable.type]);
 }
 
 function variableValues(
@@ -31,23 +69,24 @@ function variableValues(
   variable: Variable,
   isArray: boolean,
 ) {
-  if (isArray) {
-    return;
-  }
-
-  if (variable.type == "int" || variable.type == "float") {
-    context.variables.set(variable.id, Number(variable.initialValue));
-  } else if (variable.type == "bool") {
-    if (variable.initialValue == "true")
-      context.variables.set(variable.id, true);
-    else context.variables.set(variable.id, false);
+  if (isArray && typeof variable.initialValue === "string") {
+    const parsed = parseArrayValues(variable.initialValue!);
+    context.variables.set(variable.id, parsed);
   } else {
-    context.variables.set(variable.id, variable.initialValue);
+    context.variables.set(
+      variable.id,
+      parseScalar(variable.initialValue!, variable.type),
+    );
   }
 }
 
 function addVariable(context: Context, variable: Variable) {
-  context.variableTypes.set(variable.id, variable.type);
+  const isArray = variable.cardinalities.length != 0;
+  if (isArray) {
+    context.variableTypes.set(variable.id, variable.type + "[]");
+  } else {
+    context.variableTypes.set(variable.id, variable.type);
+  }
 
   if (variable.isOutput) {
     context.outputVariables.push(variable.id);
@@ -56,7 +95,6 @@ function addVariable(context: Context, variable: Variable) {
     context.inputVariables.push(variable.id);
   }
 
-  const isArray = variable.cardinalities.length != 0;
   if (variable.initialValue === undefined) {
     variableDefaults(context, variable, isArray);
   } else {

@@ -3,28 +3,20 @@
 - [x] Transitions
 - [x] Hierarchy
 - [x] Weak and Strong Abort
-	- Testing still required, but implemented
 - [x] Connectors
-	- very basic, the one thing is we want to impliicitly consider all outgoind connections as immediate, even if they aren't explicitly set to immediate.
 - [x] Concurrency (logial) 
 - [x] Actions
 	- [x] Transition
 	- [x] State
-		- How is that with entry, during, exit as maybe?
-		- Implemented entry, during, exit. testing needed, but should be working
 - [x] Final + Initial States
-	- I think they are done?
 
 ## mabybe
 for the PoC, these should probably be left out unless it is easy.
 
-- [/] Complex Final States
-	- There is something working, the question is just if it is correct. I need to see some examples, because all except for actions can't be scheduled.
+- [x] Complex Final States
 - [x] Entrance, Exit, During Actions
 - [x] Deep History Transitions
-	- ~~The JSON exporter needs support for them first~~
-- [ ] Reference SCCharts
-	- They are now in the KiCo JSON exporter
+- [x] Reference SCCharts
 - [ ] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
 
@@ -36,7 +28,6 @@ for the PoC, these should probably be left out unless it is easy.
 - [x] simulation interface
 	- [x] basic via terminal
 	- [x] something better
-		- take stdin like the kico simulation
 - [ ] exceptions
 	- some states of the interpreter should raise and expection and throw and error.
 	- [x] basic structure for that 
@@ -50,7 +41,7 @@ for the PoC, these should probably be left out unless it is easy.
 
 ## missing
 - [ ] varible types
-	- [ ] arrays
+	- [x] arrays
 		- ~~They need to be implmented in the json converter first~~
 	- [ ] enums
 
@@ -70,8 +61,10 @@ Also see the blocklist for models that have unsupported features.
 - [x] ssm/statebased/RBLS/DFT-abro4-exp: a bool is set to 0?
 	- js + kico weirdness: false | false = 0 instead of false
 - [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
+    - scheduling porbably
 - [ ] als/various/const_float_computation: No expression parsing during assignments
-- [ ] ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.
+- [x] ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.
+    - This is goig to get fixed on KiCo level
 - [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
 
 
@@ -84,7 +77,4 @@ Also see the blocklist for models that have unsupported features.
 -
 
 ### other
-- The KiCO Simulation (and compiled code, due to how it works) doesnt set non inputed variables as their 0-value but keeps the last, should i do that as well? It would be in interpreter/utils.py removing the default assignment in asignVariables.
-	- If we do want to do signals, this would just be signals?
-
-Reference Charts can be of models in the same file.
+- Reference Charts can be of models in the same file.
