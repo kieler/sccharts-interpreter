@@ -26,14 +26,19 @@ def get_java_jar_path() -> str:
     return jar_path
 
 
-def load_model_name(name: str) -> list[dict[str, Any]]:
+def load_model_name(name: str, no_reset: bool = False) -> list[dict[str, Any]]:
     json_path = BASE_DIR / "json" / f"{name}.json"
 
-    return load_model(json_path, "sctx")
+    return load_model(json_path, "sctx", no_reset)
 
 
-def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
-    if not os.environ.get("FORCE_RESET") and path.exists():
+def load_model(
+    path: Path, sctx_dir: str = "", no_reset: bool = False
+) -> list[dict[str, Any]]:
+    if (
+        (not os.environ.get("FORCE_RESET") and not os.environ.get("FORCE_RESET_JSON"))
+        or no_reset
+    ) and path.exists():
         with open(path) as f:
             return json.load(f)
 
@@ -67,6 +72,7 @@ def compile_sctx_to_json(sctx_path: Path, output_path: Path | None = None):
             else output_path.with_suffix(".json"),
             str(sctx_path),
         ],
+        check=False,
         capture_output=True,
         text=True,
     )
@@ -79,12 +85,12 @@ def compile_sctx_to_json(sctx_path: Path, output_path: Path | None = None):
 class TestRunner:
     __test__ = False
 
-    def __init__(self, name: str, path: Path | None = None):
+    def __init__(self, name: str, path: Path | None = None, no_reset: bool = False):
         self.name = name
         if path is not None:
-            self.model = load_model(path)
+            self.model = load_model(path, no_reset=no_reset)
         else:
-            self.model = load_model_name(name)
+            self.model = load_model_name(name, no_reset)
 
     def setup(self, wonly=False, seed: int = 42) -> requests.Response:
         self.random = random.Random(seed)
@@ -93,19 +99,22 @@ class TestRunner:
             f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
         )
 
-        if resp.status_code == 500 and resp.json()["reference"]:
-            compile_sctx_to_json(
-                Path(resp.json()["reference"][5:])
-            )  # string starts with file:
+        if resp.status_code == 500:
+            print(resp.json())
 
-            resp2 = requests.post(
-                f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
-            )
+            if resp.json()["reference"]:
+                compile_sctx_to_json(
+                    Path(resp.json()["reference"][5:])
+                )  # string starts with file:
 
-            assert resp2.status_code == 200, (
-                f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
-            )
-            return resp2
+                resp2 = requests.post(
+                    f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+                )
+
+                assert resp2.status_code == 200, (
+                    f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
+                )
+                return resp2
 
         assert resp.status_code == 200, (
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
@@ -270,6 +279,7 @@ def generate_expected(
                 str(exe_path),
                 str(sctx_file),
             ],
+            check=False,
             capture_output=True,
             text=True,
         )

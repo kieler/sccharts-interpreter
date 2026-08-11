@@ -1,10 +1,88 @@
 import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
-import type { Region, SCChartModel } from "../schema/types.js";
+import type { Region, SCChartModel, Variable } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext } from "./utils.js";
 import { readFileSync } from "node:fs";
 
-function constructRegion(region: Region, context: Context): StateGraph {
+function variableDefaults(
+  context: Context,
+  variable: Variable,
+  isArray: boolean,
+) {
+  if (isArray) {
+    // TODO: Ararys
+    context.variables.set(variable.id, new Array(variable.cardinalities[0]));
+
+    return;
+  }
+
+  if (variable.type == "int") {
+    context.variables.set(variable.id, 0);
+  } else if (variable.type == "bool") {
+    context.variables.set(variable.id, false);
+  } else if (variable.type == "string") {
+    context.variables.set(variable.id, null);
+  } else if (variable.type == "float") {
+    context.variables.set(variable.id, 0.0);
+  }
+}
+
+function variableValues(
+  context: Context,
+  variable: Variable,
+  isArray: boolean,
+) {
+  if (isArray) {
+    return;
+  }
+
+  if (variable.type == "int" || variable.type == "float") {
+    context.variables.set(variable.id, Number(variable.initialValue));
+  } else if (variable.type == "bool") {
+    if (variable.initialValue == "true")
+      context.variables.set(variable.id, true);
+    else context.variables.set(variable.id, false);
+  } else {
+    context.variables.set(variable.id, variable.initialValue);
+  }
+}
+
+function addVariable(context: Context, variable: Variable) {
+  context.variableTypes.set(variable.id, variable.type);
+
+  if (variable.isOutput) {
+    context.outputVariables.push(variable.id);
+  }
+  if (variable.isInput) {
+    context.inputVariables.push(variable.id);
+  }
+
+  const isArray = variable.cardinalities.length != 0;
+  if (variable.initialValue === undefined) {
+    variableDefaults(context, variable, isArray);
+  } else {
+    variableValues(context, variable, isArray);
+  }
+}
+
+function getScope(graph: StateGraph): string {
+  let scope = "";
+
+  while (graph.parent) {
+    scope = graph.parent.id + "." + graph.id + "." + scope;
+    graph = graph.parent.graph;
+  }
+
+  return scope;
+}
+
+function constructRegion(
+  parentState: StateNode | undefined,
+  region: Region,
+  context: Context,
+): StateGraph {
   let graph: StateGraph = {
+    id: region.id,
+    parent: parentState,
     edges: [],
     nodes: [],
     initalNode: undefined,
@@ -31,11 +109,16 @@ function constructRegion(region: Region, context: Context): StateGraph {
     if (isSuper) {
       stateNode.subgraphs = [];
       for (const subRegion of state.regions) {
-        stateNode.subgraphs.push(constructRegion(subRegion, context));
+        stateNode.subgraphs.push(
+          constructRegion(stateNode, subRegion, context),
+        );
       }
     }
     if (state.isInitial) graph.initalNode = stateNode;
-    context.nodeMap.set(state.id, stateNode);
+    context.nodeMap.set(
+      JSON.stringify({ id: state.id, scope: getScope(graph) }),
+      stateNode,
+    );
     graph.nodes.push(stateNode);
 
     // Add outgoing transitions / edges
@@ -58,38 +141,7 @@ function constructRegion(region: Region, context: Context): StateGraph {
 
     // Add variables
     for (const variable of state.variables) {
-      if (variable.initialValue !== undefined) {
-        if (variable.type == "int" || variable.type == "float") {
-          context.variables.set(variable.id, Number(variable.initialValue));
-        } else if (variable.type == "bool") {
-          if (variable.initialValue == "true")
-            context.variables.set(variable.id, true);
-          else context.variables.set(variable.id, false);
-        } else {
-          context.variables.set(variable.id, variable.initialValue);
-        }
-      } else {
-        if (variable.type == "int") {
-          context.variables.set(variable.id, 0);
-        } else if (variable.type == "bool") {
-          context.variables.set(variable.id, false);
-        } else if (variable.type == "string") {
-          context.variables.set(variable.id, null);
-        } else if (variable.type == "float") {
-          context.variables.set(variable.id, 0.0);
-        }
-        // TODO: the rest?
-        // Arrays
-      }
-
-      context.variableTypes.set(variable.id, variable.type);
-
-      if (variable.isOutput) {
-        context.outputVariables.push(variable.id);
-      }
-      if (variable.isInput) {
-        context.inputVariables.push(variable.id);
-      }
+      addVariable(context, variable);
     }
 
     for (const action of state.actions) {
@@ -154,7 +206,12 @@ function mapReferenceVariables(parameters: string[]): Map<string, string[]> {
 
 function finishEdges(graph: StateGraph, context: Context): void {
   for (const edge of graph.edges) {
-    edge.to = context.nodeMap.get(edge.transition.targetID);
+    edge.to = context.nodeMap.get(
+      JSON.stringify({
+        id: edge.transition.targetID,
+        scope: getScope(edge.from.graph),
+      }),
+    );
   }
 
   for (const node of graph.nodes) {
@@ -167,14 +224,18 @@ function finishEdges(graph: StateGraph, context: Context): void {
 }
 
 export function constructStateGraph(model: SCChartModel): Context {
+  if (model.length != 1) {
+    throw new Error("Model must have exactly one state");
+  }
+
   console.log("Setting up model: ", model[0].id);
 
   const rootRegion: Region = createFakeRootRegion(model);
 
-  let context: Context = emptyContext(model);
+  let context: Context = emptyContext(model, rootRegion.id);
 
   // Go over all States once and add them and the transitions to the graph
-  context.graph = constructRegion(rootRegion, context);
+  context.graph = constructRegion(undefined, rootRegion, context);
 
   if (context.model[0].label) context.label = context.model[0].label;
 

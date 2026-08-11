@@ -57,11 +57,13 @@ export function createFakeRootRegion(model: SCChartModel): Region {
   };
 }
 
-export function emptyContext(model: SCChartModel): Context {
+export function emptyContext(model: SCChartModel, id: string): Context {
   return {
     model: model,
     label: "",
     graph: {
+      id: id,
+      parent: undefined,
       edges: [],
       nodes: [],
       initalNode: undefined,

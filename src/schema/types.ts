@@ -22,6 +22,7 @@ export interface Variable {
   initialValue?: string | number | boolean;
   isInput: boolean;
   isOutput: boolean;
+  cardinalities: number[];
 }
 
 export interface Region {

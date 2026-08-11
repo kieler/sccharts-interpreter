@@ -51,7 +51,7 @@ for the PoC, these should probably be left out unless it is easy.
 ## missing
 - [ ] varible types
 	- [ ] arrays
-		- They need to be implmented in the json converter first
+		- ~~They need to be implmented in the json converter first~~
 	- [ ] enums
 
 
@@ -86,3 +86,5 @@ Also see the blocklist for models that have unsupported features.
 ### other
 - The KiCO Simulation (and compiled code, due to how it works) doesnt set non inputed variables as their 0-value but keeps the last, should i do that as well? It would be in interpreter/utils.py removing the default assignment in asignVariables.
 	- If we do want to do signals, this would just be signals?
+
+Reference Charts can be of models in the same file.

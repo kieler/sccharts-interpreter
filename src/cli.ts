@@ -6,7 +6,7 @@ import { setupContext } from "./interpreter/utils.js";
 import { TickResult } from "./interpreter/types.js";
 
 const filePath = process.argv[2];
-const inputsOrMode = process.argv[3];
+const jsonInputs = process.argv[3];
 const wonly = process.argv.includes("-Wonly");
 
 if (wonly) {
@@ -14,9 +14,7 @@ if (wonly) {
 }
 
 function usage_error() {
-  console.error(
-    "Usage: npm run cli -- <path-to-model.json> [inputs-list | -i]",
-  );
+  console.error("Usage: npm run cli -- <path-to-model.json> [inputs-list]");
 }
 
 function final_message(result: TickResult) {
@@ -44,7 +42,7 @@ const globalContext = setupContext(model as SCChartModel, wonly);
 
 console.log("Setup successful. Model", globalContext.model[0].label, "loaded.");
 
-if (process.argv.includes("-i")) {
+if (jsonInputs == undefined) {
   // Interactive mode: read inputs one tick at the time
   const rl = readline.createInterface({
     input: process.stdin,
@@ -81,15 +79,14 @@ if (process.argv.includes("-i")) {
 
   prompt();
 } else {
-  const inputsString = inputsOrMode;
-  if (!inputsString) {
+  if (!jsonInputs) {
     usage_error();
     process.exit(1);
   }
 
   let inputs: Item[];
   try {
-    inputs = JSON.parse(inputsString);
+    inputs = JSON.parse(jsonInputs);
   } catch (err) {
     const e = err as Error;
     console.error(`Failed to read/parse input list: ${e.message}`);

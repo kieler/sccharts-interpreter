@@ -4,11 +4,12 @@ import { sanitizeKeysAndExpr } from "./jsKeywords.js";
 
 function infixToAssignment(expr: string): string {
   // Turns something like A+=1 into A=A+1 for the eval() function
+  // TODO: regex for arrays, should look something like this:
   return expr.replace(
-    /([A-Za-z_]\w*)\s*([\+\-\*\/\%\&\|\^~\?]=)\s*(.*)/,
+    /([A-Za-z_]\w*(?:\[[^\]]*\])*)\s*([\+\-\*\/\%\&\|\^~\?]+)=\s*(.*)/,
     (match, variable: string, op: string, rhs: string) => {
-      const baseOp = op.slice(0, -1); // strip '='
-      return `${variable}=${variable}${baseOp} ${rhs}`;
+      // const baseOp = op.slice(0, -1); // strip '='
+      return `${variable}=${variable}${op} ${rhs}`;
     },
   );
 }
