@@ -88,3 +88,9 @@ Also see the blocklist for models that have unsupported features.
 	- If we do want to do signals, this would just be signals?
 
 Reference Charts can be of models in the same file.
+
+For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a regiom instead of state.
+
+Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
+
+If an action assigns a variable that doesn't exist, the interpreter is happy to create it. should that be a warning / error?

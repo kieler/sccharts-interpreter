@@ -45,6 +45,8 @@ def test_name_double():
 
     inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
 
-    expected = generate_expected("NameDouble", inputs, ["O"])
+    expected = generate_expected(
+        "NameDouble", inputs, ["O", "x", "terminated", "A", "B"]
+    )
 
     assert_subset(runner.run(inputs), expected)

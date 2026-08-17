@@ -1,5 +1,3 @@
-// TODO: reference charts
-
 grammar SCChart
 
 entry SCTX:
@@ -19,7 +17,7 @@ Variable:
     'const'? isInput?='input'? isOutput?='output'? type=VarType assignments+=VariableAssignment (',' assignments+=VariableAssignment)*;
 
 VariableAssignment:
-    name=ID ('=' initialValue=ExpressionString)?;
+    name=ID ('['cardinalities+=INT']')* ('=' initialValue=ExpressionString)?;
 
 Transition:
     isImmediate?='immediate'? ('if' guard=ExpressionString)? ('do' action=ExpressionString)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;

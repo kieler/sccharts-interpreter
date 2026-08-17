@@ -193,7 +193,7 @@ function convertVariablesToSchema(
       type: variable.type,
       isInput: variable.isInput,
       isOutput: variable.isOutput,
-      cardinalities: [], // TODO: array parsing
+      cardinalities: assignment.cardinalities,
     };
 
     if (assignment.initialValue !== undefined) {
@@ -322,15 +322,24 @@ function convertAstRegionToSchema(
     } else if (element.$type === "Variable") {
       // Variables inside a region attached to the region itself somehow
       // Since regions don't have variables in our schema, we create a holder state
-      const varEntry: Variable = {
-        id: element.assignments[0].name,
-        type: element.type,
-        isInput: element.isInput,
-        isOutput: element.isOutput,
-        cardinalities: [], // TODO: array parsing
-      };
-      if (element.assignments[0].initialValue !== undefined) {
-        varEntry.initialValue = element.assignments[0].initialValue;
+      const variables: Variable[] = [];
+
+      for (const assignment of element.assignments) {
+        const varEntry: Variable = {
+          id: assignment.name,
+          type: element.type,
+          isInput: element.isInput,
+          isOutput: element.isOutput,
+          cardinalities: assignment.cardinalities,
+        };
+
+        if (assignment.initialValue !== undefined) {
+          varEntry.initialValue = assignment.initialValue
+            .replaceAll("#", "")
+            .trim();
+        }
+
+        variables.push(varEntry);
       }
 
       // Check if there's already a holder state in this region for variables
@@ -345,7 +354,7 @@ function convertAstRegionToSchema(
           label: "",
           actions: [],
           transitions: [],
-          variables: [varEntry],
+          variables: variables,
           isInitial: false,
           isFinal: false,
           isConnector: false,

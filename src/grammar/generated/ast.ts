@@ -9,6 +9,7 @@ import * as langium from 'langium';
 export const SCChartsTerminals = {
     VarType: /bool|int|float|string/,
     ExpressionString: /\#([^\#\#]*)\#/,
+    INT: /[0-9]+/,
     STRING: /"[^"]*"|'[^']*'/,
     Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)|(?:"[^"]*"|'[^']*')/,
     ID: /[_a-zA-Z0-9][\w]*/,
@@ -25,6 +26,8 @@ export type SCChartsKeywordNames =
     | ","
     | ":"
     | "="
+    | "["
+    | "]"
     | "abort"
     | "connector"
     | "const"
@@ -217,12 +220,14 @@ export function isVariable(item: unknown): item is Variable {
 export interface VariableAssignment extends langium.AstNode {
     readonly $container: Variable;
     readonly $type: 'VariableAssignment';
+    cardinalities: Array<number>;
     initialValue?: string;
     name: string;
 }
 
 export const VariableAssignment = {
     $type: 'VariableAssignment',
+    cardinalities: 'cardinalities',
     initialValue: 'initialValue',
     name: 'name'
 } as const;
@@ -424,6 +429,11 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
         VariableAssignment: {
             name: VariableAssignment.$type,
             properties: {
+                cardinalities: {
+                    name: VariableAssignment.cardinalities,
+                    defaultValue: [],
+                    optional: true
+                },
                 initialValue: {
                     name: VariableAssignment.initialValue,
                     optional: true
