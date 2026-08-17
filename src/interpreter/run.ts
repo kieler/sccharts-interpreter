@@ -64,7 +64,6 @@ function walkEdge(
   }
 
   // Clear the history of the state upon entry and all subgraphs
-  // TODO: For history transitions, skip this. This has to wait until the JSON exporter supports history transitions
   if (!edge.transition.history) resetNode(edge.to, context);
 
   doActions(edge.from.exitActions, context);

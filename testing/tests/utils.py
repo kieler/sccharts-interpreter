@@ -2,6 +2,8 @@ import re
 
 
 def fill_missing_vars(input_vars, input):
+    return input_vars, input
+
     # This whole input var thing is because the kico cli doesnt auto reset input vars like the intrprter cli
     # This way it keeps the old value
     # TODO: should the cli maybe also not reset?
@@ -11,8 +13,6 @@ def fill_missing_vars(input_vars, input):
     for var_name, value in input_vars.items():
         if var_name not in input:
             input[var_name] = value
-
-    return input_vars, input
 
 
 def parse_ktrace(ktrace: str):
