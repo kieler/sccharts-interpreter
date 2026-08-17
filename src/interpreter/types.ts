@@ -36,6 +36,8 @@ export interface StateNode {
 }
 
 export interface StateGraph {
+  id: string;
+  parent: StateNode | undefined;
   edges: TransitionEdge[];
   nodes: StateNode[];
   initalNode?: StateNode;

@@ -30,13 +30,13 @@ def get_java_jar_path() -> str:
     return jar_path
 
 
-def load_model_name(name: str) -> list[dict[str, Any]]:
+def load_model_name(name: str, no_reset: bool = False) -> list[dict[str, Any]]:
     if _get_langium_mode():
         json_path = BASE_DIR / "json" / f"langium_{name}.json"
     else:
         json_path = BASE_DIR / "json" / f"{name}.json"
 
-    return load_model(json_path, "sctx")
+    return load_model(json_path, "sctx", no_reset)
 
 
 def _resolve_sctx(path: Path, sctx_dir: str) -> Path:
@@ -61,10 +61,17 @@ def _derive_json_path(sctx_path: Path, langium_mode: bool) -> Path:
     return sctx_path.parent / json_name
 
 
-def load_model(path: Path, sctx_dir: str = "") -> list[dict[str, Any]]:
+def load_model(
+    path: Path, sctx_dir: str = "", no_reset: bool = False
+) -> list[dict[str, Any]]:
     langium_mode = _get_langium_mode()
 
-    if (not os.environ.get("FORCE_RESET") and not os.environ.get("FORCE_RESET_JSON")) and path.exists():
+    if (
+        no_reset
+        or (
+            not os.environ.get("FORCE_RESET") and not os.environ.get("FORCE_RESET_JSON")
+        )
+    ) and path.exists():
         with open(path) as f:
             return json.load(f)
 
@@ -137,12 +144,12 @@ def compile_sctx_to_langium(sctx_path: Path, output_path: Path | None = None):
 class TestRunner:
     __test__ = False
 
-    def __init__(self, name: str, path: Path | None = None):
+    def __init__(self, name: str, path: Path | None = None, no_reset: bool = False):
         self.name = name
         if path is not None:
-            self.model = load_model(path)
+            self.model = load_model(path, no_reset=no_reset)
         else:
-            self.model = load_model_name(name)
+            self.model = load_model_name(name, no_reset)
 
     def setup(self, wonly=False, seed: int = 42) -> requests.Response:
         self.random = random.Random(seed)
@@ -151,21 +158,25 @@ class TestRunner:
             f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
         )
 
-        if resp.status_code == 500 and resp.json()["reference"]:
-            sctx_ref = Path(resp.json()["reference"][5:])
-            if _get_langium_mode():
-                compile_sctx_to_langium(sctx_ref)
-            else:
-                compile_sctx_to_json(sctx_ref)
+        if resp.status_code == 500:
+            print(resp.json())
 
-            resp2 = requests.post(
-                f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
-            )
+            if resp.json()["reference"]:
+                sctx_ref = Path(resp.json()["reference"][5:])
 
-            assert resp2.status_code == 200, (
-                f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
-            )
-            return resp2
+                if _get_langium_mode():
+                    compile_sctx_to_langium(sctx_ref)
+                else:
+                    compile_sctx_to_json(sctx_ref)
+
+                resp2 = requests.post(
+                    f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+                )
+
+                assert resp2.status_code == 200, (
+                    f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
+                )
+                return resp2
 
         assert resp.status_code == 200, (
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"

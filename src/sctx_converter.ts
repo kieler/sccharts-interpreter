@@ -106,38 +106,6 @@ export function preProcess(model: string): string {
   return model_split.join("\n");
 }
 
-function deduplicateStateNames(parsed: SCTX): void {
-  const usedNames = new Set<string>();
-  function visitElements(elements: Array<Element | AstRegion>): void {
-    for (const element of elements) {
-      if (element.$type === "State") {
-        const state = element as AstState;
-        // Skip external reference states — they point to another chart file,
-        // so no local transitions can target them by name.
-        if (state.reference) continue;
-        let finalName = state.name;
-        if (usedNames.has(finalName)) {
-          let suffix = 0;
-          let candidate: string;
-          do {
-            candidate = `${state.name}${suffix}`;
-            suffix++;
-          } while (usedNames.has(candidate));
-          finalName = candidate;
-        }
-        if (finalName !== state.name) {
-          state.name = finalName;
-        }
-        usedNames.add(finalName);
-        visitElements(state.elements);
-      } else if (element.$type === "Region") {
-        const region = element as AstRegion;
-        visitElements(region.elements);
-      }
-    }
-  }
-  visitElements(parsed.elements);
-}
 export function convertSCTXtoSchema(parsed: SCTX): SCChartModel {
   const counter = { val: 0 }; // for the auto naming of dummy regions
   const topLevelVars: Variable[] = [];
@@ -225,6 +193,7 @@ function convertVariablesToSchema(
       type: variable.type,
       isInput: variable.isInput,
       isOutput: variable.isOutput,
+      cardinalities: [], // TODO: array parsing
     };
 
     if (assignment.initialValue !== undefined) {
@@ -358,6 +327,7 @@ function convertAstRegionToSchema(
         type: element.type,
         isInput: element.isInput,
         isOutput: element.isOutput,
+        cardinalities: [], // TODO: array parsing
       };
       if (element.assignments[0].initialValue !== undefined) {
         varEntry.initialValue = element.assignments[0].initialValue;
@@ -494,7 +464,6 @@ if (
   throw new Error("Lexer or Parser errors occurred");
 }
 
-deduplicateStateNames(document.parseResult.value);
 const result = convertSCTXtoSchema(document.parseResult.value);
 
 if (ourputFilePath) {

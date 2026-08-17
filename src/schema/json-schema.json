@@ -127,9 +127,15 @@
 				},
 				"isOutput": {
 					"type": "boolean"
+				},
+				"cardinalities": {
+					"type": "array",
+					"items": {
+						"type": "integer"
+					}
 				}
 			},
-			"required": ["id", "type", "isInput", "isOutput"]
+			"required": ["id", "type", "isInput", "isOutput", "cardinalities"]
 		},
 		"action": {
 			"type": "object",
