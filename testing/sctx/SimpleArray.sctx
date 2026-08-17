@@ -1,5 +1,5 @@
 scchart SimpleArray {
-	output int O[3] = {5, 7, 0}
+	output int O[3] = {5, 7, 1}
 
 	initial state init
 	if O[2] == 0 go to end

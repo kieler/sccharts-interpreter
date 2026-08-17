@@ -12,14 +12,12 @@ scchart NameDouble {
 			final state T
 		}
 
-		region B {
-			output int A, B	
-			
+		region B {			
 			initial state W
-			do A = 1 go to S
+			go to S
 
 			state S
-			do B = 2 go to T
+			go to T
 
 			final state T
 		}

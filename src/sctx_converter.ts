@@ -91,14 +91,32 @@ export function preProcess(model: string): string {
         model_split[i].includes("float") ||
         model_split[i].includes("bool"))
     ) {
-      const vars = model_split[i].split(",");
+      // Split only on commas at brace depth 0 (inside {} don't count)
+      const splitByTopLevelComma = (str: string): string[] => {
+        const parts: string[] = [];
+        let current = "";
+        let depth = 0;
+        for (const ch of str) {
+          if (ch === "{") depth++;
+          else if (ch === "}") depth--;
+          if (ch === "," && depth === 0) {
+            parts.push(current.trim());
+            current = "";
+          } else {
+            current += ch;
+          }
+        }
+        const trimmed = current.trim();
+        if (trimmed) parts.push(trimmed);
+        return parts;
+      };
+      const vars = splitByTopLevelComma(model_split[i]);
       for (let j = 0; j < vars.length; j++) {
         if (vars[j].includes("=")) {
           vars[j] = vars[j].replace("=", "=#");
           vars[j] += "#";
         }
       }
-
       model_split[i] = vars.join(",");
     }
   }
