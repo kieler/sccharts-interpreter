@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -206,6 +207,7 @@ def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) 
         assert item["variables"] == {}, (
             f"Length mismatch: extra step(s) in expected with content: {item}"
         )
+
     for i, (a, e) in enumerate(zip(actual, expected)):
         assert set(e.keys()).issubset(set(a.keys())), (
             f"Step {i}: expected keys not subset of actual: {e.keys()}"
@@ -223,11 +225,30 @@ def _assert_subset_dict(
 ) -> None:
     for k, v in expected.items():
         full_key = f"{prefix}.{k}"
-        assert k in actual, f"{full_key}: key missing"
-        if isinstance(v, dict):
+
+        match = re.match(r'^(.+?)(\[.*\])+$', k)
+
+        if match:
+            var_name = match.group(1)
+            indices_str = match.group(2)
+            assert var_name in actual, f"{full_key}: key missing"
+
+            source = actual[var_name]
+
+            indices = re.findall(r'\[(\d+)\]', indices_str)
+            for idx_str in indices:
+                idx = int(idx_str)
+                assert isinstance(source, list), f"{full_key}: expected a list"
+                assert idx < len(source), f"{full_key}: index {idx} out of range (length {len(source)})"
+                source = source[idx]
+
+            assert source == v, f"{full_key}: expected {v}, got {source}"
+        elif isinstance(v, dict):
+            assert k in actual, f"{full_key}: key missing"
             assert isinstance(actual[k], dict), f"{full_key} is not a dict"
             _assert_subset_dict(actual[k], v, full_key)
         else:
+            assert k in actual, f"{full_key}: key missing"
             assert actual[k] == v, f"{full_key}: expected {v}, got {actual[k]}"
 
 

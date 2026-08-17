@@ -59,7 +59,8 @@ export function parseAction(action: string, context: Context): void {
       part = part.replaceAll(placeholder, replacement);
     }
 
-    const [variable, expression] = part.split("=")!;
+    let [variable, expression] = part.split("=")!;
+    expression = expression.replaceAll("{", "[").replaceAll("}", "]");
     const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, expression);
     const fn = new Function(...safeKeys, `return (${safeExpr})`);
     let result = fn(...values);

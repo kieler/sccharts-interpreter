@@ -62,10 +62,15 @@ Also see the blocklist for models that have unsupported features.
 	- js + kico weirdness: false | false = 0 instead of false
 - [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
     - scheduling porbably
-- [ ] als/various/const_float_computation: No expression parsing during assignments
+- [ ] No expression parsing during assignments
+	- als/various/const_float_computation
+	- kolja/VectorValueExpressions01.ktrace, for vectors
+	- kolja/VectorValueExpressions02.ktrace, 2 * {{4} * 3} gets evaluated to 24, because js doesn't support that sytax like python 
+	- kolja/VectorValueExpressions03.ktrace
 - [x] ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.
     - This is goig to get fixed on KiCo level
 - [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
+- [ ] kolja/ArrayAssignmentActions.ktrace: The js evaluator turns [1,2]+[1,2] into '1,21,2' so adding arrays element wise breaks the thing
 
 
 ### featurs
