@@ -226,7 +226,7 @@ def _assert_subset_dict(
     for k, v in expected.items():
         full_key = f"{prefix}.{k}"
 
-        match = re.match(r'^(.+?)(\[.*\])+$', k)
+        match = re.match(r"^(.+?)(\[.*\])+$", k)
 
         if match:
             var_name = match.group(1)
@@ -235,11 +235,13 @@ def _assert_subset_dict(
 
             source = actual[var_name]
 
-            indices = re.findall(r'\[(\d+)\]', indices_str)
+            indices = re.findall(r"\[(\d+)\]", indices_str)
             for idx_str in indices:
                 idx = int(idx_str)
                 assert isinstance(source, list), f"{full_key}: expected a list"
-                assert idx < len(source), f"{full_key}: index {idx} out of range (length {len(source)})"
+                assert idx < len(source), (
+                    f"{full_key}: index {idx} out of range (length {len(source)})"
+                )
                 source = source[idx]
 
             assert source == v, f"{full_key}: expected {v}, got {source}"

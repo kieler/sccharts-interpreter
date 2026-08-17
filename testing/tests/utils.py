@@ -40,6 +40,9 @@ def parse_var_type(value_str: str | None):
     if lowered == "false":
         return False
 
+    if lowered == "null":
+        return None
+
     if lowered.startswith("[") and lowered.endswith("]"):
         return ast.literal_eval(value_str)
 
@@ -53,7 +56,9 @@ def parse_var_type(value_str: str | None):
     except ValueError:
         pass
 
-    return value_str  # str as fallback
+    # str as fallback, but remove quotaion marks
+    # otherwise we compare '"Hellow World!"' with "Hello World!", which fails
+    return value_str.replace('"', "")
 
 
 def parse_side(side: str) -> dict:

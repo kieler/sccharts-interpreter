@@ -2,6 +2,7 @@ import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
 import type { Region, SCChartModel, Variable } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext } from "./utils.js";
 import { readFileSync } from "node:fs";
+import { parseExpression } from "./actionParser.js";
 
 function initialArrayValues(
   cardinalities: number[],
@@ -25,7 +26,11 @@ function initialArrayValues(
   return array;
 }
 
-function parseScalar(value: any, type: string): unknown {
+function parseScalar(value: any, type: string, context: Context): unknown {
+  const parsed_value = parseExpression(value, context, type);
+  return parsed_value;
+  console.log(parsed_value, typeof parsed_value);
+
   if (type === "int") return Number(value);
   if (type === "float") return Number(value);
   if (type === "bool") return value === "true";
@@ -75,7 +80,7 @@ function variableValues(
   } else {
     context.variables.set(
       variable.id,
-      parseScalar(variable.initialValue!, variable.type),
+      parseScalar(variable.initialValue!, variable.type, context),
     );
   }
 }
