@@ -1,4 +1,4 @@
-from base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner, assert_subset, generate_expected
 
 
 def test_abort_and_regions():
@@ -10,7 +10,7 @@ def test_abort_and_regions():
         runner.setup()
         run_inputs = [{"I": i} for _ in range(10)]
 
-        runner.add_random_inputs(run_inputs, "int", "I", 10, (0, 6))
+        run_inputs = runner.add_random_inputs(run_inputs, "int", "I", 10, (0, 6))
         expected = generate_expected("AbortAndRegions", run_inputs, ["I", "O"])
 
         assert_subset(runner.run(run_inputs), expected)

@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -151,37 +152,34 @@ class TestRunner:
         else:
             self.model = load_model_name(name, no_reset)
 
-    def setup(self, wonly=False, seed: int = 42) -> requests.Response:
+    def setup(self, wonly=False, seed: int = 42):
         self.random = random.Random(seed)
 
         resp = requests.post(
             f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
         )
 
-        if resp.status_code == 500:
-            print(resp.json())
+        if resp.status_code == 500 and "reference" in resp.json():
+            sctx_ref = Path(resp.json()["reference"][5:])
+            # string starts with file: #TOOD: not always
 
-            if resp.json()["reference"]:
-                sctx_ref = Path(resp.json()["reference"][5:])
+            if _get_langium_mode():
+                compile_sctx_to_langium(sctx_ref)
+            else:
+                compile_sctx_to_json(sctx_ref)
 
-                if _get_langium_mode():
-                    compile_sctx_to_langium(sctx_ref)
-                else:
-                    compile_sctx_to_json(sctx_ref)
+            resp2 = requests.post(
+                f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+            )
 
-                resp2 = requests.post(
-                    f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
-                )
-
-                assert resp2.status_code == 200, (
-                    f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
-                )
-                return resp2
+            assert resp2.status_code == 200, (
+                f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
+            )
+            return
 
         assert resp.status_code == 200, (
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
         )
-        return resp
 
     def add_random_inputs(
         self,
@@ -268,6 +266,7 @@ def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) 
         assert item["variables"] == {}, (
             f"Length mismatch: extra step(s) in expected with content: {item}"
         )
+
     for i, (a, e) in enumerate(zip(actual, expected)):
         assert set(e.keys()).issubset(set(a.keys())), (
             f"Step {i}: expected keys not subset of actual: {e.keys()}"
@@ -285,11 +284,32 @@ def _assert_subset_dict(
 ) -> None:
     for k, v in expected.items():
         full_key = f"{prefix}.{k}"
-        assert k in actual, f"{full_key}: key missing"
-        if isinstance(v, dict):
+
+        match = re.match(r"^(.+?)(\[.*\])+$", k)
+
+        if match:
+            var_name = match.group(1)
+            indices_str = match.group(2)
+            assert var_name in actual, f"{full_key}: key missing"
+
+            source = actual[var_name]
+
+            indices = re.findall(r"\[(\d+)\]", indices_str)
+            for idx_str in indices:
+                idx = int(idx_str)
+                assert isinstance(source, list), f"{full_key}: expected a list"
+                assert idx < len(source), (
+                    f"{full_key}: index {idx} out of range (length {len(source)})"
+                )
+                source = source[idx]
+
+            assert source == v, f"{full_key}: expected {v}, got {source}"
+        elif isinstance(v, dict):
+            assert k in actual, f"{full_key}: key missing"
             assert isinstance(actual[k], dict), f"{full_key} is not a dict"
             _assert_subset_dict(actual[k], v, full_key)
         else:
+            assert k in actual, f"{full_key}: key missing"
             assert actual[k] == v, f"{full_key}: expected {v}, got {actual[k]}"
 
 

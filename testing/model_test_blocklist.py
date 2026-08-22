@@ -51,4 +51,5 @@ blocklist = [
     # other
     "timed_signal_immediate_test.ktrace",  # the vs code extension gives me a sytax error
     "Controller.ktrace",  # Steam boiler, idk
+    "ConstArraySize.ktrace",  # Arrays with variables as sizes
 ]

@@ -1,4 +1,4 @@
-from base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner, assert_subset, generate_expected
 
 
 def test_array_simple():

@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 
-from base import TestRunner, assert_subset
-from utils import parse_ktrace
+from tests.base import TestRunner, assert_subset
+from tests.utils import parse_ktrace
 
 
 def _make_json_name(ktrace_sctx_path: str) -> str:

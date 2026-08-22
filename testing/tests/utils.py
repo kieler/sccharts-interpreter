@@ -1,35 +1,16 @@
-import re
-
-
-def fill_missing_vars(input_vars, input):
-    return input_vars, input
-
-    # This whole input var thing is because the kico cli doesnt auto reset input vars like the intrprter cli
-    # This way it keeps the old value
-    # TODO: should the cli maybe also not reset?
-    for var_name, value in input.items():
-        input_vars[var_name] = value
-
-    for var_name, value in input_vars.items():
-        if var_name not in input:
-            input[var_name] = value
+import ast
+import sys
 
 
 def parse_ktrace(ktrace: str):
     ticks = ktrace.strip().split(";")
     trace = {"inputs": [], "outputs": []}
 
-    input_vars = {}
-
     for tick in ticks:
+        tick = tick.replace("{", "[").replace("}", "]")
+
         if tick.strip() == "reset":
             trace["inputs"].append({"reset": True})
-            trace["outputs"].append({})
-            continue
-
-        if not tick.strip():
-            input_vars, imp = fill_missing_vars(input_vars, {})
-            trace["inputs"].append(imp)
             trace["outputs"].append({})
             continue
 
@@ -42,21 +23,28 @@ def parse_ktrace(ktrace: str):
         inp = parse_side(input_part) if input_part.strip() else {}
         out = parse_side(output_part) if output_part.strip() else {}
 
-        input_vars, inp = fill_missing_vars(input_vars, inp)
-
         trace["inputs"].append(inp)
         trace["outputs"].append(out)
 
     return trace
 
 
-def parse_var_type(value_str: str):
+def parse_var_type(value_str: str | None):
+    if value_str is None:
+        return None
+
     lowered = value_str.lower()
 
     if lowered == "true":
         return True
     if lowered == "false":
         return False
+
+    if lowered == "null":
+        return None
+
+    if lowered.startswith("[") and lowered.endswith("]"):
+        return ast.literal_eval(value_str)
 
     try:
         return int(lowered)
@@ -68,24 +56,42 @@ def parse_var_type(value_str: str):
     except ValueError:
         pass
 
-    return value_str  # str as fallback
+    # str as fallback, but remove quotaion marks
+    # otherwise we compare '"Hellow World!"' with "Hello World!", which fails
+    return value_str.replace('"', "")
 
 
 def parse_side(side: str) -> dict:
     result = {}
-    for match in re.finditer(r"(\S+?)\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|(\S+))", side):
-        var_name = match.group(1)
-        value_str = (
-            match.group(2)
-            if match.group(2) is not None
-            else (match.group(3) if match.group(3) is not None else match.group(4))
-        )
 
-        if any(match.group(i) is not None for i in [2, 3]):
-            result[var_name] = (
-                value_str  # quoted values used as-is (no type conversion)
-            )
-        else:
-            parsed = parse_var_type(value_str)
-            result[var_name] = None if parsed == "null" else parsed
+    side = side.replace(" = ", "=").strip()
+
+    # Go through all ' ' and split at the one before a '='
+    # as each vaiable should have 1 '='
+    separatorIndices = [i for i, c in enumerate(side) if c == " "]
+    separatorIndices = [0] + separatorIndices + [len(side)]
+    equalIndices = [i for i, c in enumerate(side) if c == "="]
+
+    splitIndices: list[int] = [0]
+    for index in equalIndices[1:]:
+        i = 0
+        while separatorIndices[i] < index:
+            i += 1
+        splitIndices.append(separatorIndices[i - 1])
+    splitIndices.append(len(side) - 1)
+
+    for i in range(len(splitIndices) - 1):
+        assignment = side[splitIndices[i] : splitIndices[i + 1] + 1]
+        var, value = assignment.split("=")
+        result[var.strip()] = parse_var_type(value.strip())
+
     return result
+
+
+if __name__ == "__main__":
+    path = sys.argv[1]
+    with open(path, "r") as f:
+        ktrace = f.read()
+
+    trace = parse_ktrace(ktrace)
+    print(trace)

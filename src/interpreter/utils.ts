@@ -104,6 +104,19 @@ export function setupContext(model: SCChartModel, wonly: boolean): Context {
 }
 
 export function pre(context: Context, variable: string): unknown {
-  console.log(variable, context.preVariables.get(variable));
+  if (variable.includes("[")) {
+    const [base, ...indicesStr] = variable.split("[");
+    const indices = indicesStr.map((i) => Number(i.replace("]", "")));
+    let value = context.preVariables.get(base);
+
+    let i = 0;
+    while (value instanceof Array) {
+      value = value[indices[i]];
+      i++;
+    }
+
+    return value;
+  }
+
   return context.preVariables.get(variable);
 }

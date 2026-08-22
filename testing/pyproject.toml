@@ -2,4 +2,8 @@
 name = "sccharts-interpreter-tests"
 version = "0.2.0"
 requires-python = ">=3.10"
-dependencies = ["requests", "pytest"]
+dependencies = [
+    "requests",
+    "pytest",
+    "typing-extensions>=4.15.0",
+]

@@ -1,4 +1,4 @@
-from base import TestRunner, generate_expected, assert_subset
+from tests.base import TestRunner, assert_subset, generate_expected
 
 
 def test_immediate():

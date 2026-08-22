@@ -1,7 +1,7 @@
 import json
 import re
 
-from base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner, assert_subset, generate_expected
 
 
 def unrename(data):
