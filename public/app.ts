@@ -32,8 +32,17 @@ console.error = (...args: unknown[]) => {
 
 log("[System] Ready.");
 
-import { setupContext, tick } from "web-interpreter";
-import type { Context, TickResult, SCChartModel } from "web-interpreter";
+import {
+  setupContext,
+  tick,
+  preProcess,
+  convertSCTXtoSchema,
+  createSCChartsServices,
+} from "web-interpreter";
+import type { Context, TickResult, SCChartModel, SCTX } from "web-interpreter";
+
+import { EmptyFileSystem } from "langium";
+import { parseHelper } from "langium/test";
 
 const fileInput = document.getElementById("json-file") as HTMLInputElement;
 const sctxTabButton = document.getElementById("sctx-tab") as HTMLButtonElement;
@@ -86,36 +95,36 @@ let tickCount = 0;
 let loopInputs = false;
 let context: Context | unknown;
 let scchartModel: SCChartModel | undefined;
-let compilerAvailable: boolean = await checkCompilerAvailability();
+// let compilerAvailable: boolean = await checkCompilerAvailability();
 
-async function checkCompilerAvailability() {
-  log("[Compiler] Checking connection...");
-  try {
-    const resp = await fetch("http://localhost:8080/ping", {
-      signal: AbortSignal.timeout(5000),
-    });
-    const data = await resp.json();
-    if (data.message === "pong") {
-      log("[Compiler] connected");
-      return true;
-    }
-    throw new Error("not connected: " + JSON.stringify(data));
-  } catch (err: any) {
-    log("[Compiler] Connection failed");
-    return false;
-  }
-}
+// async function checkCompilerAvailability() {
+//   log("[Compiler] Checking connection...");
+//   try {
+//     const resp = await fetch("http://localhost:8080/ping", {
+//       signal: AbortSignal.timeout(5000),
+//     });
+//     const data = await resp.json();
+//     if (data.message === "pong") {
+//       log("[Compiler] connected");
+//       return true;
+//     }
+//     throw new Error("not connected: " + JSON.stringify(data));
+//   } catch (err: any) {
+//     log("[Compiler] Connection failed");
+//     return false;
+//   }
+// }
 
-if (compilerAvailable) {
-  sctxTabButton.disabled = false;
-} else {
-  sctxTabButton.disabled = true;
-}
+// if (compilerAvailable) {
+//   sctxTabButton.disabled = false;
+// } else {
+//   sctxTabButton.disabled = true;
+// }
 
-sctxTabButton.addEventListener("click", () => {
-  sctxPanel.style.display =
-    sctxPanel.style.display === "none" ? "flex" : "none";
-});
+// sctxTabButton.addEventListener("click", () => {
+//   sctxPanel.style.display =
+//     sctxPanel.style.display === "none" ? "flex" : "none";
+// });
 
 function createVarCard(
   name: string,
@@ -296,34 +305,25 @@ compileButton.addEventListener("click", async () => {
   const text = sctxTextInput.value;
 
   try {
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(text);
-    const base64 = arrayBufferToBase64(bytes.buffer);
+    const model = preProcess(text);
 
-    const resp = await fetch("http://localhost:8080/compile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sctx_base64: base64, filename: "model.sctx" }),
-    });
+    const services = createSCChartsServices(EmptyFileSystem);
+    const parse = parseHelper<SCTX>(services.SCCharts);
+    const document = await parse(model, { validation: true });
 
-    if (!resp.ok) {
-      log(`[Compiler] ${await resp.text()}`, "error");
-      return false;
+    if (
+      document.parseResult.lexerErrors.length > 0 ||
+      document.parseResult.parserErrors.length > 0
+    ) {
+      log(model, "error");
+      log(String(document.parseResult.lexerErrors), "error");
+      log(String(document.parseResult.parserErrors), "error");
+      throw new Error("Lexer or Parser errors occurred");
     }
 
-    const result = (await resp.json()) as {
-      type: string;
-      data?: unknown;
-      message?: string;
-    };
+    const result = convertSCTXtoSchema(document.parseResult.value, "");
 
-    if (result.type === "error") {
-      log(`[Compiler] ${result.message}`, "error");
-      return false;
-    }
-
-    const model = result.data;
-    loadModel(model);
+    loadModel(result);
   } catch (err: any) {
     log(`[Compiler] Compilation failed: ${(err as Error).message}`, "error");
     return false;

@@ -4,8 +4,23 @@
  * In the browser, it throws an error (file system access is not available).
  */
 export function readFileSync(path: string): string {
-  if (typeof process !== "undefined" && process.versions != null && process.versions.node != null) {
+  if (
+    typeof process !== "undefined" &&
+    process.versions != null &&
+    process.versions.node != null
+  ) {
     return require("node:fs").readFileSync(path, "utf-8") as string;
+  }
+  throw new Error("File system access is not available in the browser");
+}
+
+export function writeFileSync(path: string, data: string): string {
+  if (
+    typeof process !== "undefined" &&
+    process.versions != null &&
+    process.versions.node != null
+  ) {
+    return require("node:fs").writeFileSync(path, data, "utf-8") as string;
   }
   throw new Error("File system access is not available in the browser");
 }
