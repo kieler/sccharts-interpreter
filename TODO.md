@@ -82,8 +82,8 @@ Also see the blocklist for models that have unsupported features.
 - [x] ~~ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.~~
     - This is goig to get fixed on KiCo level
 - [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
-- [ ] kolja/ArrayAssignmentActions.ktrace: The js evaluator turns [1,2]+[1,2] into '1,21,2' so adding arrays element wise breaks the thing
-
+- [ ] kolja/ArrayAssignmentActions.ktrace: The js evaluator turns [1,2]+[1,2] into '1,21,2' so adding arrays element wise breaks the thinga
+- [ ] kolja/ArrayAssignmentActions.ktrace: When assigning array values from other arrays it doesn't work proplery in the same tick. In the following tick, it seems to work fine. I probably need to split up the action function.
 
 ### featurs
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
