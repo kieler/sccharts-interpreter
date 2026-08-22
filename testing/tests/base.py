@@ -93,34 +93,30 @@ class TestRunner:
         else:
             self.model = load_model_name(name, no_reset)
 
-    def setup(self, wonly=False, seed: int = 42) -> requests.Response:
+    def setup(self, wonly=False, seed: int = 42):
         self.random = random.Random(seed)
 
         resp = requests.post(
             f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
         )
 
-        if resp.status_code == 500:
-            print(resp.json())
+        if resp.status_code == 500 and "reference" in resp.json():
+            compile_sctx_to_json(
+                Path(resp.json()["reference"][5:])
+            )  # string starts with file: #TOOD: not always
 
-            if resp.json()["reference"]:
-                compile_sctx_to_json(
-                    Path(resp.json()["reference"][5:])
-                )  # string starts with file:
+            resp2 = requests.post(
+                f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+            )
 
-                resp2 = requests.post(
-                    f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
-                )
-
-                assert resp2.status_code == 200, (
-                    f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
-                )
-                return resp2
+            assert resp2.status_code == 200, (
+                f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
+            )
+            return
 
         assert resp.status_code == 200, (
             f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
         )
-        return resp
 
     def add_random_inputs(
         self,

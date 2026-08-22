@@ -19,6 +19,8 @@ for the PoC, these should probably be left out unless it is easy.
 - [x] Reference SCCharts
 - [ ] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
+	- Maybe one could use something like the scope thing I added to the transition resolution. variables could have a scope and then we take the one that is in the same scope as the current node (or above). If I use the current getScope() this could literaly be: if scopeVar in scopeNode: use variable (checnking the deepest/longest scopes first).
+	- They would currently break the testing. The results are correct as long as the variables don't share a name, but KiCo does some name prefixing and so the stdout parser doesn't work properly.
 
 ## other
 - [x] testing
@@ -62,12 +64,13 @@ Also see the blocklist for models that have unsupported features.
 	- js + kico weirdness: false | false = 0 instead of false
 - [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
     - scheduling porbably
-- [ ] No expression parsing during assignments
-	- als/various/const_float_computation
+- [x] als/various/const_float_computation: No expression parsing during assignments
+- [ ] Vector expressions:
 	- kolja/VectorValueExpressions01.ktrace, for vectors
 	- kolja/VectorValueExpressions02.ktrace, 2 * {{4} * 3} gets evaluated to 24, because js doesn't support that sytax like python 
 	- kolja/VectorValueExpressions03.ktrace
-- [x] ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.
+	- als/various/computed_vector.ktrace: [1 to 4] -> {1,2,3,4}
+- [x] ~~ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.~~
     - This is goig to get fixed on KiCo level
 - [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
 - [ ] kolja/ArrayAssignmentActions.ktrace: The js evaluator turns [1,2]+[1,2] into '1,21,2' so adding arrays element wise breaks the thing
@@ -82,4 +85,5 @@ Also see the blocklist for models that have unsupported features.
 -
 
 ### other
+- Commenting and documenting the code.
 - Reference Charts can be of models in the same file.

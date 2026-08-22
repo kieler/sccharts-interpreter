@@ -1,4 +1,4 @@
-from base import TestRunner, assert_subset
+from tests.base import TestRunner, assert_subset
 
 
 def test_ao():
