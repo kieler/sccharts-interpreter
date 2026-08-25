@@ -42,6 +42,7 @@ for the PoC, these should probably be left out unless it is easy.
 	- Explicitly what should throw an error: 
 		- [x] Ending a tick in a connector
 		- [ ] multiple inital stated
+		- [ ] using undeclared variables
 		- [ ] ...
 	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
@@ -72,35 +73,31 @@ Also see the blocklist for models that have unsupported features.
     - scheduling porbably
 - [x] als/various/const_float_computation: No expression parsing during assignments
 - [ ] Vector expressions:
-	- kolja/VectorValueExpressions01.ktrace, for vectors
+	- kolja/VectorValueExpressions01.ktrace
 	- kolja/VectorValueExpressions02.ktrace, 2 * {{4} * 3} gets evaluated to 24, because js doesn't support that sytax like python 
 	- kolja/VectorValueExpressions03.ktrace
 	- als/various/computed_vector.ktrace: [1 to 4] -> {1,2,3,4}
 - [x] ~~ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.~~
     - This is goig to get fixed on KiCo level
 - [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
+	- Create a fake vaiable that has that value and should not be touched by any actions and such should never not be the literal
 - [ ] kolja/ArrayAssignmentActions.ktrace: The js evaluator turns [1,2]+[1,2] into '1,21,2' so adding arrays element wise breaks the thinga
 - [ ] kolja/ArrayAssignmentActions.ktrace: When assigning array values from other arrays it doesn't work proplery in the same tick. In the following tick, it seems to work fine. I probably need to split up the action function.
+- [ ] When reseting the model that was compiled in the browser the tick buttons still are grayed out. I assume that if the model is compiled instead of uploaded, it isn't stored so the reset can load it.
+- [ ] If an action assigns a variable that doesn't exist, the interpreter is happy to create it. should that be a warning / error?
+	- Also see above in "exceptions"
+- [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 
+	- This is kind of intentional, regions dont have variables in the json schema
+- [ ] Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
 
-### featurs
+### features
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
     - [x] It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword.
+- [ ] Reference Charts can be of models in the same file.
 
 ### scheduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here
 
 ### other
-- The KiCO Simulation (and compiled code, due to how it works) doesnt set non inputed variables as their 0-value but keeps the last, should i do that as well? It would be in interpreter/utils.py removing the default assignment in asignVariables.
-	- If we do want to do signals, this would just be signals?
-
-Reference Charts can be of models in the same file.
-
-For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a regiom instead of state.
-
-Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
-
-If an action assigns a variable that doesn't exist, the interpreter is happy to create it. should that be a warning / error?
-
-Commenting and documenting the code.
-
-When reseting the model that was compiled in the browser the tick buttons still are grayed out. I assume that if the model is compiled instead of uploaded, it isn't stored so the reset can load it.
+- [ ] Commenting and documenting the code.
+- [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
