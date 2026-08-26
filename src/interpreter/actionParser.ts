@@ -1,5 +1,5 @@
 import { pre } from "./utils.js";
-import { Context } from "./types.js";
+import { Context, Variable } from "./types.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
 
 function infixToAssignment(expr: string): string {
@@ -18,10 +18,11 @@ export function parseExpression(
   varType: string = "",
 ): any {
   const keys = Array.from(context.variables.keys());
-  const values = Array.from(context.variables.values());
+  var values: Variable[] = Array.from(context.variables.values()) as Variable[];
+  values = values.map((v) => v.value);
 
   if (varType) {
-    varType = context.variableTypes.get(varType) ?? "";
+    varType = context.variables.get(varType)?.type ?? "";
   }
 
   const specialFns: Record<string, (arg: string) => unknown> = {
@@ -87,11 +88,11 @@ export function parseAction(action: string, context: Context): void {
     if (variable.includes("[") && variable.includes("]")) {
       const [varName, ...indicesStr] = variable.trim().split("[");
 
-      if (!context.variableTypes.get(varName)?.includes("[]")) {
+      if (!context.variables.get(varName)?.type.includes("[]")) {
         throw new Error(`Variable ${varName} is not an array`);
       }
 
-      const array = context.variables.get(varName);
+      const array = context.variables.get(varName)?.value;
       if (!Array.isArray(array))
         throw new Error(`Variable ${varName} is not defined`);
 
@@ -102,8 +103,8 @@ export function parseAction(action: string, context: Context): void {
 
         if (!isNaN(Number(strIndex))) {
           indices.push(Number(strIndex));
-        } else if (!isNaN(Number(context.variables.get(strIndex)))) {
-          indices.push(Number(context.variables.get(strIndex)));
+        } else if (!isNaN(Number(context.variables.get(strIndex)?.value))) {
+          indices.push(Number(context.variables.get(strIndex)?.value));
         } else {
           throw new Error(`Invalid index ${strIndex}`);
         }
@@ -117,7 +118,7 @@ export function parseAction(action: string, context: Context): void {
       }
       target[indices[indices.length - 1]] = result;
     } else {
-      context.variables.set(variable.trim(), result);
+      context.variables.get(variable.trim())!.value = result;
     }
   }
 }

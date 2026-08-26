@@ -1,4 +1,5 @@
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
+import { Variable } from "./types.js";
 
 export function parseGuard(
   guard: string,
@@ -7,7 +8,8 @@ export function parseGuard(
   if (!guard || guard.trim() === "") return true;
 
   const keys = Array.from(variables.keys());
-  const values = Array.from(variables.values());
+  var values: Variable[] = Array.from(variables.values()) as Variable[];
+  values = values.map((v) => v.value);
 
   const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
 

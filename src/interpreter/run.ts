@@ -4,7 +4,7 @@ import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
-import { assignInputVariables } from "./utils.js";
+import { assignInputVariables, setPreVars } from "./utils.js";
 
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
@@ -144,7 +144,8 @@ function processNode(
   if (node.referencedContext && node.referencedVarMap) {
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
-        node.referencedContext.variables.set(i, context.variables.get(outer));
+        node.referencedContext.variables.get(i)!.value =
+          context.variables.get(outer)?.value;
       }
     }
 
@@ -152,7 +153,8 @@ function processNode(
 
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
-        context.variables.set(outer, node.referencedContext.variables.get(i));
+        context.variables.get(outer)!.value =
+          node.referencedContext.variables.get(i)?.value;
       }
     }
   }
@@ -178,7 +180,8 @@ export function tick(
       messages: [],
     };
 
-  context.preVariables = new Map(context.variables);
+  setPreVars(context);
+
   if (assignInputs) assignInputVariables(context, inputs);
   processNode(context.graph.activeNode, context);
 
@@ -197,7 +200,10 @@ export function tick(
   context.messages = [];
   return {
     terminated: context.graph.terminated,
-    variables: Object.fromEntries(context.variables),
+    // variables: Object.fromEntries(context.variables),
+    variables: Object.fromEntries(
+      [...context.variables.entries()].map(([id, v]) => [id, v.value]),
+    ),
     messages: messages,
   };
 }

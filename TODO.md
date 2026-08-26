@@ -89,6 +89,7 @@ Also see the blocklist for models that have unsupported features.
 - [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 
 	- This is kind of intentional, regions dont have variables in the json schema
 - [ ] Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
+- [ ] aas/arrays/IndexVariable2.ktrace: O[i[0]] throws an error, because "i" is not a number (see action parser ~l.103)
 
 ### features
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts

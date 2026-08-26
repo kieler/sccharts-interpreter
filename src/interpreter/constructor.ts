@@ -1,6 +1,21 @@
-import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
-import type { Region, SCChartModel, Variable } from "../schema/types.js";
-import { createFakeRootRegion, emptyContext } from "./utils.js";
+import type {
+  Context,
+  StateNode,
+  StateGraph,
+  TransitionEdge,
+  Variable,
+} from "./types.js";
+import type {
+  Region,
+  SCChartModel,
+  Variable as SchemaVariable,
+} from "../schema/types.js";
+import {
+  createFakeRootRegion,
+  emptyContext,
+  getScope,
+  setPreVars,
+} from "./utils.js";
 import { readFileSync } from "node:fs";
 import { parseExpression } from "./actionParser.js";
 
@@ -29,13 +44,6 @@ function initialArrayValues(
 function parseScalar(value: any, type: string, context: Context): unknown {
   const parsed_value = parseExpression(value, context, type);
   return parsed_value;
-  console.log(parsed_value, typeof parsed_value);
-
-  if (type === "int") return Number(value);
-  if (type === "float") return Number(value);
-  if (type === "bool") return value === "true";
-  if (type === "string") return value;
-  return value;
 }
 
 function parseArrayValues(valueStr: string): unknown[] {
@@ -46,7 +54,7 @@ function parseArrayValues(valueStr: string): unknown[] {
 
 function variableDefaults(
   context: Context,
-  variable: Variable,
+  variable: SchemaVariable,
   isArray: boolean,
 ) {
   const defaultValues: Record<string, unknown> = {
@@ -56,42 +64,66 @@ function variableDefaults(
     float: 0.0,
   };
 
+  let assignVar: Variable;
+
   if (isArray) {
     const array = initialArrayValues(
       variable.cardinalities,
       defaultValues[variable.type],
     );
-    context.variables.set(variable.id, array);
+
+    assignVar = {
+      id: variable.id,
+      scope: "", // TODO: proper variable scope
+      type: variable.type + "[]",
+      value: array,
+      preValue: null,
+    };
+    context.variables.set(variable.id, assignVar);
 
     return;
   }
 
-  context.variables.set(variable.id, defaultValues[variable.type]);
+  assignVar = {
+    id: variable.id,
+    scope: "", // TODO: proper variable scope
+    type: variable.type,
+    value: defaultValues[variable.type],
+    preValue: null,
+  };
+  context.variables.set(variable.id, assignVar);
 }
 
 function variableValues(
   context: Context,
-  variable: Variable,
+  variable: SchemaVariable,
   isArray: boolean,
 ) {
   if (isArray && typeof variable.initialValue === "string") {
     const parsed = parseArrayValues(variable.initialValue!);
-    context.variables.set(variable.id, parsed);
+    const assignVar = {
+      id: variable.id,
+      scope: "", // TODO: proper variable scope
+      type: variable.type + "[]",
+      value: parsed,
+      preValue: null,
+    };
+    context.variables.set(variable.id, assignVar);
   } else {
-    context.variables.set(
-      variable.id,
-      parseScalar(variable.initialValue!, variable.type, context),
-    );
+    const assignVar = {
+      id: variable.id,
+      scope: "", // TODO: proper variable scope
+      type: variable.type,
+      value: parseScalar(variable.initialValue!, variable.type, context),
+      preValue: null,
+    };
+
+    context.variables.set(variable.id, assignVar);
   }
 }
 
-function addVariable(context: Context, variable: Variable) {
+function addVariable(context: Context, variable: SchemaVariable) {
   const isArray = variable.cardinalities.length != 0;
-  if (isArray) {
-    context.variableTypes.set(variable.id, variable.type + "[]");
-  } else {
-    context.variableTypes.set(variable.id, variable.type);
-  }
 
   if (variable.isOutput) {
     context.outputVariables.push(variable.id);
@@ -105,17 +137,6 @@ function addVariable(context: Context, variable: Variable) {
   } else {
     variableValues(context, variable, isArray);
   }
-}
-
-function getScope(graph: StateGraph): string {
-  let scope = "";
-
-  while (graph.parent) {
-    scope = graph.parent.id + "." + graph.id + "." + scope;
-    graph = graph.parent.graph;
-  }
-
-  return scope;
 }
 
 function constructRegion(
@@ -285,7 +306,7 @@ export function constructStateGraph(model: SCChartModel): Context {
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
 
-  context.preVariables = new Map(context.variables);
+  setPreVars(context);
 
   return context;
 }

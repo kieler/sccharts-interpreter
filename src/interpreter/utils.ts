@@ -1,6 +1,6 @@
 import { validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
-import { Context, StateNode } from "./types.js";
+import { Context, StateGraph, StateNode } from "./types.js";
 import { constructStateGraph } from "./constructor.js";
 
 export function isSuper(stateNode: StateNode): boolean {
@@ -71,8 +71,6 @@ export function emptyContext(model: SCChartModel, id: string): Context {
       terminated: false,
     },
     variables: new Map(),
-    preVariables: new Map(),
-    variableTypes: new Map(),
     outputVariables: [],
     inputVariables: [],
     nodeMap: new Map(),
@@ -85,7 +83,7 @@ export function emptyContext(model: SCChartModel, id: string): Context {
 export function assignInputVariables(context: Context, inputs: any): void {
   for (const variable of context.inputVariables) {
     if (inputs[variable] !== undefined) {
-      context.variables.set(variable, inputs[variable]);
+      context.variables.get(variable)!.value = inputs[variable];
     }
   }
 }
@@ -107,7 +105,7 @@ export function pre(context: Context, variable: string): unknown {
   if (variable.includes("[")) {
     const [base, ...indicesStr] = variable.split("[");
     const indices = indicesStr.map((i) => Number(i.replace("]", "")));
-    let value = context.preVariables.get(base);
+    let value = context.variables.get(base)?.preValue;
 
     let i = 0;
     while (value instanceof Array) {
@@ -118,5 +116,23 @@ export function pre(context: Context, variable: string): unknown {
     return value;
   }
 
-  return context.preVariables.get(variable);
+  return context.variables.get(variable)?.preValue;
+}
+
+export function getScope(graph: StateGraph): string {
+  let scope = "";
+
+  while (graph.parent) {
+    scope = graph.parent.id + "." + graph.id + "." + scope;
+    graph = graph.parent.graph;
+  }
+
+  return scope;
+}
+
+export function setPreVars(context: Context): void {
+  for (const id of context.variables.keys()) {
+    const varObj = context.variables.get(id);
+    if (varObj) varObj.preValue = varObj.value;
+  }
 }
