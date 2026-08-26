@@ -4,7 +4,14 @@ import { tick } from "./interpreter/run.js";
 import { SCChartModel } from "./schema/types.js";
 import { setupContext } from "./interpreter/utils.js";
 import { TickResult } from "./interpreter/types.js";
-import { inspect } from "util";
+
+import { EmptyFileSystem } from "langium";
+import { parseHelper } from "langium/test";
+import { createSCChartsServices } from "./grammar/sccharts-module.js";
+
+import { preProcess, convertSCTXtoSchema } from "./converter/functions.js";
+
+import { SCTX } from "./grammar/generated/ast.js";
 
 const filePath = process.argv[2];
 const jsonInputs = process.argv[3];
@@ -30,10 +37,38 @@ if (!filePath) {
 
 let model: unknown;
 try {
-  model = JSON.parse(readFileSync(filePath, "utf-8"));
+  model = readFileSync(filePath, "utf-8");
 } catch (err) {
   const e = err as Error;
-  console.error(`Failed to read/parse file: ${e.message}`);
+  console.error(`Failed to read file: ${e.message}`);
+  process.exit(1);
+}
+
+if (filePath.endsWith(".sctx")) {
+  model = preProcess(model as string);
+
+  const services = createSCChartsServices(EmptyFileSystem);
+  const parse = parseHelper<SCTX>(services.SCCharts);
+  const document = await parse(model as string, { validation: true });
+
+  if (
+    document.parseResult.lexerErrors.length > 0 ||
+    document.parseResult.parserErrors.length > 0
+  ) {
+    console.error(model);
+    console.error(
+      "Errors:",
+      document.parseResult.lexerErrors,
+      document.parseResult.parserErrors,
+    );
+    throw new Error("Lexer or Parser errors occurred");
+  }
+
+  model = convertSCTXtoSchema(document.parseResult.value, filePath);
+} else if (filePath.endsWith(".json")) {
+  model = JSON.parse(model as string);
+} else {
+  console.error("Unsupported file type. Only .sctx and .json are supported.");
   process.exit(1);
 }
 
