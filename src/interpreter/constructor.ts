@@ -14,6 +14,7 @@ import {
   createFakeRootRegion,
   emptyContext,
   getScope,
+  getVariableScope,
   setPreVars,
 } from "./utils.js";
 import { readFileSync } from "node:fs";
@@ -56,6 +57,7 @@ function variableDefaults(
   context: Context,
   variable: SchemaVariable,
   isArray: boolean,
+  node: StateNode,
 ) {
   const defaultValues: Record<string, unknown> = {
     int: 0,
@@ -74,7 +76,7 @@ function variableDefaults(
 
     assignVar = {
       id: variable.id,
-      scope: "", // TODO: proper variable scope
+      scope: getVariableScope(node),
       type: variable.type + "[]",
       value: array,
       preValue: null,
@@ -86,7 +88,7 @@ function variableDefaults(
 
   assignVar = {
     id: variable.id,
-    scope: "", // TODO: proper variable scope
+    scope: getVariableScope(node),
     type: variable.type,
     value: defaultValues[variable.type],
     preValue: null,
@@ -98,12 +100,13 @@ function variableValues(
   context: Context,
   variable: SchemaVariable,
   isArray: boolean,
+  node: StateNode,
 ) {
   if (isArray && typeof variable.initialValue === "string") {
     const parsed = parseArrayValues(variable.initialValue!);
     const assignVar = {
       id: variable.id,
-      scope: "", // TODO: proper variable scope
+      scope: getVariableScope(node),
       type: variable.type + "[]",
       value: parsed,
       preValue: null,
@@ -112,7 +115,7 @@ function variableValues(
   } else {
     const assignVar = {
       id: variable.id,
-      scope: "", // TODO: proper variable scope
+      scope: getVariableScope(node),
       type: variable.type,
       value: parseScalar(variable.initialValue!, variable.type, context),
       preValue: null,
@@ -122,9 +125,11 @@ function variableValues(
   }
 }
 
-function addVariable(context: Context, variable: SchemaVariable) {
-  const isArray = variable.cardinalities.length != 0;
-
+function addVariable(
+  context: Context,
+  variable: SchemaVariable,
+  node: StateNode,
+) {
   if (variable.isOutput) {
     context.outputVariables.push(variable.id);
   }
@@ -132,10 +137,11 @@ function addVariable(context: Context, variable: SchemaVariable) {
     context.inputVariables.push(variable.id);
   }
 
+  const isArray = variable.cardinalities.length != 0;
   if (variable.initialValue === undefined) {
-    variableDefaults(context, variable, isArray);
+    variableDefaults(context, variable, isArray, node);
   } else {
-    variableValues(context, variable, isArray);
+    variableValues(context, variable, isArray, node);
   }
 }
 
@@ -205,7 +211,7 @@ function constructRegion(
 
     // Add variables
     for (const variable of state.variables) {
-      addVariable(context, variable);
+      addVariable(context, variable, stateNode);
     }
 
     for (const action of state.actions) {

@@ -130,6 +130,10 @@ export function getScope(graph: StateGraph): string {
   return scope;
 }
 
+export function getVariableScope(node: StateNode): string {
+  return getScope(node.graph) + node.id;
+}
+
 export function setPreVars(context: Context): void {
   for (const id of context.variables.keys()) {
     const varObj = context.variables.get(id);

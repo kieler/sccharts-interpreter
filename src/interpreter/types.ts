@@ -47,7 +47,7 @@ export interface StateGraph {
 
 export interface Variable {
   id: string;
-  scope: string; // For local varibales
+  scope: string; // Mainly for local varibales
   type: string;
   value: any;
   preValue: any;
@@ -59,8 +59,6 @@ export interface Context {
   graph: StateGraph;
 
   variables: Map<string, Variable>; // name -> var
-  // preVariables: Map<string, unknown>;
-  // variableTypes: Map<string, string>;
   outputVariables: string[];
   inputVariables: string[];
 

@@ -200,7 +200,6 @@ export function tick(
   context.messages = [];
   return {
     terminated: context.graph.terminated,
-    // variables: Object.fromEntries(context.variables),
     variables: Object.fromEntries(
       [...context.variables.entries()].map(([id, v]) => [id, v.value]),
     ),

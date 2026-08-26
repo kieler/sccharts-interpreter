@@ -1,7 +1,3 @@
-// TODO: look this over! it works for now, but a lot of AI coding, so I should check
-
-// TODO: reference charts
-
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { EmptyFileSystem } from "langium";
