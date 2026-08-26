@@ -23,7 +23,7 @@ for the PoC, these should probably be left out unless it is easy.
 - [x] Entrance, Exit, During Actions
 - [x] Deep History Transitions
 - [x] Reference SCCharts
-- [ ] Local Variables
+- [x] Local Variables
 	- Could also be done with some pre- or suffix for varibles in global scope?
 	- Maybe one could use something like the scope thing I added to the transition resolution. variables could have a scope and then we take the one that is in the same scope as the current node (or above). If I use the current getScope() this could literaly be: if scopeVar in scopeNode: use variable (checnking the deepest/longest scopes first).
 	- They would currently break the testing. The results are correct as long as the variables don't share a name, but KiCo does some name prefixing and so the stdout parser doesn't work properly.
@@ -95,6 +95,8 @@ Also see the blocklist for models that have unsupported features.
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
     - [x] It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword.
 - [ ] Reference Charts can be of models in the same file.
+	- also deal with the 'import' statements when converting with langium
+- [ ] converting sctx2json should automatically do it recursively for reference charts
 
 ### scheduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here
@@ -102,3 +104,6 @@ Also see the blocklist for models that have unsupported features.
 ### other
 - [ ] Commenting and documenting the code.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
+
+### for daniel
+- [ ] aas/referenced/arrays/bind-array-and-index/MainChart.sctx: when compiling it binds 'A[3] to A' and my interpreter does not like that. That's also the test that fails with KiCo json but not with my converter (because my converter just does 'A to A').

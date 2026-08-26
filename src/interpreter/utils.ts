@@ -2,6 +2,7 @@ import { validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
 import { Context, StateGraph, StateNode } from "./types.js";
 import { constructStateGraph } from "./constructor.js";
+import { getVariablePre, setVariable } from "./variables.js";
 
 export function isSuper(stateNode: StateNode): boolean {
   return stateNode.subgraphs !== undefined;
@@ -83,7 +84,13 @@ export function emptyContext(model: SCChartModel, id: string): Context {
 export function assignInputVariables(context: Context, inputs: any): void {
   for (const variable of context.inputVariables) {
     if (inputs[variable] !== undefined) {
-      context.variables.get(variable)!.value = inputs[variable];
+      setVariable(
+        variable,
+        inputs[variable],
+        context.graph.initalNode!,
+        context,
+      );
+      // context.variables.get(variable)!.value = inputs[variable];
     }
   }
 }
@@ -101,11 +108,16 @@ export function setupContext(model: SCChartModel, wonly: boolean): Context {
   return context;
 }
 
-export function pre(context: Context, variable: string): unknown {
+export function pre(
+  context: Context,
+  variable: string,
+  node: StateNode,
+): unknown {
   if (variable.includes("[")) {
     const [base, ...indicesStr] = variable.split("[");
     const indices = indicesStr.map((i) => Number(i.replace("]", "")));
-    let value = context.variables.get(base)?.preValue;
+    let value = getVariablePre(base, node, context);
+    // let value = context.variables.get(base)?.preValue;
 
     let i = 0;
     while (value instanceof Array) {
@@ -116,7 +128,7 @@ export function pre(context: Context, variable: string): unknown {
     return value;
   }
 
-  return context.variables.get(variable)?.preValue;
+  return getVariablePre(variable, node, context);
 }
 
 export function getScope(graph: StateGraph): string {
@@ -132,11 +144,4 @@ export function getScope(graph: StateGraph): string {
 
 export function getVariableScope(node: StateNode): string {
   return getScope(node.graph) + node.id;
-}
-
-export function setPreVars(context: Context): void {
-  for (const id of context.variables.keys()) {
-    const varObj = context.variables.get(id);
-    if (varObj) varObj.preValue = varObj.value;
-  }
 }

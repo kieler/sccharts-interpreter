@@ -4,7 +4,8 @@ import { parseAction } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
-import { assignInputVariables, setPreVars } from "./utils.js";
+import { assignInputVariables } from "./utils.js";
+import { getVariable, setPreVariables, setVariable } from "./variables.js";
 
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
@@ -48,7 +49,7 @@ function walkEdge(
 
   const guardPass =
     !edge.transition.guard ||
-    parseGuard(edge.transition.guard, context.variables);
+    parseGuard(edge.transition.guard, context, edge.from);
 
   if (!guardPass) return false;
   if (!edge.to) return false;
@@ -66,9 +67,10 @@ function walkEdge(
   // Clear the history of the state upon entry and all subgraphs
   if (!edge.transition.history) resetNode(edge.to, context);
 
-  doActions(edge.from.exitActions, context);
+  doActions(edge.from.exitActions, context, edge.from);
 
-  if (edge.transition.action) parseAction(edge.transition.action, context);
+  if (edge.transition.action)
+    parseAction(edge.transition.action, context, edge.from);
 
   if (!edge.to.state.isFinal) edge.to.graph.terminated = false;
   edge.to.graph.activeNode = edge.to;
@@ -88,10 +90,10 @@ function walkEdge(
   return true;
 }
 
-function doActions(actions: Action[], context: Context) {
+function doActions(actions: Action[], context: Context, node: StateNode) {
   for (const action of actions) {
-    if (!action.guard || parseGuard(action.guard, context.variables)) {
-      parseAction(action.action, context);
+    if (!action.guard || parseGuard(action.guard, context, node)) {
+      parseAction(action.action, context, node);
     }
   }
 }
@@ -107,7 +109,7 @@ function processNode(
   context.activeNodes.add(node);
 
   if (entering) {
-    doActions(node.entryActions, context);
+    doActions(node.entryActions, context, node);
   }
 
   for (const edge of node.strongEdges) {
@@ -116,7 +118,7 @@ function processNode(
   }
 
   if (!entering) {
-    doActions(node.duringActions, context);
+    doActions(node.duringActions, context, node);
   }
 
   if (entering) {
@@ -137,15 +139,15 @@ function processNode(
       ?.flatMap((graph) => graph.terminated)
       .every((x) => x);
     if (subGraphDone) {
-      doActions(node.exitActions, context);
+      doActions(node.exitActions, context, node);
     }
   }
 
   if (node.referencedContext && node.referencedVarMap) {
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
-        node.referencedContext.variables.get(i)!.value =
-          context.variables.get(outer)?.value;
+        const outerVal = getVariable(outer, node, context);
+        setVariable(i, outerVal, node, node.referencedContext);
       }
     }
 
@@ -153,8 +155,8 @@ function processNode(
 
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
-        context.variables.get(outer)!.value =
-          node.referencedContext.variables.get(i)?.value;
+        const innerVal = getVariable(i, node, node.referencedContext);
+        setVariable(outer, innerVal, node, context);
       }
     }
   }
@@ -180,7 +182,7 @@ export function tick(
       messages: [],
     };
 
-  setPreVars(context);
+  setPreVariables(context);
 
   if (assignInputs) assignInputVariables(context, inputs);
   processNode(context.graph.activeNode, context);
@@ -198,11 +200,22 @@ export function tick(
   const messages = context.messages;
   clearMessages();
   context.messages = [];
+
+  var returnVars: Record<string, any> = {};
+  for (const varName of context.variables.keys()) {
+    const value = context.variables.get(varName);
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        returnVars[v.scope + "_" + varName] = v.value;
+      }
+    } else {
+      returnVars[varName] = value!.value;
+    }
+  }
+
   return {
     terminated: context.graph.terminated,
-    variables: Object.fromEntries(
-      [...context.variables.entries()].map(([id, v]) => [id, v.value]),
-    ),
+    variables: returnVars,
     messages: messages,
   };
 }

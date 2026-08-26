@@ -10,120 +10,9 @@ import type {
   SCChartModel,
   Variable as SchemaVariable,
 } from "../schema/types.js";
-import {
-  createFakeRootRegion,
-  emptyContext,
-  getScope,
-  getVariableScope,
-  setPreVars,
-} from "./utils.js";
+import { createFakeRootRegion, emptyContext, getScope } from "./utils.js";
 import { readFileSync } from "node:fs";
-import { parseExpression } from "./actionParser.js";
-
-function initialArrayValues(
-  cardinalities: number[],
-  defaultValue: unknown,
-): unknown[] {
-  if (cardinalities.length == 0) {
-    return [];
-  }
-
-  const [size, ...rest] = cardinalities;
-  const array: any[] = [];
-
-  for (let i = 0; i < size; i++) {
-    if (rest.length == 0) {
-      array.push(defaultValue);
-    } else {
-      array.push(initialArrayValues(rest, defaultValue));
-    }
-  }
-
-  return array;
-}
-
-function parseScalar(value: any, type: string, context: Context): unknown {
-  const parsed_value = parseExpression(value, context, type);
-  return parsed_value;
-}
-
-function parseArrayValues(valueStr: string): unknown[] {
-  valueStr = valueStr.replaceAll("{", "[").replaceAll("}", "]");
-
-  return eval(valueStr);
-}
-
-function variableDefaults(
-  context: Context,
-  variable: SchemaVariable,
-  isArray: boolean,
-  node: StateNode,
-) {
-  const defaultValues: Record<string, unknown> = {
-    int: 0,
-    bool: false,
-    string: null,
-    float: 0.0,
-  };
-
-  let assignVar: Variable;
-
-  if (isArray) {
-    const array = initialArrayValues(
-      variable.cardinalities,
-      defaultValues[variable.type],
-    );
-
-    assignVar = {
-      id: variable.id,
-      scope: getVariableScope(node),
-      type: variable.type + "[]",
-      value: array,
-      preValue: null,
-    };
-    context.variables.set(variable.id, assignVar);
-
-    return;
-  }
-
-  assignVar = {
-    id: variable.id,
-    scope: getVariableScope(node),
-    type: variable.type,
-    value: defaultValues[variable.type],
-    preValue: null,
-  };
-  context.variables.set(variable.id, assignVar);
-}
-
-function variableValues(
-  context: Context,
-  variable: SchemaVariable,
-  isArray: boolean,
-  node: StateNode,
-) {
-  if (isArray && typeof variable.initialValue === "string") {
-    const parsed = parseArrayValues(variable.initialValue!);
-    const assignVar = {
-      id: variable.id,
-      scope: getVariableScope(node),
-      type: variable.type + "[]",
-      value: parsed,
-      preValue: null,
-    };
-    context.variables.set(variable.id, assignVar);
-  } else {
-    const assignVar = {
-      id: variable.id,
-      scope: getVariableScope(node),
-      type: variable.type,
-      value: parseScalar(variable.initialValue!, variable.type, context),
-      preValue: null,
-    };
-
-    context.variables.set(variable.id, assignVar);
-  }
-}
+import { createVariable, setPreVariables } from "./variables.js";
 
 function addVariable(
   context: Context,
@@ -137,12 +26,14 @@ function addVariable(
     context.inputVariables.push(variable.id);
   }
 
-  const isArray = variable.cardinalities.length != 0;
-  if (variable.initialValue === undefined) {
-    variableDefaults(context, variable, isArray, node);
-  } else {
-    variableValues(context, variable, isArray, node);
-  }
+  createVariable(
+    context,
+    variable.id,
+    node,
+    variable.type,
+    variable.initialValue,
+    variable.cardinalities,
+  );
 }
 
 function constructRegion(
@@ -312,7 +203,7 @@ export function constructStateGraph(model: SCChartModel): Context {
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
 
-  setPreVars(context);
+  setPreVariables(context);
 
   return context;
 }

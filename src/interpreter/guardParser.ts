@@ -1,15 +1,17 @@
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
-import { Variable } from "./types.js";
+import { Context, StateNode, Variable } from "./types.js";
+import { getLocalVariableMap } from "./variables.js";
 
 export function parseGuard(
   guard: string,
-  variables: Map<string, unknown>,
+  context: Context,
+  node: StateNode,
 ): boolean {
   if (!guard || guard.trim() === "") return true;
 
-  const keys = Array.from(variables.keys());
-  var values: Variable[] = Array.from(variables.values()) as Variable[];
-  values = values.map((v) => v.value);
+  const localVarMap = getLocalVariableMap(context, node);
+  const keys = Array.from(localVarMap.keys());
+  const values = Array.from(localVarMap.values());
 
   const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
 

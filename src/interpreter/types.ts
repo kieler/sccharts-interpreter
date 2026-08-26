@@ -58,7 +58,8 @@ export interface Context {
   model: SCChartModel;
   graph: StateGraph;
 
-  variables: Map<string, Variable>; // name -> var
+  // name -> var / vars if multiple have the same name but different scope
+  variables: Map<string, Variable | Variable[]>;
   outputVariables: string[];
   inputVariables: string[];
 

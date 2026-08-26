@@ -1,0 +1,33 @@
+scchart LocalVar{
+    output int Var1 
+    int Var2 // 
+    output bool Done
+
+    region:
+    initial state handleA{
+        int Var2=0
+
+        initial state A1
+        do Var2++ go to A2
+
+        state A2
+        immediate if Var2 == 5 do Var1 = Var2 go to A3
+        immediate go to A1
+
+        final state A3        
+    }
+
+    region:
+    initial state handleB{
+        int Var2=12
+        
+        initial state B1
+        do Var2-- go to B2
+
+        state B2
+        immediate if Var2 < Var1 do Done = true go to B3
+        immediate go to B1
+
+        final state B3
+    }
+}

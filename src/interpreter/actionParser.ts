@@ -1,6 +1,12 @@
 import { pre } from "./utils.js";
-import { Context, Variable } from "./types.js";
+import { Context, StateNode, Variable } from "./types.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
+import {
+  getLocalVariableMap,
+  getVariable,
+  getVariableType,
+  setVariable,
+} from "./variables.js";
 
 function infixToAssignment(expr: string): string {
   // Turns something like A+=1 into A=A+1 for the eval() function
@@ -15,18 +21,15 @@ function infixToAssignment(expr: string): string {
 export function parseExpression(
   expression: string,
   context: Context,
-  varType: string = "",
+  varType: string,
+  node: StateNode,
 ): any {
-  const keys = Array.from(context.variables.keys());
-  var values: Variable[] = Array.from(context.variables.values()) as Variable[];
-  values = values.map((v) => v.value);
-
-  if (varType) {
-    varType = context.variables.get(varType)?.type ?? "";
-  }
+  const localVarMap = getLocalVariableMap(context, node);
+  const keys = Array.from(localVarMap.keys());
+  const values = Array.from(localVarMap.values());
 
   const specialFns: Record<string, (arg: string) => unknown> = {
-    pre: (v: string) => pre(context, v),
+    pre: (v: string) => pre(context, v, node),
     // future: prev: (v) => ..., changed: (v) => ...
   };
 
@@ -74,7 +77,11 @@ export function parseExpression(
   return result;
 }
 
-export function parseAction(action: string, context: Context): void {
+export function parseAction(
+  action: string,
+  context: Context,
+  node: StateNode,
+): void {
   if (!action || action.trim() === "") return;
 
   const actions = action.split(";");
@@ -83,16 +90,22 @@ export function parseAction(action: string, context: Context): void {
     part = infixToAssignment(part);
 
     let [variable, expression] = part.split("=")!;
-    const result = parseExpression(expression, context);
+    const result = parseExpression(
+      expression,
+      context,
+      getVariableType(variable, node, context)!,
+      node,
+    );
 
     if (variable.includes("[") && variable.includes("]")) {
       const [varName, ...indicesStr] = variable.trim().split("[");
 
-      if (!context.variables.get(varName)?.type.includes("[]")) {
+      if (!getVariableType(varName, node, context)!.includes("[]")) {
         throw new Error(`Variable ${varName} is not an array`);
       }
 
-      const array = context.variables.get(varName)?.value;
+      // const array = context.variables.get(varName)?.value;
+      const array = getVariable(varName.trim(), node, context);
       if (!Array.isArray(array))
         throw new Error(`Variable ${varName} is not defined`);
 
@@ -103,8 +116,8 @@ export function parseAction(action: string, context: Context): void {
 
         if (!isNaN(Number(strIndex))) {
           indices.push(Number(strIndex));
-        } else if (!isNaN(Number(context.variables.get(strIndex)?.value))) {
-          indices.push(Number(context.variables.get(strIndex)?.value));
+        } else if (!isNaN(Number(getVariable(strIndex, node, context)))) {
+          indices.push(Number(getVariable(strIndex, node, context)));
         } else {
           throw new Error(`Invalid index ${strIndex}`);
         }
@@ -118,7 +131,8 @@ export function parseAction(action: string, context: Context): void {
       }
       target[indices[indices.length - 1]] = result;
     } else {
-      context.variables.get(variable.trim())!.value = result;
+      setVariable(variable.trim(), result, node, context);
+      // context.variables.get(variable.trim())!.value = result;
     }
   }
 }
