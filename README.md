@@ -12,30 +12,37 @@ To set up the project, run:
 
 ```bash
 npm install
-npm run build
+npm run build-all
 ```
 
+Note that `npm run generate-lang` which is called as part of `npm run build-all` can run into errors depending on your version of node. For example it runs fine on node 26.0.0 but errors out on 26.7.0. 
+
 ### webui
+There is a web interface for the interpreter which you lauch like this: 
+
 ```bash
 npm start
 ```
 
-The main usgae of the interpreter is via a webui. It is accessed via a web server and the interpreter runs locally in the browser.
-
 ### cli
 If you want to use it locally in the terminal there is a cli.
 
-By default it expects two arguments. The first is a path to the JSON and the second is your input list in JSON format. For expample
 ```bash
-npm run cli testing/sctx/IM.json '[{"A": true}, {"A": false},{"A": true}]'
-```
-
-There is also an interactive mode, which can be called like:
-```bash
-npm run cli testing/sctx/IM.json -- -i
+npm run cli testing/sctx/ABO.sctx
 ```
 It reads inputs in JSON format from stdin every tick and prints the state of all variables as a response.
 
+You can also provide a json list as input as a command line argument. It will then run a tick for each entry in the array. For expample
+```bash
+npm run cli testing/sctx/ABO.sctx '[{"A": true}, {"A": false},{"A": true}]'
+```
+
+### sctx2json 
+Part of this interpreter convcerts the sctx files of SCCharts to a json intermediary (This is done for testing purposes). You can also manually call that step. If you leave out an output path, the json will be printed to stdout. The cli also excpets the json files as input.
+
+```bash
+npm run convert-sctx testing/sctx/ABO.sctx testing/json/ABO.json
+```
 
 ### tests
 For the tests to work properly a version of the Kieler Compiler has to be downloaded (currently from this branch https://github.com/kieler/semantics/tree/dam/json) and its location configured in the `kico_config.json`. It is used to compare the results of the interpreter against that of the compiler.
@@ -45,9 +52,11 @@ The tests are written in python and require `uv` to be installed.
 npm run test
 ```
 
+To see options see
+```
+npm run test -- -h
+```
+
 ## structure
 ### interpreter
 ![fig1](docs/img/structure_basic.png)
-
-### sctx2json converter
-<iframe src="docs/syntax-diagram.html"></iframe>

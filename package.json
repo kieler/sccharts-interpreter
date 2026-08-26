@@ -16,7 +16,8 @@
 		"api": "node dist/api_server.js",
 		"test": "sh ./testing/run_test.sh",
 		"generate-lang": "langium generate",
-		"convert-sctx": "node dist/sctx_converter.js"
+		"convert-sctx": "node dist/sctx_converter.js",
+		"build-all": "langium generate && tsc && vite build"
 	},
 	"dependencies": {
 		"@types/cors": "^2.8.19",

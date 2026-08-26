@@ -5,6 +5,13 @@ from tests.base import TestRunner, assert_subset, generate_expected
 
 
 def unrename(data):
+    """
+    When the test is run with KiCo, it already renames the states properly
+    so this un-renames them to test that the interpreter is working correctly.
+    When the test is run with our convertion this isn't an issue, but we
+    want to be able to test it with KiCo to make sure we can say if a
+    problem comes from the converter or interpreter.
+    """
     pattern = re.compile(r"^([A-Za-z]+?)\d+$")
 
     if isinstance(data, dict):

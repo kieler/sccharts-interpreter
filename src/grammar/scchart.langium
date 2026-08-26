@@ -30,19 +30,17 @@ Region:
 
 // Region is separated out because of the "region A:" sytax.
 // It does the region until the next region, so it has to separate,
-// otherwise it can end at forst state in a region
+// otherwise it can end at first state in a region
 Element:
     State | Variable | Action;
 
 terminal VarType : 'bool' | 'int' | 'float' | 'string';
 
 // We need to do some preprocessing
-// add a # after ever if and do and before every go/join/abort and do
+// add a # after every if and do and before every go/join/abort and do
 // and then with actions that dont have a go to at the end of the line.
-// I hate langium or maybe I am too stupid to figure out how parse stuff like this with it...
 terminal ExpressionString returns string: /\#([^\#\#]*)\#/;
 
-// DO NOT MOVE THESE, IT WILL BREAK EVERYTHING! somehow...
 terminal BOOL: 'true'|'false';
 terminal FLOAT returns number: /[0-9]+\.[0-9]+/;
 terminal INT returns number: /[0-9]+/;
@@ -50,7 +48,6 @@ terminal STRING returns string: /"[^"]*"|'[^']*'/;
 terminal Literal: BOOL | FLOAT | INT | STRING;
 
 terminal ID returns string: /[_a-zA-Z0-9][\w]*/;
-
 
 hidden terminal WS: /\s+/;
 

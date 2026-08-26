@@ -8,13 +8,13 @@ import pytest
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run integration tests with pytest")
-    parser.add_argument(
+    _ = parser.add_argument(
         "tests",
         nargs="*",
         default=["all"],
         help='Test names (e.g. "abo ao im") or "all"',
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "-r",
         "--reset",
         required=False,
@@ -22,7 +22,7 @@ def main() -> None:
         action="store_true",
         help="Always recompile the JSON and EXE",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--reset-json",
         required=False,
         default=False,

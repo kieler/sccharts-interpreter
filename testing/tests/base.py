@@ -146,7 +146,9 @@ class TestRunner:
     __test__ = False
 
     def __init__(self, name: str, path: Path | None = None, no_reset: bool = False):
-        self.name = name
+        self.name: str = name
+        self.random: random.Random = random.Random(42)
+
         if path is not None:
             self.model = load_model(path, no_reset=no_reset)
         else:

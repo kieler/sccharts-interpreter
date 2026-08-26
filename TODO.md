@@ -104,6 +104,7 @@ Also see the blocklist for models that have unsupported features.
 ### other
 - [ ] Commenting and documenting the code.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
+- [ ] Maybe do an optional debugging web view with a semi-interactive graph of the model. Basic would be ugly, but maybe we can use ELK?
 
 ### for daniel
 - [ ] aas/referenced/arrays/bind-array-and-index/MainChart.sctx: when compiling it binds 'A[3] to A' and my interpreter does not like that. That's also the test that fails with KiCo json but not with my converter (because my converter just does 'A to A').
