@@ -95,15 +95,16 @@ export function assignInputVariables(context: Context, inputs: any): void {
   }
 }
 
-export function setupContext(model: SCChartModel, wonly: boolean): Context {
+export function setupContext(
+  model: SCChartModel,
+  wonly: boolean,
+  referenceMapping: Record<string, SCChartModel> | undefined = undefined,
+): Context {
   const valid = validateSCChart(model);
   if (!valid) throw new Error("Invalid SCChart Model JSON");
 
-  const chartModel = model as SCChartModel;
-
-  const context = constructStateGraph(chartModel);
+  const context = constructStateGraph(model, wonly, referenceMapping);
   context.graph.activeNode = context.graph.initalNode;
-  context.errorMode = wonly ? "warnings-only" : "strict";
 
   return context;
 }

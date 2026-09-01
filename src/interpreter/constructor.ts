@@ -12,7 +12,7 @@ import type {
 } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext, getScope } from "./utils.js";
 import { readFileSync } from "node:fs";
-import { createVariable, setPreVariables } from "./variables.js";
+import { createVariable, getVariable, setPreVariables } from "./variables.js";
 
 function addVariable(
   context: Context,
@@ -40,6 +40,8 @@ function constructRegion(
   parentState: StateNode | undefined,
   region: Region,
   context: Context,
+  wonly: boolean,
+  referenceMapping: Record<string, SCChartModel> | undefined = undefined,
 ): StateGraph {
   let graph: StateGraph = {
     id: region.id,
@@ -71,7 +73,13 @@ function constructRegion(
       stateNode.subgraphs = [];
       for (const subRegion of state.regions) {
         stateNode.subgraphs.push(
-          constructRegion(stateNode, subRegion, context),
+          constructRegion(
+            stateNode,
+            subRegion,
+            context,
+            wonly,
+            referenceMapping,
+          ),
         );
       }
     }
@@ -128,17 +136,29 @@ function constructRegion(
       }
 
       let refModel;
-      try {
-        const jsonPath = state.reference.targetFile
-          .replace(".sctx", ".json")
-          .replace("file:", "");
-        refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
-      } catch (e) {
-        throw new Error(
-          `Reference missing - ${e} - ${state.reference.targetFile}`,
-        );
+      if (referenceMapping) {
+        if (!referenceMapping[state.reference.targetFile.trim()]) {
+          throw new Error(`Reference missing - ${state.reference.targetFile}`);
+        }
+        refModel = referenceMapping[state.reference.targetFile];
+      } else {
+        try {
+          const jsonPath = state.reference.targetFile
+            .replace(".sctx", ".json")
+            .replace("file:", "");
+          refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
+        } catch (e) {
+          throw new Error(
+            `Reference missing - ${e} - ${state.reference.targetFile}`,
+          );
+        }
       }
-      stateNode.referencedContext = constructStateGraph(refModel);
+
+      stateNode.referencedContext = constructStateGraph(
+        refModel,
+        wonly,
+        referenceMapping,
+      );
       stateNode.referencedContext.graph.activeNode =
         stateNode.referencedContext.graph.initalNode;
 
@@ -184,7 +204,11 @@ function finishEdges(graph: StateGraph, context: Context): void {
   }
 }
 
-export function constructStateGraph(model: SCChartModel): Context {
+export function constructStateGraph(
+  model: SCChartModel,
+  wonly: boolean,
+  referenceMapping: Record<string, SCChartModel> | undefined = undefined,
+): Context {
   if (model.length != 1) {
     throw new Error("Model must have exactly one state");
   }
@@ -194,9 +218,16 @@ export function constructStateGraph(model: SCChartModel): Context {
   const rootRegion: Region = createFakeRootRegion(model);
 
   let context: Context = emptyContext(model, rootRegion.id);
+  context.errorMode = wonly ? "warnings-only" : "strict";
 
   // Go over all States once and add them and the transitions to the graph
-  context.graph = constructRegion(undefined, rootRegion, context);
+  context.graph = constructRegion(
+    undefined,
+    rootRegion,
+    context,
+    wonly,
+    referenceMapping,
+  );
 
   if (context.model[0].label) context.label = context.model[0].label;
 

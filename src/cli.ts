@@ -3,7 +3,7 @@ import readline from "node:readline";
 import { tick } from "./interpreter/run.js";
 import { SCChartModel } from "./schema/types.js";
 import { setupContext } from "./interpreter/utils.js";
-import { TickResult } from "./interpreter/types.js";
+import { Context, TickResult } from "./interpreter/types.js";
 
 import { EmptyFileSystem } from "langium";
 import { parseHelper } from "langium/test";
@@ -14,7 +14,15 @@ import { preProcess, convertSCTXtoSchema } from "./converter/functions.js";
 import { SCTX } from "./grammar/generated/ast.js";
 
 const filePath = process.argv[2];
-const jsonInputs = process.argv[3];
+
+// This current version needs it to be in a specific spot
+// and if not use the -Wonly for exaple is interpreted as the input,
+// but '-Wonly' is not valied json
+// So for now this is disabled
+//
+// const jsonInputs = process.argv[3];
+const jsonInputs = undefined; // TODO: Add proper way to read in jsonInputs
+
 const wonly = process.argv.includes("-Wonly");
 
 if (wonly) {
@@ -30,22 +38,8 @@ function final_message(result: TickResult) {
   process.exit(0);
 }
 
-if (!filePath) {
-  usage_error();
-  process.exit(1);
-}
-
-let model: unknown;
-try {
-  model = readFileSync(filePath, "utf-8");
-} catch (err) {
-  const e = err as Error;
-  console.error(`Failed to read file: ${e.message}`);
-  process.exit(1);
-}
-
-if (filePath.endsWith(".sctx")) {
-  model = preProcess(model as string);
+async function convertSctxToJson(model: string): Promise<SCChartModel> {
+  model = preProcess(model);
 
   const services = createSCChartsServices(EmptyFileSystem);
   const parse = parseHelper<SCTX>(services.SCCharts);
@@ -64,7 +58,25 @@ if (filePath.endsWith(".sctx")) {
     throw new Error("Lexer or Parser errors occurred");
   }
 
-  model = convertSCTXtoSchema(document.parseResult.value, filePath);
+  return convertSCTXtoSchema(document.parseResult.value, filePath);
+}
+
+if (!filePath) {
+  usage_error();
+  process.exit(1);
+}
+
+let model: unknown;
+try {
+  model = readFileSync(filePath, "utf-8");
+} catch (err) {
+  const e = err as Error;
+  console.error(`Failed to read file: ${e.message}`);
+  process.exit(1);
+}
+
+if (filePath.endsWith(".sctx")) {
+  model = await convertSctxToJson(model as string);
 } else if (filePath.endsWith(".json")) {
   model = JSON.parse(model as string);
 } else {
@@ -74,9 +86,51 @@ if (filePath.endsWith(".sctx")) {
 
 type Item = Record<string, boolean>;
 
-const globalContext = setupContext(model as SCChartModel, wonly);
+let globalContext: Context;
+let referenceMapping: Record<string, SCChartModel> = {};
+
+try {
+  globalContext = setupContext(model as SCChartModel, wonly, referenceMapping);
+} catch (err) {
+  const e = err as Error;
+  if (e.message.startsWith("Reference missing")) {
+    const path = e.message.substring(e.message.indexOf("-") + 1).trim();
+
+    let subModel: unknown;
+    try {
+      subModel = readFileSync(path.replace(".json", ".sctx"), "utf-8");
+    } catch (err) {
+      const e = err as Error;
+      console.error(`Failed to read file: ${e.message}`);
+      process.exit(1);
+    }
+    subModel = await convertSctxToJson(subModel as string);
+
+    referenceMapping[path] = subModel as SCChartModel;
+    globalContext = setupContext(
+      model as SCChartModel,
+      wonly,
+      referenceMapping,
+    );
+  } else {
+    throw e;
+  }
+}
 
 console.log("Setup successful. Model", globalContext.model[0].label, "loaded.");
+
+var returnVars: Record<string, any> = {};
+for (const varName of globalContext.variables.keys()) {
+  const value = globalContext.variables.get(varName);
+  if (Array.isArray(value)) {
+    for (const v of value) {
+      returnVars[v.scope + "_" + varName] = v.value;
+    }
+  } else {
+    returnVars[varName] = value!.value;
+  }
+}
+console.log(JSON.stringify(returnVars, null, 2));
 
 if (jsonInputs == undefined) {
   // Interactive mode: read inputs one tick at the time

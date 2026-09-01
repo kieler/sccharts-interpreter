@@ -78,39 +78,6 @@ export function setVariable(
   possibleVars.value = value;
 }
 
-function parseScalar(
-  value: any,
-  type: string,
-  context: Context,
-  node: StateNode,
-): unknown {
-  const parsed_value = parseExpression(value, context, type, node);
-  return parsed_value;
-}
-
-export function parseArrayRange(valueStr: string): string {
-  let [start, end] = valueStr.replace("[", "").replace("]", "").split("to");
-  const array = Array.from(
-    { length: parseInt(end) - parseInt(start) + 1 },
-    (_, i) => i + parseInt(start),
-  );
-  return JSON.stringify(array);
-}
-
-function parseArrayValues(valueStr: string): unknown[] {
-  valueStr = valueStr.replaceAll("{", "[").replaceAll("}", "]");
-
-  if (
-    valueStr.includes("[") &&
-    valueStr.includes("]") &&
-    valueStr.includes("to")
-  ) {
-    valueStr = parseArrayRange(valueStr);
-  }
-
-  return eval(valueStr);
-}
-
 function initialArrayValues(
   cardinalities: number[],
   defaultValue: unknown,
@@ -157,11 +124,7 @@ export function createVariable(
       value = defaultValues[type];
     }
   } else {
-    if (isArray) {
-      value = parseArrayValues(value);
-    } else {
-      value = parseScalar(value, type, context, node);
-    }
+    value = parseExpression(value, context, type, node);
   }
 
   const variable: Variable = {

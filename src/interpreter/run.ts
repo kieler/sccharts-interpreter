@@ -1,6 +1,6 @@
 import { Severity, TickResult } from "./types.js";
 import { clearMessages, raise } from "./errors.js";
-import { parseAction } from "./actionParser.js";
+import { parseAction, parseExpression } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
@@ -146,7 +146,10 @@ function processNode(
   if (node.referencedContext && node.referencedVarMap) {
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
-        const outerVal = getVariable(outer, node, context);
+        let outerVal = getVariable(outer, node, context);
+        if (!outerVal) {
+          outerVal = parseExpression(outer, context, "", node);
+        }
         setVariable(i, outerVal, node, node.referencedContext);
       }
     }
