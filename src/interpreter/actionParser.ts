@@ -5,6 +5,7 @@ import {
   getLocalVariableMap,
   getVariable,
   getVariableType,
+  parseArrayRange,
   setVariable,
 } from "./variables.js";
 
@@ -64,6 +65,15 @@ export function parseExpression(
   }
 
   expression = expression.replaceAll("{", "[").replaceAll("}", "]");
+
+  if (
+    expression.includes("[") &&
+    expression.includes("]") &&
+    expression.includes("to")
+  ) {
+    expression = parseArrayRange(expression);
+  }
+
   const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, expression);
   const fn = new Function(...safeKeys, `return (${safeExpr})`);
   let result = fn(...values);

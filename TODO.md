@@ -73,10 +73,10 @@ Also see the blocklist for models that have unsupported features.
     - scheduling porbably
 - [x] als/various/const_float_computation: No expression parsing during assignments
 - [ ] Vector expressions:
-	- kolja/VectorValueExpressions01.ktrace
-	- kolja/VectorValueExpressions02.ktrace, 2 * {{4} * 3} gets evaluated to 24, because js doesn't support that sytax like python 
-	- kolja/VectorValueExpressions03.ktrace
-	- als/various/computed_vector.ktrace: [1 to 4] -> {1,2,3,4}
+	- [ ] kolja/VectorValueExpressions01.ktrace
+	- [ ] kolja/VectorValueExpressions02.ktrace, 2 * {{4} * 3} gets evaluated to 24, because js doesn't support that sytax like python 
+	- [ ] kolja/VectorValueExpressions03.ktrace
+	- [x] als/various/computed_vector.ktrace: [1 to 4] -> {1,2,3,4}
 - [x] ~~ssm/reference/ExternalReference: When the sctx file just has `inc(O,O)` instead of `inc(O to O,I to O)` the json exporter turns that to `null to O`, which then causes problems.~~
     - This is goig to get fixed on KiCo level
 - [ ] aas/referenced/BindLiteral: binding literals for references like `SubChart(true to in , O to out)`
@@ -88,7 +88,8 @@ Also see the blocklist for models that have unsupported features.
 	- Also see above in "exceptions"
 - [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 
 	- This is kind of intentional, regions dont have variables in the json schema
-- [ ] Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
+- [ ] Local variables are named something like: local_region1_A in the simulation so the tests
+int test[4] can fail, luckily most tests dont use local variables.
 - [ ] aas/arrays/IndexVariable2.ktrace: O[i[0]] throws an error, because "i" is not a number (see action parser ~l.103)
 
 ### features

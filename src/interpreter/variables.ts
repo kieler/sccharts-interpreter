@@ -88,8 +88,25 @@ function parseScalar(
   return parsed_value;
 }
 
+export function parseArrayRange(valueStr: string): string {
+  let [start, end] = valueStr.replace("[", "").replace("]", "").split("to");
+  const array = Array.from(
+    { length: parseInt(end) - parseInt(start) + 1 },
+    (_, i) => i + parseInt(start),
+  );
+  return JSON.stringify(array);
+}
+
 function parseArrayValues(valueStr: string): unknown[] {
   valueStr = valueStr.replaceAll("{", "[").replaceAll("}", "]");
+
+  if (
+    valueStr.includes("[") &&
+    valueStr.includes("]") &&
+    valueStr.includes("to")
+  ) {
+    valueStr = parseArrayRange(valueStr);
+  }
 
   return eval(valueStr);
 }
