@@ -88,32 +88,30 @@ type Item = Record<string, boolean>;
 
 let globalContext: Context;
 let referenceMapping: Record<string, SCChartModel> = {};
+let attempts = 0;
 
-try {
-  globalContext = setupContext(model as SCChartModel, wonly, referenceMapping);
-} catch (err) {
-  const e = err as Error;
-  if (e.message.startsWith("Reference missing")) {
-    const path = e.message.substring(e.message.indexOf("-") + 1).trim();
-
-    let subModel: unknown;
-    try {
-      subModel = readFileSync(path.replace(".json", ".sctx"), "utf-8");
-    } catch (err) {
-      const e = err as Error;
-      console.error(`Failed to read file: ${e.message}`);
-      process.exit(1);
-    }
-    subModel = await convertSctxToJson(subModel as string);
-
-    referenceMapping[path] = subModel as SCChartModel;
+// Automatically and recursively convert referenced files
+while (true) {
+  try {
     globalContext = setupContext(
       model as SCChartModel,
       wonly,
       referenceMapping,
     );
-  } else {
-    throw e;
+    break;
+  } catch (err) {
+    const e = err as Error;
+    if (!e.message.startsWith("Reference missing") || ++attempts > 100) throw e;
+    const path = e.message.substring(e.message.lastIndexOf(":") + 1).trim();
+    const sctxPath = path.replace(".json", ".sctx");
+    let raw: string;
+    try {
+      raw = readFileSync(sctxPath, "utf-8");
+    } catch (err) {
+      console.error(`Failed to read file: ${(err as Error).message}`);
+      process.exit(1);
+    }
+    referenceMapping[path] = (await convertSctxToJson(raw)) as SCChartModel;
   }
 }
 

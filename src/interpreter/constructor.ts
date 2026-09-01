@@ -138,7 +138,7 @@ function constructRegion(
       let refModel;
       if (referenceMapping) {
         if (!referenceMapping[state.reference.targetFile.trim()]) {
-          throw new Error(`Reference missing - ${state.reference.targetFile}`);
+          throw new Error(`Reference missing: ${state.reference.targetFile}`);
         }
         refModel = referenceMapping[state.reference.targetFile];
       } else {
@@ -149,7 +149,7 @@ function constructRegion(
           refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
         } catch (e) {
           throw new Error(
-            `Reference missing - ${e} - ${state.reference.targetFile}`,
+            `Reference missing - ${e}: ${state.reference.targetFile}`,
           );
         }
       }
