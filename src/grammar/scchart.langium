@@ -2,10 +2,10 @@ grammar SCChart
 
 entry SCTX:
   ('import' imports+=(STRING|ID))*
-  'scchart' name=ID STRING? '{'
-   (elements+=(Element|Region))*
-  '}';
+  ('scchart' charts+=Chart)*;
 
+Chart:
+    name=ID STRING? '{' (elements+=(Element|Region))* '}';
 
 State:
     isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (('{' (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID'(' (refAssignments+=RefVariableAssignment ','?)* ')')? (transitions+=Transition)*;

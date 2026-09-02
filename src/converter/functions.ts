@@ -14,7 +14,15 @@ import {
   Transition as AstTransition,
   State as AstState,
   Action as AstAction,
+  Chart,
 } from "../grammar/generated/ast.js";
+import path from "node:path";
+
+import { readFileSync, writeFileSync } from "node:fs";
+
+import { EmptyFileSystem } from "langium";
+import { parseHelper } from "langium/test";
+import { createSCChartsServices } from "../grammar/sccharts-module.js";
 
 export function preProcess(model: string): string {
   // Adds the # needed for the grammar regex, so the expressions can get parsed
@@ -26,12 +34,26 @@ export function preProcess(model: string): string {
   for (let i = 0; i < model_split.length; i++) {
     model_split[i] = model_split[i].replace("^", "");
 
+    if (model_split[i].includes("@macro")) {
+      model_split[i] = model_split[i]
+        .replace(/@macro\s*(?:"[^"]*"\s*,?\s*)+/g, "") // remove @macro + quoted args
+        .replace(/\s+/g, " ") // collapse extra spaces
+        .trim();
+    }
+
     if (model_split[i].includes("@")) {
       model_split[i] = model_split[i].substring(0, model_split[i].indexOf("@"));
     }
 
     if (model_split[i].trim().startsWith("#")) {
       model_split[i] = "";
+    }
+
+    if (model_split[i].includes("//")) {
+      model_split[i] = model_split[i].substring(
+        0,
+        model_split[i].indexOf("//"),
+      );
     }
 
     var j = 1;
@@ -54,6 +76,7 @@ export function preProcess(model: string): string {
     ) {
       model_split[i] = model_split[i].replace("do#", "#do#");
     }
+
     if (
       model_split[i].includes("do#") ||
       (!model_split[i].includes("do#") && model_split[i].includes("if#"))
@@ -72,9 +95,9 @@ export function preProcess(model: string): string {
     // Variable Assignment ExpressionString
     if (
       model_split[i].includes("=") &&
-      (model_split[i].includes("int") ||
-        model_split[i].includes("float") ||
-        model_split[i].includes("bool"))
+      (model_split[i].includes("int ") ||
+        model_split[i].includes("float ") ||
+        model_split[i].includes("bool "))
     ) {
       // Split only on commas at brace depth 0 (inside {} don't count)
       const splitByTopLevelComma = (str: string): string[] => {
@@ -109,10 +132,7 @@ export function preProcess(model: string): string {
   return model_split.join("\n");
 }
 
-export function convertSCTXtoSchema(
-  parsed: SCTX,
-  inputFilePath: string,
-): SCChartModel {
+function parseChart(chart: Chart, knownModels: Map<string, string>): State {
   const counter = { val: 0 }; // for the auto naming of dummy regions
   const topLevelVars: Variable[] = [];
 
@@ -120,7 +140,7 @@ export function convertSCTXtoSchema(
   const topLevelAstRegions: AstRegion[] = [];
   const topLevelAstActions: AstAction[] = [];
 
-  for (const element of parsed.elements) {
+  for (const element of chart.elements) {
     if (element.$type === "Variable") {
       convertVariablesToSchema(element, topLevelVars);
     } else if (element.$type === "State") {
@@ -136,7 +156,7 @@ export function convertSCTXtoSchema(
   const topLevelWrapperStates: State[] = [];
   for (const astState of topLevelAstStates) {
     topLevelWrapperStates.push(
-      convertAstStateToSchema(astState, counter, inputFilePath),
+      convertAstStateToSchema(astState, counter, knownModels),
     );
   }
 
@@ -146,7 +166,7 @@ export function convertSCTXtoSchema(
     const schemaRegion = convertAstRegionToSchema(
       astRegion,
       counter,
-      inputFilePath,
+      knownModels,
     );
     if (topLevelAstStates.length > 0) {
       topLevelWrapperStates.push({
@@ -171,8 +191,8 @@ export function convertSCTXtoSchema(
   }
 
   const rootState: State = {
-    id: parsed.name,
-    label: parsed.name,
+    id: chart.name,
+    label: chart.name,
     actions: topLevelWrapperActions,
     transitions: [],
     variables: topLevelVars,
@@ -192,7 +212,83 @@ export function convertSCTXtoSchema(
         : topLevelSchemaRegions,
   };
 
-  return [rootState];
+  return rootState;
+}
+
+export async function parseModelFile(filePath: string): Promise<SCTX> {
+  let model: string;
+  try {
+    model = readFileSync(filePath, "utf-8");
+  } catch (err) {
+    const e = err as Error;
+    console.error(`Failed to read/parse file: ${e.message}`);
+    process.exit(1);
+  }
+
+  model = preProcess(model);
+
+  const services = createSCChartsServices(EmptyFileSystem);
+  const parse = parseHelper<SCTX>(services.SCCharts);
+  const document = await parse(model, { validation: true });
+
+  if (
+    document.parseResult.lexerErrors.length > 0 ||
+    document.parseResult.parserErrors.length > 0
+  ) {
+    console.error(model);
+    console.error(
+      "Errors:",
+      document.parseResult.lexerErrors,
+      document.parseResult.parserErrors,
+    );
+    throw new Error("Lexer or Parser errors occurred");
+  }
+
+  return document.parseResult.value;
+}
+
+async function manageImports(
+  imports: string[],
+  directory: string,
+): Promise<Map<string, string>> {
+  // chart_name -> file_path
+  let models: Map<string, string> = new Map();
+
+  for (const imp of imports) {
+    const fullPath = path.resolve(path.join(directory, imp + ".sctx"));
+    console.log("Importing", fullPath);
+
+    const parsedModel = await parseModelFile(fullPath);
+    const jsonModels = await convertSCTXtoSchema(parsedModel, fullPath);
+
+    for (const model of jsonModels) {
+      models.set(model.id, fullPath);
+    }
+  }
+
+  return models;
+}
+
+export async function convertSCTXtoSchema(
+  parsed: SCTX,
+  inputFilePath: string,
+): Promise<SCChartModel> {
+  const charts: State[] = [];
+  const directory = path.resolve(path.dirname(inputFilePath));
+
+  const knownModels: Map<string, string> = await manageImports(
+    parsed.imports,
+    directory,
+  );
+  for (const chart of parsed.charts) {
+    knownModels.set(chart.name, "this");
+  }
+
+  for (const chart of parsed.charts) {
+    charts.push(parseChart(chart, knownModels));
+  }
+
+  return charts;
 }
 
 function convertVariablesToSchema(
@@ -221,7 +317,7 @@ function convertVariablesToSchema(
 function convertAstStateToSchema(
   astState: AstState,
   counter: { val: number },
-  inputFilePath: string,
+  knownModels: Map<string, string>,
 ): State {
   const schemaState: State = {
     id: astState.name,
@@ -239,15 +335,19 @@ function convertAstStateToSchema(
   // TODO: do this in a way that it works in the browser
   // TODO: What about the imports?
   if (astState.reference) {
+    const path = knownModels.get(astState.reference);
+    if (path === undefined) {
+      throw new Error(`Reference ${astState.reference} not found`);
+    }
+
     schemaState.reference = {
       targetID: astState.reference,
-      targetFile:
-        inputFilePath.substring(0, inputFilePath.lastIndexOf("/")) +
-        "/" +
-        astState.reference +
-        ".json",
       parameters: [],
     };
+
+    if (path !== "this") {
+      schemaState.reference.targetFile = "file:" + path;
+    }
 
     for (const param of astState.refAssignments) {
       schemaState.reference.parameters.push(
@@ -278,11 +378,7 @@ function convertAstStateToSchema(
 
   // Process explicit regions first
   for (const region of nestedRegions) {
-    const schemaRegion = convertAstRegionToSchema(
-      region,
-      counter,
-      inputFilePath,
-    );
+    const schemaRegion = convertAstRegionToSchema(region, counter, knownModels);
     schemaState.regions.push(schemaRegion);
   }
 
@@ -296,7 +392,7 @@ function convertAstStateToSchema(
       const childSchema = convertAstStateToSchema(
         nestedState,
         counter,
-        inputFilePath,
+        knownModels,
       );
 
       // If the nested state has direct variable declarations in its elements[],
@@ -318,7 +414,7 @@ function convertAstStateToSchema(
       const childSchema = convertAstStateToSchema(
         nestedState,
         counter,
-        inputFilePath,
+        knownModels,
       );
       innerStates.push(childSchema);
     }
@@ -336,7 +432,7 @@ function convertAstStateToSchema(
 function convertAstRegionToSchema(
   astRegion: AstRegion,
   counter: { val: number },
-  inputFilePath: string,
+  knownModels: Map<string, string>,
 ): Region {
   const regionName = astRegion.name || `_regionR${counter.val++}`;
   const innerStates: State[] = [];
@@ -346,7 +442,7 @@ function convertAstRegionToSchema(
       const schemaState = convertAstStateToSchema(
         element,
         counter,
-        inputFilePath,
+        knownModels,
       );
       innerStates.push(schemaState);
     } else if (element.$type === "Variable") {
@@ -395,7 +491,7 @@ function convertAstRegionToSchema(
       const nestedSchemaRegion = convertAstRegionToSchema(
         element,
         counter,
-        inputFilePath,
+        knownModels,
       );
       innerStates.push({
         id: element.name || `_regionR${counter.val++}`,

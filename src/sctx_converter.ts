@@ -1,59 +1,33 @@
-import { readFileSync, writeFileSync } from "node:fs";
-
-import { EmptyFileSystem } from "langium";
-import { parseHelper } from "langium/test";
-import { createSCChartsServices } from "./grammar/sccharts-module.js";
-
-import { preProcess, convertSCTXtoSchema } from "./converter/functions.js";
-
-import { SCTX } from "./grammar/generated/ast.js";
+import { writeFileSync } from "node:fs";
+import { convertSCTXtoSchema, parseModelFile } from "./converter/functions.js";
 
 function usage_error() {
   console.error(
-    "Usage: npm run convert-sctx <input_path.sctx> [output_path.json]",
+    "Usage: npm run convert-sctx <input_path.sctx> -- [output_path.json / -ip]",
   );
 }
 
 const inputFilePath = process.argv[2];
 const ourputFilePath = process.argv[3];
+const inPlace = process.argv.includes("-ip");
 
 if (!inputFilePath) {
   usage_error();
   process.exit(1);
 }
 
-let model: string;
-try {
-  model = readFileSync(inputFilePath, "utf-8");
-} catch (err) {
-  const e = err as Error;
-  console.error(`Failed to read/parse file: ${e.message}`);
-  process.exit(1);
-}
+const parsedModel = await parseModelFile(inputFilePath);
+const jsonModel = await convertSCTXtoSchema(parsedModel, inputFilePath);
 
-model = preProcess(model);
-
-const services = createSCChartsServices(EmptyFileSystem);
-const parse = parseHelper<SCTX>(services.SCCharts);
-const document = await parse(model, { validation: true });
-
-if (
-  document.parseResult.lexerErrors.length > 0 ||
-  document.parseResult.parserErrors.length > 0
-) {
-  console.error(model);
-  console.error(
-    "Errors:",
-    document.parseResult.lexerErrors,
-    document.parseResult.parserErrors,
+if (inPlace) {
+  console.log("Saving to", inputFilePath.replace(".sctx", ".json"));
+  writeFileSync(
+    inputFilePath.replace(".sctx", ".json"),
+    JSON.stringify(jsonModel, null, 2),
   );
-  throw new Error("Lexer or Parser errors occurred");
-}
-
-const result = convertSCTXtoSchema(document.parseResult.value, inputFilePath);
-
-if (ourputFilePath) {
-  writeFileSync(ourputFilePath, JSON.stringify(result, null, 2));
+} else if (ourputFilePath) {
+  console.log("Saving to", ourputFilePath);
+  writeFileSync(ourputFilePath, JSON.stringify(jsonModel, null, 2));
 } else {
-  console.log(JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(jsonModel, null, 2));
 }

@@ -9,6 +9,7 @@ import type {
   Region,
   SCChartModel,
   Variable as SchemaVariable,
+  State,
 } from "../schema/types.js";
 import { createFakeRootRegion, emptyContext, getScope } from "./utils.js";
 import { readFileSync } from "node:fs";
@@ -41,6 +42,7 @@ function constructRegion(
   region: Region,
   context: Context,
   wonly: boolean,
+  filePath: string | undefined,
   referenceMapping: Record<string, SCChartModel> | undefined = undefined,
 ): StateGraph {
   let graph: StateGraph = {
@@ -78,6 +80,7 @@ function constructRegion(
             subRegion,
             context,
             wonly,
+            filePath,
             referenceMapping,
           ),
         );
@@ -134,29 +137,37 @@ function constructRegion(
       if (!readFileSync) {
         throw new Error("File loading not supported");
       }
+      if (!filePath) {
+        throw new Error("File path not provided");
+      }
 
       let refModel;
+      let path = state.reference.targetFile
+        ? state.reference.targetFile.replace("file:", "")
+        : filePath;
+      path = path.replace(".sctx", ".json").trim();
+
       if (referenceMapping) {
-        if (!referenceMapping[state.reference.targetFile.trim()]) {
-          throw new Error(`Reference missing: ${state.reference.targetFile}`);
-        }
-        refModel = referenceMapping[state.reference.targetFile];
+        if (!referenceMapping[path])
+          throw new Error(`Reference missing: ${path}`);
+
+        refModel = referenceMapping[path];
       } else {
         try {
-          const jsonPath = state.reference.targetFile
-            .replace(".sctx", ".json")
+          const jsonPath = state.reference
+            .targetFile!.replace(".sctx", ".json")
             .replace("file:", "");
           refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
         } catch (e) {
-          throw new Error(
-            `Reference missing - ${e}: ${state.reference.targetFile}`,
-          );
+          throw new Error(`Reference missing - ${e}: ${path}`);
         }
       }
 
       stateNode.referencedContext = constructStateGraph(
         refModel,
         wonly,
+        filePath,
+        state.reference.targetID,
         referenceMapping,
       );
       stateNode.referencedContext.graph.activeNode =
@@ -207,17 +218,30 @@ function finishEdges(graph: StateGraph, context: Context): void {
 export function constructStateGraph(
   model: SCChartModel,
   wonly: boolean,
+  filePath: string | undefined,
+  name: string = "", // The name of the chart that should be constructed
   referenceMapping: Record<string, SCChartModel> | undefined = undefined,
 ): Context {
-  if (model.length != 1) {
-    throw new Error("Model must have exactly one state");
+  let rootState: State | undefined;
+  if (name == "") {
+    rootState = model[0];
+  } else {
+    for (const state of model) {
+      if (state.id == name) {
+        rootState = state;
+      }
+    }
   }
 
-  console.log("Setting up model: ", model[0].id);
+  if (rootState === undefined) {
+    throw new Error(`State ${name} not found`);
+  }
 
-  const rootRegion: Region = createFakeRootRegion(model);
+  console.log("Setting up model: ", rootState.id);
 
-  let context: Context = emptyContext(model, rootRegion.id);
+  const rootRegion: Region = createFakeRootRegion([rootState]);
+
+  let context: Context = emptyContext([rootState], rootRegion.id);
   context.errorMode = wonly ? "warnings-only" : "strict";
 
   // Go over all States once and add them and the transitions to the graph
@@ -226,10 +250,11 @@ export function constructStateGraph(
     rootRegion,
     context,
     wonly,
+    filePath,
     referenceMapping,
   );
 
-  if (context.model[0].label) context.label = context.model[0].label;
+  if (rootState.label) context.label = rootState.label;
 
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);

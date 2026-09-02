@@ -36,14 +36,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                     {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@14"
+                        "$ref": "#/rules@15"
                       },
                       "arguments": []
                     },
                     {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@16"
+                        "$ref": "#/rules@17"
                       },
                       "arguments": []
                     }
@@ -54,9 +54,38 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "cardinality": "*"
           },
           {
-            "$type": "Keyword",
-            "value": "scchart"
-          },
+            "$type": "Group",
+            "elements": [
+              {
+                "$type": "Keyword",
+                "value": "scchart"
+              },
+              {
+                "$type": "Assignment",
+                "feature": "charts",
+                "operator": "+=",
+                "terminal": {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@1"
+                  },
+                  "arguments": []
+                }
+              }
+            ],
+            "cardinality": "*"
+          }
+        ]
+      },
+      "fragment": false,
+      "parameters": []
+    },
+    {
+      "$type": "ParserRule",
+      "name": "Chart",
+      "definition": {
+        "$type": "Group",
+        "elements": [
           {
             "$type": "Assignment",
             "feature": "name",
@@ -64,7 +93,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@16"
+                "$ref": "#/rules@17"
               },
               "arguments": []
             }
@@ -72,7 +101,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@14"
+              "$ref": "#/rules@15"
             },
             "arguments": [],
             "cardinality": "?"
@@ -91,14 +120,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@8"
+                    "$ref": "#/rules@9"
                   },
                   "arguments": []
                 },
                 {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@7"
+                    "$ref": "#/rules@8"
                   },
                   "arguments": []
                 }
@@ -112,6 +141,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
           }
         ]
       },
+      "entry": false,
       "fragment": false,
       "parameters": []
     },
@@ -162,7 +192,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@16"
+                "$ref": "#/rules@17"
               },
               "arguments": []
             }
@@ -184,7 +214,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                     "terminal": {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@6"
+                        "$ref": "#/rules@7"
                       },
                       "arguments": []
                     },
@@ -200,14 +230,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                         {
                           "$type": "RuleCall",
                           "rule": {
-                            "$ref": "#/rules@8"
+                            "$ref": "#/rules@9"
                           },
                           "arguments": []
                         },
                         {
                           "$type": "RuleCall",
                           "rule": {
-                            "$ref": "#/rules@7"
+                            "$ref": "#/rules@8"
                           },
                           "arguments": []
                         }
@@ -235,7 +265,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                     "terminal": {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@16"
+                        "$ref": "#/rules@17"
                       },
                       "arguments": []
                     }
@@ -254,7 +284,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                         "terminal": {
                           "$type": "RuleCall",
                           "rule": {
-                            "$ref": "#/rules@2"
+                            "$ref": "#/rules@3"
                           },
                           "arguments": []
                         }
@@ -283,7 +313,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@5"
+                "$ref": "#/rules@6"
               },
               "arguments": []
             },
@@ -311,14 +341,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@16"
+                    "$ref": "#/rules@17"
                   },
                   "arguments": []
                 },
                 {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@15"
+                    "$ref": "#/rules@16"
                   },
                   "arguments": []
                 }
@@ -339,7 +369,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@16"
+                    "$ref": "#/rules@17"
                   },
                   "arguments": []
                 }
@@ -391,7 +421,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@9"
+                "$ref": "#/rules@10"
               },
               "arguments": []
             }
@@ -403,7 +433,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@4"
+                "$ref": "#/rules@5"
               },
               "arguments": []
             }
@@ -422,7 +452,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@4"
+                    "$ref": "#/rules@5"
                   },
                   "arguments": []
                 }
@@ -449,7 +479,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@16"
+                "$ref": "#/rules@17"
               },
               "arguments": []
             }
@@ -468,7 +498,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@13"
+                    "$ref": "#/rules@14"
                   },
                   "arguments": []
                 }
@@ -494,7 +524,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@11"
                   },
                   "arguments": []
                 }
@@ -538,7 +568,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@11"
                   },
                   "arguments": []
                 }
@@ -560,7 +590,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@11"
                   },
                   "arguments": []
                 }
@@ -601,12 +631,12 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
             "terminal": {
               "$type": "CrossReference",
               "type": {
-                "$ref": "#/rules@1"
+                "$ref": "#/rules@2"
               },
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@16"
+                  "$ref": "#/rules@17"
                 },
                 "arguments": []
               },
@@ -696,7 +726,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@11"
                   },
                   "arguments": []
                 }
@@ -718,7 +748,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@10"
+                    "$ref": "#/rules@11"
                   },
                   "arguments": []
                 }
@@ -756,14 +786,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@16"
+                    "$ref": "#/rules@17"
                   },
                   "arguments": []
                 },
                 {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@14"
+                    "$ref": "#/rules@15"
                   },
                   "arguments": []
                 }
@@ -791,14 +821,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                         {
                           "$type": "RuleCall",
                           "rule": {
-                            "$ref": "#/rules@8"
+                            "$ref": "#/rules@9"
                           },
                           "arguments": []
                         },
                         {
                           "$type": "RuleCall",
                           "rule": {
-                            "$ref": "#/rules@7"
+                            "$ref": "#/rules@8"
                           },
                           "arguments": []
                         }
@@ -827,7 +857,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                     "terminal": {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@8"
+                        "$ref": "#/rules@9"
                       },
                       "arguments": []
                     },
@@ -852,21 +882,21 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@1"
+              "$ref": "#/rules@2"
             },
             "arguments": []
           },
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@3"
+              "$ref": "#/rules@4"
             },
             "arguments": []
           },
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@6"
+              "$ref": "#/rules@7"
             },
             "arguments": []
           }
@@ -1035,14 +1065,14 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                   {
                     "$type": "TerminalRuleCall",
                     "rule": {
-                      "$ref": "#/rules@11"
+                      "$ref": "#/rules@12"
                     },
                     "parenthesized": false
                   },
                   {
                     "$type": "TerminalRuleCall",
                     "rule": {
-                      "$ref": "#/rules@12"
+                      "$ref": "#/rules@13"
                     },
                     "parenthesized": false
                   }
@@ -1052,7 +1082,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
               {
                 "$type": "TerminalRuleCall",
                 "rule": {
-                  "$ref": "#/rules@13"
+                  "$ref": "#/rules@14"
                 },
                 "parenthesized": false
               }
@@ -1062,7 +1092,7 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
           {
             "$type": "TerminalRuleCall",
             "rule": {
-              "$ref": "#/rules@14"
+              "$ref": "#/rules@15"
             },
             "parenthesized": false
           }

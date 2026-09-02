@@ -1,4 +1,4 @@
-import { pre } from "./utils.js";
+import { modelPrint, pre } from "./utils.js";
 import { Context, Severity, StateNode, Variable } from "./types.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
 import {
@@ -40,6 +40,7 @@ export function parseExpression(
 
   const specialFns: Record<string, (arg: string) => unknown> = {
     pre: (v: string) => pre(context, v, node),
+    print: (v: string) => modelPrint(v),
     // future: prev: (v) => ..., changed: (v) => ...
   };
 
@@ -105,13 +106,24 @@ export function parseAction(
     part = part.replaceAll("++", "+=1").replaceAll("--", "-=1");
     part = infixToAssignment(part);
 
-    let [variable, expression] = part.split("=")!;
+    // An action can just call a function.
+    // Most functions are not supported, but print() for example is
+    let variable, expression;
+
+    if (part.includes("=")) {
+      [variable, expression] = part.split("=")!;
+    } else {
+      variable = "";
+      expression = part;
+    }
     const result = parseExpression(
       expression,
       context,
       getVariableType(variable, node, context)!,
       node,
     );
+
+    if (variable.trim() == "") return;
 
     if (variable.includes("[") && variable.includes("]")) {
       const indicesStart = variable.indexOf("[");

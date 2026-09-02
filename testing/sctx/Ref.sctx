@@ -1,0 +1,45 @@
+import SubChart
+
+scchart Ref {
+    output int A, B, C
+
+    region A:
+        initial state Init
+        go to Sub1
+
+        state Sub1 is Sub1(A to A)
+        join to End
+
+        final state End
+    
+    region B:
+        initial state Init
+        go to Sub2
+
+        state Sub2 is Sub2(B to A)
+        join to End
+
+        final state End
+
+    region C:
+        initial state Init
+        go to Sub3
+
+        state Sub3 is Sub3(C to A)
+        join to End
+
+        final state End
+}
+
+scchart Sub3 {
+    input output int A
+
+    initial state A
+    do A-=2 go to B
+
+    state B
+    immediate if A < -5 go to C
+    immediate go to A
+
+    final state C
+}

@@ -14,23 +14,19 @@ import { preProcess, convertSCTXtoSchema } from "./converter/functions.js";
 import { SCTX } from "./grammar/generated/ast.js";
 
 const filePath = process.argv[2];
-
-// This current version needs it to be in a specific spot
-// and if not use the -Wonly for exaple is interpreted as the input,
-// but '-Wonly' is not valied json
-// So for now this is disabled
-//
-// const jsonInputs = process.argv[3];
-const jsonInputs = undefined; // TODO: Add proper way to read in jsonInputs
-
 const wonly = process.argv.includes("-Wonly");
+const jsonInputs = process.argv.includes("-i")
+  ? process.argv[process.argv.indexOf("-i") + 1]
+  : undefined;
 
 if (wonly) {
   console.log("Warning-only mode enabled");
 }
 
 function usage_error() {
-  console.error("Usage: npm run cli -- <path-to-model.json> [inputs-list]");
+  console.error(
+    "Usage: npm run cli -- <path-to-model.json> [-Wonly] [-i inputs-list]",
+  );
 }
 
 function final_message(result: TickResult) {
@@ -96,21 +92,26 @@ while (true) {
     globalContext = setupContext(
       model as SCChartModel,
       wonly,
+      filePath,
       referenceMapping,
     );
     break;
   } catch (err) {
     const e = err as Error;
     if (!e.message.startsWith("Reference missing") || ++attempts > 100) throw e;
-    const path = e.message.substring(e.message.lastIndexOf(":") + 1).trim();
+    const [_error, path] = e.message.split(":").map((s) => s.trim());
     const sctxPath = path.replace(".json", ".sctx");
     let raw: string;
+
     try {
       raw = readFileSync(sctxPath, "utf-8");
     } catch (err) {
-      console.error(`Failed to read file: ${(err as Error).message}`);
+      console.error(
+        `Failed to read file ${sctxPath}: ${(err as Error).message}`,
+      );
       process.exit(1);
     }
+
     referenceMapping[path] = (await convertSctxToJson(raw)) as SCChartModel;
   }
 }

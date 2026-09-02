@@ -46,7 +46,7 @@ export interface State {
 
 export interface Reference {
   targetID: string;
-  targetFile: string;
+  targetFile?: string;
   parameters: string[];
 }
 

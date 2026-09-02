@@ -47,8 +47,6 @@ for the PoC, these should probably be left out unless it is easy.
 		- [ ] ...
 	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
-- Clocks?
-
 ## missing
 - [ ] varible types
 	- [x] arrays
@@ -98,9 +96,9 @@ int test[4] can fail, luckily most tests dont use local variables.
 ### features
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
     - [x] It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword.
-- [ ] Reference Charts can be of models in the same file.
+- [x] Reference Charts can be of models in the same file.
 	- also deal with the 'import' statements when converting with langium
-- [ ] converting sctx2json should automatically do it recursively for reference charts
+- [x] converting sctx2json should automatically do it recursively for reference charts
 
 ### scheduling differences
 - ssm/statebased/SBNested*: Similar to the ABO thing. Just that both sections "rely" on eachother and as such this doesnt work here
@@ -109,8 +107,13 @@ int test[4] can fail, luckily most tests dont use local variables.
 - [ ] Commenting and documenting the code.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
 - [ ] Maybe do an optional debugging web view with a semi-interactive graph of the model. Basic would be ugly, but maybe we can use ELK?
+- [ ] Redo the testing to not use an api, but just the cli. The cli now allows the inputs all at once again. This should fix some stuff and make things with references easier.
 
 ### for daniel
 - [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 
 	- This is kind of intentional, regions dont have variables in the json schema
 - [ ] aas/referenced/arrays/bind-array-and-index/MainChart.sctx: when compiling it binds 'A[3] to A' and my interpreter does not like that. That's also the test that fails with KiCo json but not with my converter (because my converter just does 'A to A').
+
+### notes
+- no dataflow, because it is not model order
+- qualitativ documentation of how to rewrite models to make them work

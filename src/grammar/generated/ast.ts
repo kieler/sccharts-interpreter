@@ -58,7 +58,7 @@ export type SCChartsKeywordNames =
 export type SCChartsTokenNames = SCChartsTerminalNames | SCChartsKeywordNames;
 
 export interface Action extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'Action';
     action: string;
     guard?: string;
@@ -76,6 +76,23 @@ export const Action = {
 
 export function isAction(item: unknown): item is Action {
     return reflection.isInstance(item, Action.$type);
+}
+
+export interface Chart extends langium.AstNode {
+    readonly $container: SCTX;
+    readonly $type: 'Chart';
+    elements: Array<Element | Region>;
+    name: string;
+}
+
+export const Chart = {
+    $type: 'Chart',
+    elements: 'elements',
+    name: 'name'
+} as const;
+
+export function isChart(item: unknown): item is Chart {
+    return reflection.isInstance(item, Chart.$type);
 }
 
 export type Element = Action | State | Variable;
@@ -106,7 +123,7 @@ export function isRefVariableAssignment(item: unknown): item is RefVariableAssig
 }
 
 export interface Region extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'Region';
     elements: Array<Element | Region>;
     name?: string;
@@ -124,16 +141,14 @@ export function isRegion(item: unknown): item is Region {
 
 export interface SCTX extends langium.AstNode {
     readonly $type: 'SCTX';
-    elements: Array<Element | Region>;
+    charts: Array<Chart>;
     imports: Array<string>;
-    name: string;
 }
 
 export const SCTX = {
     $type: 'SCTX',
-    elements: 'elements',
-    imports: 'imports',
-    name: 'name'
+    charts: 'charts',
+    imports: 'imports'
 } as const;
 
 export function isSCTX(item: unknown): item is SCTX {
@@ -141,7 +156,7 @@ export function isSCTX(item: unknown): item is SCTX {
 }
 
 export interface State extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'State';
     actions: Array<Action>;
     elements: Array<Element | Region>;
@@ -197,7 +212,7 @@ export function isTransition(item: unknown): item is Transition {
 }
 
 export interface Variable extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'Variable';
     assignments: Array<VariableAssignment>;
     isInput: boolean;
@@ -238,6 +253,7 @@ export function isVariableAssignment(item: unknown): item is VariableAssignment 
 
 export type SCChartsAstType = {
     Action: Action
+    Chart: Chart
     Element: Element
     RefVariableAssignment: RefVariableAssignment
     Region: Region
@@ -270,6 +286,20 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                 }
             },
             superTypes: [Element.$type]
+        },
+        Chart: {
+            name: Chart.$type,
+            properties: {
+                elements: {
+                    name: Chart.elements,
+                    defaultValue: [],
+                    optional: true
+                },
+                name: {
+                    name: Chart.name
+                }
+            },
+            superTypes: []
         },
         Element: {
             name: Element.$type,
@@ -308,8 +338,8 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
         SCTX: {
             name: SCTX.$type,
             properties: {
-                elements: {
-                    name: SCTX.elements,
+                charts: {
+                    name: SCTX.charts,
                     defaultValue: [],
                     optional: true
                 },
@@ -317,9 +347,6 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     name: SCTX.imports,
                     defaultValue: [],
                     optional: true
-                },
-                name: {
-                    name: SCTX.name
                 }
             },
             superTypes: []

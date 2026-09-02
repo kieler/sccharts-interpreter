@@ -98,12 +98,19 @@ export function assignInputVariables(context: Context, inputs: any): void {
 export function setupContext(
   model: SCChartModel,
   wonly: boolean,
+  filePath: string | undefined = undefined,
   referenceMapping: Record<string, SCChartModel> | undefined = undefined,
 ): Context {
   const valid = validateSCChart(model);
   if (!valid) throw new Error("Invalid SCChart Model JSON");
 
-  const context = constructStateGraph(model, wonly, referenceMapping);
+  const context = constructStateGraph(
+    model,
+    wonly,
+    filePath,
+    "",
+    referenceMapping,
+  );
   context.graph.activeNode = context.graph.initalNode;
 
   return context;
@@ -130,6 +137,10 @@ export function pre(
   }
 
   return getVariablePre(variable, node, context);
+}
+
+export function modelPrint(value: string): void {
+  console.log("MODEL PRINT:", value);
 }
 
 export function getScope(graph: StateGraph): string {
