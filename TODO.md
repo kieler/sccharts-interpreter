@@ -92,6 +92,7 @@ Also see the blocklist for models that have unsupported features.
 - [ ] Local variables are named something like: local_region1_A in the simulation so the tests
 int test[4] can fail, luckily most tests dont use local variables.
 - [x] aas/arrays/IndexVariable2.ktrace: O[i[0]] throws an error, because "i" is not a number (see action parser ~l.103)
+- [ ] tests/Ref: If the model is converted to json with KiCo, the model doesn't build in the interpreter, because Sub34 is not found. 
 
 ### features
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
@@ -108,6 +109,8 @@ int test[4] can fail, luckily most tests dont use local variables.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
 - [ ] Maybe do an optional debugging web view with a semi-interactive graph of the model. Basic would be ugly, but maybe we can use ELK?
 - [ ] Redo the testing to not use an api, but just the cli. The cli now allows the inputs all at once again. This should fix some stuff and make things with references easier.
+	- [ ] random inputs
+	- [ ] get all the tests to the new version
 
 ### for daniel
 - [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 

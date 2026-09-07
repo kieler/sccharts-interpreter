@@ -1,13 +1,12 @@
-from tests.base import TestRunner, assert_subset, generate_expected
+from tests.new_base import TestRunner, assert_subset
 
 
 def test_ref():
     """Test Reference Charts and loading of them"""
-    runner = TestRunner("Ref")
-    runner.setup()
+    runner = TestRunner("./sctx/Ref")
 
     inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
 
-    expected = generate_expected("Ref", inputs, ["A", "B", "C"])
+    expected = runner.generate_expected(inputs, ["A", "B", "C"])
 
     assert_subset(runner.run(inputs), expected)

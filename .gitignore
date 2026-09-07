@@ -12,5 +12,8 @@ __pycache__
 testing/config.json
 kico_config.json
 testing/json/*.json
+testing/sctx/*.json
 testing/exe/*.exe
+testing/sctx/*.exe
+
 kieler-gen
