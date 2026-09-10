@@ -1,5 +1,10 @@
 import ast
+import random
+import re
+import string
 import sys
+
+from typing_extensions import Any
 
 
 def parse_ktrace(ktrace: str):
@@ -95,3 +100,67 @@ if __name__ == "__main__":
 
     trace = parse_ktrace(ktrace)
     print(trace)
+
+
+def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) -> None:
+    """Assert actual matches expected as a subset (extra fields in actual ignored).
+    Extra trailing empty dicts in either list are silently allowed.
+    This is because of the differing behaviour of the interpreter cli and the KiCo simulation cli, which continues even if the model is terminated.
+    """
+    for item in actual[len(expected) :]:
+        assert item["variables"] == {}, (
+            f"Length mismatch: extra step(s) in actual with content: {item}"
+        )
+    for item in expected[len(actual) :]:
+        assert item["variables"] == {}, (
+            f"Length mismatch: extra step(s) in expected with content: {item}"
+        )
+
+    for i, (a, e) in enumerate(zip(actual, expected)):
+        assert set(e.keys()).issubset(set(a.keys())), (
+            f"Step {i}: expected keys not subset of actual: {e.keys()}"
+        )
+        for k, v in e.items():
+            if isinstance(v, dict):
+                assert isinstance(a[k], dict), f"Step {i}: {k} is not a dict"
+                _assert_subset_dict(a[k], v, f"step {i}.{k}")
+            else:
+                assert a[k] == v, f"Step {i}.{k}: expected {v}, got {a[k]}"
+
+
+def _assert_subset_dict(
+    actual: dict[str, Any], expected: dict[str, Any], prefix: str
+) -> None:
+    for k, v in expected.items():
+        full_key = f"{prefix}.{k}"
+
+        match = re.match(r"^(.+?)(\[.*\])+$", k)
+
+        if match:
+            var_name = match.group(1)
+            indices_str = match.group(2)
+            assert var_name in actual, f"{full_key}: key missing"
+
+            source = actual[var_name]
+
+            indices = re.findall(r"\[(\d+)\]", indices_str)
+            for idx_str in indices:
+                idx = int(idx_str)
+                assert isinstance(source, list), f"{full_key}: expected a list"
+                assert idx < len(source), (
+                    f"{full_key}: index {idx} out of range (length {len(source)})"
+                )
+                source = source[idx]
+
+            assert source == v, f"{full_key}: expected {v}, got {source}"
+        elif isinstance(v, dict):
+            assert k in actual, f"{full_key}: key missing"
+            assert isinstance(actual[k], dict), f"{full_key} is not a dict"
+            _assert_subset_dict(actual[k], v, full_key)
+        else:
+            assert k in actual, f"{full_key}: key missing"
+            assert actual[k] == v, f"{full_key}: expected {v}, got {actual[k]}"
+
+
+def generate_random_string(n: int, random: random.Random) -> str:
+    return "".join(random.choices(string.ascii_letters, k=n))

@@ -93,6 +93,8 @@ Also see the blocklist for models that have unsupported features.
 int test[4] can fail, luckily most tests dont use local variables.
 - [x] aas/arrays/IndexVariable2.ktrace: O[i[0]] throws an error, because "i" is not a number (see action parser ~l.103)
 - [ ] tests/Ref: If the model is converted to json with KiCo, the model doesn't build in the interpreter, because Sub34 is not found. 
+- [ ] tests/Ref: The model doesn't properly terminate
+- [ ] tests/langium_Ref: When calling it via the cli, it cant find 'langium_Ref.sctx' (because it doesn't exist). So this needs to change that if it is called from a json, it doens't change the path to sctx.
 
 ### features
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts

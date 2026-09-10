@@ -1,9 +1,10 @@
-from tests.new_base import TestRunner, assert_subset
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_abo_Afirst():
     """Test ABO model"""
-    runner = TestRunner("./sctx/ABO")
+    runner = TestRunner("./models/ABO")
 
     inputs = [
         {"A": False, "B": False},
@@ -20,7 +21,7 @@ def test_abo_Afirst():
 
 def test_abo_Bfirst():
     """Test ABO model"""
-    runner = TestRunner("./sctx/ABO")
+    runner = TestRunner("./models/ABO")
 
     inputs = [
         {"A": False, "B": False},

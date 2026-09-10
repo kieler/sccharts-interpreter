@@ -1,25 +1,24 @@
-from tests.base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_array_simple():
     """Test simple Arrays"""
-    runner = TestRunner("SimpleArray")
-    runner.setup()
+    runner = TestRunner("./models/SimpleArray")
 
     inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
 
-    expected = generate_expected("SimpleArray", inputs, [])
+    expected = runner.generate_expected(inputs, [])
 
     assert_subset(runner.run(inputs), expected)
 
 
 def test_multi_dim_array():
     """Test multi-dimensional Arrays"""
-    runner = TestRunner("MultiDimArray")
-    runner.setup()
+    runner = TestRunner("./models/MultiDimArray")
 
     inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}]
 
-    expected = generate_expected("MultiDimArray", inputs, [])
+    expected = runner.generate_expected(inputs, [])
 
     assert_subset(runner.run(inputs), expected)

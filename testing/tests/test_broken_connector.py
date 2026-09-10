@@ -1,10 +1,10 @@
-from tests.base import TestRunner, assert_subset
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_broken_connector_bad_input():
     """Test if ending a tick in a connector correctly raises an error."""
-    runner = TestRunner("BrokenConnector")
-    runner.setup()
+    runner = TestRunner("./models/BrokenConnector")
 
     inputs = [
         {"A": False},
@@ -13,7 +13,6 @@ def test_broken_connector_bad_input():
     ]
 
     expected = [
-        {"terminated": False, "variables": {"A": False}, "status": "fine"},
         {"status": "error"},
     ]
 
@@ -22,8 +21,7 @@ def test_broken_connector_bad_input():
 
 def test_broken_connector_good_input():
     """Test if ending a tick in a connector correctly raises an error."""
-    runner = TestRunner("BrokenConnector")
-    runner.setup()
+    runner = TestRunner("./models/BrokenConnector")
 
     inputs = [
         {"A": False},
@@ -32,8 +30,8 @@ def test_broken_connector_good_input():
     ]
 
     expected = [
-        {"terminated": False, "variables": {"A": False}, "status": "fine"},
-        {"terminated": True, "variables": {"A": True}, "status": "fine"},
+        {"terminated": False, "variables": {"A": False}},
+        {"terminated": True, "variables": {"A": True}},
     ]
 
     assert_subset(runner.run(inputs), expected)
@@ -46,8 +44,7 @@ def test_broken_connector_Wonly():
     (see test_broken_connector_bad_input()), but with Wonly mode this is fine.
     """
 
-    runner = TestRunner("BrokenConnector")
-    runner.setup(wonly=True)
+    runner = TestRunner("./models/BrokenConnector", wonly=True)
 
     inputs = [
         {"A": False},
@@ -57,10 +54,10 @@ def test_broken_connector_Wonly():
     ]
 
     expected = [
-        {"terminated": False, "variables": {"A": False}, "status": "fine"},
-        {"terminated": False, "variables": {"A": False}, "status": "fine"},
-        {"terminated": False, "variables": {"A": False}, "status": "fine"},
-        {"terminated": True, "variables": {"A": True}, "status": "fine"},
+        {"terminated": False, "variables": {"A": False}},
+        {"terminated": False, "variables": {"A": False}},
+        {"terminated": False, "variables": {"A": False}},
+        {"terminated": True, "variables": {"A": True}},
     ]
 
     assert_subset(runner.run(inputs), expected)

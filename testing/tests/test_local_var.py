@@ -1,10 +1,10 @@
-from tests.base import TestRunner, assert_subset
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_local_var():
     """Test if local variables work"""
-    runner = TestRunner("LocalVar")
-    runner.setup()
+    runner = TestRunner("./models/LocalVar")
 
     expected = [
         {"variables": {"Var1": 0, "Done": False}},

@@ -1,10 +1,10 @@
-from tests.base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_history():
     """Testing if history transitions work properly"""
-    runner = TestRunner("HistoryTransition")
-    runner.setup()
+    runner = TestRunner("./models/HistoryTransition")
 
     inputs = [
         {"A": False, "R1": False, "R2": False},
@@ -17,6 +17,6 @@ def test_history():
         {"A": False, "R1": False, "R2": False},
     ]
 
-    expected = generate_expected("HistoryTransition", inputs, ["A", "R1", "R2", "O"])
+    expected = runner.generate_expected(inputs, ["A", "R1", "R2", "O"])
 
     assert_subset(runner.run(inputs), expected)

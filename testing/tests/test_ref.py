@@ -1,9 +1,10 @@
-from tests.new_base import TestRunner, assert_subset
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_ref():
     """Test Reference Charts and loading of them"""
-    runner = TestRunner("./sctx/Ref")
+    runner = TestRunner("./models/Ref")
 
     inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
 

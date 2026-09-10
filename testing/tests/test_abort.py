@@ -1,9 +1,10 @@
-from tests.new_base import TestRunner, assert_subset
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_join():
     """Test Joins"""
-    runner = TestRunner("sctx/Abort")
+    runner = TestRunner("./models/Abort")
 
     inputs = [
         {"A": False, "Strong": False, "Weak": False, "Join": False},
@@ -22,7 +23,7 @@ def test_join():
 
 def test_strong():
     """Test Strong Aborts"""
-    runner = TestRunner("sctx/Abort")
+    runner = TestRunner("./models/Abort")
 
     inputs = [
         {"A": False, "Strong": False, "Weak": False, "Join": False},
@@ -39,7 +40,7 @@ def test_strong():
 
 def test_weak():
     """Test Weak Aborts"""
-    runner = TestRunner("sctx/Abort")
+    runner = TestRunner("./models/Abort")
 
     inputs = [
         {"A": False, "Strong": False, "Weak": False, "Join": False},

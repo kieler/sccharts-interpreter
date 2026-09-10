@@ -1,10 +1,10 @@
-from tests.base import TestRunner, assert_subset
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_ao():
     """Test AO model"""
-    runner = TestRunner("AO")
-    runner.setup()
+    runner = TestRunner("./models/AO")
 
     inputs = [
         {"A": False},
