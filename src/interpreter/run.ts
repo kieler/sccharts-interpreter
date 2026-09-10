@@ -55,13 +55,18 @@ function walkEdge(
   if (!edge.to) return false;
 
   if (edge.transition.preemption == "termination") {
-    // edge.from.subgraphs == undefined should never be the case in a properly defined model
-    // If the guard passes and the inner behaviour is done, walk the Edge
+    // Join edges can come from states and regions or from reference charts
 
-    const subGraphDone = edge.from.subgraphs
-      ?.flatMap((graph) => graph.terminated)
-      .every((x) => x);
-    if (!subGraphDone) return false;
+    if (edge.from.subgraphs != undefined) {
+      // This is a regular subgraph from a states inner logic or region
+      const subGraphsDone = edge.from.subgraphs
+        ?.flatMap((graph) => graph.terminated)
+        .every((x) => x);
+      if (!subGraphsDone) return false;
+    } else {
+      // This is with Reference Charts
+      if (!edge.from.referencedContext?.graph.terminated) return false;
+    }
   }
 
   // Clear the history of the state upon entry and all subgraphs
@@ -84,7 +89,7 @@ function walkEdge(
 
   processNode(edge.to, context, true);
 
-  // Implicitly consider all edges from a connector to be immediate for now.
+  // Implicitly consider all edges from a connector to be immediate
   if (edge.to.state.isConnector) processNode(edge.to, context);
 
   return true;
@@ -135,10 +140,10 @@ function processNode(
       }
     }
 
-    const subGraphDone = node.subgraphs
+    const subGraphsDone = node.subgraphs
       ?.flatMap((graph) => graph.terminated)
       .every((x) => x);
-    if (subGraphDone) {
+    if (subGraphsDone) {
       doActions(node.exitActions, context, node);
     }
   }

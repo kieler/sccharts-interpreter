@@ -42,6 +42,13 @@ def main() -> None:
         action="store_true",
         help="Cache the sctx2json convertion results",
     )
+    _ = parser.add_argument(
+        "--no-ktraces",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Do not execute the ktrace based tests from the provate models repository",
+    )
 
     args, extra = parser.parse_known_args()
 
@@ -53,15 +60,13 @@ def main() -> None:
         os.environ["LANGIUM"] = "1"
     if args.cache_langium:
         os.environ["CACHE_LANGIUM_JSON"] = "1"
+    if args.no_ktraces:
+        os.environ["NO_KTRACES"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 
     test_paths = []
     pytest_extra = ["-v"]
-
-    # Pass through --langium and --no-ktraces as-is for conftest to pick up
-    if "--no-ktraces" in extra:
-        pytest_extra.append("--no-ktraces")
 
     if "all" in args.tests:
         test_paths = ["tests/"]

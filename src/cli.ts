@@ -100,19 +100,28 @@ while (true) {
     const e = err as Error;
     if (!e.message.startsWith("Reference missing") || ++attempts > 100) throw e;
     const [_error, path] = e.message.split(":").map((s) => s.trim());
-    const sctxPath = path.replace(".json", ".sctx");
+    console.error(path, filePath);
+
+    let newPath = path;
+    const sameFile = newPath === filePath;
+    if (!sameFile) newPath = newPath.replace(".json", ".sctx");
+
     let raw: string;
 
     try {
-      raw = readFileSync(sctxPath, "utf-8");
+      raw = readFileSync(newPath, "utf-8");
     } catch (err) {
       console.error(
-        `Failed to read file ${sctxPath}: ${(err as Error).message}`,
+        `Failed to read file ${newPath}: ${(err as Error).message}`,
       );
       process.exit(1);
     }
 
-    referenceMapping[path] = (await convertSctxToJson(raw)) as SCChartModel;
+    if (!sameFile) {
+      referenceMapping[path] = (await convertSctxToJson(raw)) as SCChartModel;
+    } else {
+      referenceMapping[path] = JSON.parse(raw) as SCChartModel;
+    }
   }
 }
 

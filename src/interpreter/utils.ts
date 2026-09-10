@@ -140,7 +140,7 @@ export function pre(
 }
 
 export function modelPrint(value: string): void {
-  console.log("MODEL PRINT:", value);
+  console.log("[MODEL PRINT]", value);
 }
 
 export function getScope(graph: StateGraph): string {

@@ -15,31 +15,12 @@ with open(CONFIG_FILE) as f:
 MODEL_PATH = Path(config.get("model_path", ""))
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--langium",
-        action="store_true",
-        default=False,
-        help="Use langium-based converter instead of KiCo JSON compiler",
-    )
-    parser.addoption(
-        "--no-ktraces",
-        action="store_true",
-        default=False,
-        help="Skip ktrace tests",
-    )
-
-
-def pytest_configure(config):
-    os.environ["USE_LANGIUM"] = str(config.getoption("--langium")).lower()
-
-
 def pytest_generate_tests(metafunc):
     if "test_model" not in metafunc.fixturenames:
         return
 
     # Skip ktrace tests if --no-ktraces is set
-    no_ktraces = metafunc.config.getoption("--no-ktraces")
+    no_ktraces = os.environ.get("NO_KTRACES")
     if no_ktraces:
         model_trace = []
         ids = []

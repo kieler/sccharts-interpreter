@@ -34,7 +34,7 @@ It reads inputs in JSON format from stdin every tick and prints the state of all
 
 You can also provide a json list as input as a command line argument. It will then run a tick for each entry in the array. For expample
 ```bash
-npm run cli testing/sctx/ABO.sctx '[{"A": true}, {"A": false},{"A": true}]'
+npm run cli testing/sctx/ABO.sctx -- -i '[{"A": true}, {"A": false},{"A": true}]'
 ```
 
 ### sctx2json 

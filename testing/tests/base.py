@@ -219,15 +219,15 @@ class TestRunner:
 
         if "Model terminated - Final Variables:" in stdout:
             stdout = stdout[: stdout.index("Model terminated - Final Variables:")]
-        if "[WARNING]" in stdout:
-            # Remove lines starting with [WARNING]
-            stdout = "\n".join(
-                [
-                    line
-                    for line in stdout.splitlines()
-                    if not line.startswith("[WARNING]")
-                ]
-            )
+
+        filter_words = ["[WARNING]", "[MODEL PRINT]"]
+
+        for word in filter_words:
+            if word in stdout:
+                # Remove lines starting with [...] key words
+                stdout = "\n".join(
+                    [line for line in stdout.splitlines() if not line.startswith(word)]
+                )
 
         stdout = stdout[output_start:].replace("}\n{", "},{")
 
