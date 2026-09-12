@@ -215,16 +215,18 @@ class TestRunner:
         return result
 
     def parse_interpreter_output(self, stdout: str) -> list[dict[str, Any]]:
-        output_start = stdout.index("{")
+        # The stdout can begin with 'Ambiguous Alternatives Detected ...'
+        # from langium, which can include a '{' so this needs to be filtered out
+        output_start = stdout.index("Setting up model:")
+        output_start = stdout[output_start:].index("{") + output_start
 
         if "Model terminated - Final Variables:" in stdout:
             stdout = stdout[: stdout.index("Model terminated - Final Variables:")]
 
+        # Remove lines starting with [...] key words
         filter_words = ["[WARNING]", "[MODEL PRINT]"]
-
         for word in filter_words:
             if word in stdout:
-                # Remove lines starting with [...] key words
                 stdout = "\n".join(
                     [line for line in stdout.splitlines() if not line.startswith(word)]
                 )

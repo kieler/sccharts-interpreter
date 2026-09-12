@@ -1,5 +1,6 @@
+import { raise } from "./errors.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
-import { Context, StateNode, Variable } from "./types.js";
+import { Context, Severity, StateNode, Variable } from "./types.js";
 import { getLocalVariableMap } from "./variables.js";
 
 export function parseGuard(
@@ -15,6 +16,15 @@ export function parseGuard(
 
   const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
 
-  const fn = new Function(...safeKeys, `return (${safeExpr})`);
-  return fn(...values);
+  try {
+    const fn = new Function(...safeKeys, `return (${safeExpr})`);
+    return fn(...values);
+  } catch (e) {
+    raise(
+      context,
+      Severity.Error,
+      `Failed to parse guard: ${guard} at node ${node.id}, Error: ${e}`,
+    );
+    return false;
+  }
 }

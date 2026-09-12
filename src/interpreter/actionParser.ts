@@ -82,8 +82,17 @@ export function parseExpression(
   }
 
   const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, expression);
-  const fn = new Function(...safeKeys, `return (${safeExpr})`);
-  let result = fn(...values);
+  let result;
+  try {
+    const fn = new Function(...safeKeys, `return (${safeExpr})`);
+    result = fn(...values);
+  } catch (e) {
+    raise(
+      context,
+      Severity.Error,
+      `Failed to parse expression: ${expression} at node ${node.id}, Error: ${e}`,
+    );
+  }
 
   // This is here because sometimes the models in the test suite use | instead of || and js says false | false = 0
   if (varType == "bool") {
