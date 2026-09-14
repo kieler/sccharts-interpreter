@@ -89,12 +89,12 @@ Also see the blocklist for models that have unsupported features.
 - [ ] When reseting the model that was compiled in the browser the tick buttons still are grayed out. I assume that if the model is compiled instead of uploaded, it isn't stored so the reset can load it.
 - [x] If an action assigns a variable that doesn't exist, the interpreter is happy to create it. should that be a warning / error?
 	- Also see above in "exceptions"
-- [ ] Local variables are named something like: local_region1_A in the simulation so the tests
-int test[4] can fail, luckily most tests dont use local variables.
+- [ ] Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
 - [x] aas/arrays/IndexVariable2.ktrace: O[i[0]] throws an error, because "i" is not a number (see action parser ~l.103)
 - [x] tests/Ref: If the model is converted to json with KiCo, the model doesn't build in the interpreter, because Sub34 is not found. 
 - [x] tests/Ref: The model doesn't properly terminate
 - [x] tests/langium_Ref: When calling it via the cli, it cant find 'langium_Ref.sctx' (because it doesn't exist). So this needs to change that if it is called from a json, it doens't change the path to sctx.
+- [ ] aas/referenced/arrays/BindArray.ktrace: The new testing uses the cli which doesn't like "{I[0]:true}" as an input, this should be supported (and should be pretty easy).
 
 ### features
 - [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
@@ -109,6 +109,8 @@ int test[4] can fail, luckily most tests dont use local variables.
 ### other
 - [ ] Commenting and documenting the code.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
+- [ ] Do one big benchmark model like Steamboiler
+	- Basics seem to work, adapted the exisitng SteamBoiler, but that one does nothing with Steam, so gotta see what to do there. Currently Water is just converted to Steam ad absurdum
 - [ ] Maybe do an optional debugging web view with a semi-interactive graph of the model. Basic would be ugly, but maybe we can use ELK?
 - [x] Redo the testing to not use an api, but just the cli. The cli now allows the inputs all at once again. This should fix some stuff and make things with references easier.
 	- [x] random inputs

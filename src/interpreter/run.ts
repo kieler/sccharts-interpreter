@@ -4,7 +4,7 @@ import { parseAction, parseExpression } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
-import { assignInputVariables } from "./utils.js";
+import { assignInputVariables, getScope } from "./utils.js";
 import { getVariable, setPreVariables, setVariable } from "./variables.js";
 
 function addRegionsToRuntime(
@@ -151,18 +151,22 @@ function processNode(
   if (node.referencedContext && node.referencedVarMap) {
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
+        if (!node.referencedContext.inputVariables.includes(i)) continue;
+
         let outerVal = getVariable(outer, node, context);
-        if (!outerVal) {
+        if (outerVal === undefined) {
           outerVal = parseExpression(outer, context, "", node);
         }
         setVariable(i, outerVal, node, node.referencedContext);
       }
     }
 
-    const results = tick(node.referencedContext, {}, false);
+    const _results = tick(node.referencedContext, {}, false);
 
     for (const [outer, inner] of node.referencedVarMap.entries()) {
       for (const i of inner) {
+        if (!node.referencedContext.outputVariables.includes(i)) continue;
+
         const innerVal = getVariable(i, node, node.referencedContext);
         setVariable(outer, innerVal, node, context);
       }

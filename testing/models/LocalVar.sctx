@@ -1,6 +1,6 @@
 scchart LocalVar{
     output int Var1 
-    int Var2 // 
+    int Var2 
     output bool Done
 
     region:

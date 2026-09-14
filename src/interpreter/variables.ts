@@ -19,10 +19,10 @@ function __getVariable(
   context: Context,
 ): Variable | undefined {
   const possibleVars = context.variables.get(id.trim());
-  if (!possibleVars) return undefined;
+  if (possibleVars == undefined) return undefined;
 
   if (Array.isArray(possibleVars)) {
-    const scope = getScope(node.graph);
+    const scope = getScope(node.graph) + node.id;
     return findBestMatch(possibleVars, scope);
   }
 
@@ -35,7 +35,7 @@ export function getVariable(
   context: Context,
 ): any | undefined {
   const variable = __getVariable(id, node, context);
-  if (!variable) return undefined;
+  if (variable == undefined) return undefined;
   return variable.value;
 }
 
@@ -45,7 +45,7 @@ export function getVariablePre(
   context: Context,
 ): any | undefined {
   const variable = __getVariable(id, node, context);
-  if (!variable) return undefined;
+  if (variable == undefined) return undefined;
   return variable.preValue;
 }
 
@@ -55,7 +55,7 @@ export function getVariableType(
   context: Context,
 ): string | undefined {
   const variable = __getVariable(id, node, context);
-  if (!variable) return undefined;
+  if (variable == undefined) return undefined;
   return variable.type;
 }
 
@@ -66,7 +66,7 @@ export function setVariable(
   context: Context,
 ): void {
   const possibleVars = context.variables.get(id);
-  if (!possibleVars) return;
+  if (possibleVars == undefined) return;
 
   if (Array.isArray(possibleVars)) {
     const scope = getVariableScope(node);

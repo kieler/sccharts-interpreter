@@ -18,7 +18,7 @@ import {
 } from "../grammar/generated/ast.js";
 import path from "node:path";
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { EmptyFileSystem } from "langium";
 import { parseHelper } from "langium/test";
@@ -41,7 +41,9 @@ export function preProcess(model: string): string {
         .trim();
     }
 
-    if (model_split[i].includes("@")) {
+    if (model_split[i].includes("@hide")) {
+      model_split[i] = model_split[i].replaceAll("@hide", "");
+    } else if (model_split[i].includes("@")) {
       model_split[i] = model_split[i].substring(0, model_split[i].indexOf("@"));
     }
 

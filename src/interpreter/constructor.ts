@@ -186,7 +186,7 @@ function mapReferenceVariables(parameters: string[]): Map<string, string[]> {
   // "in to I", "out to O"
   const map = new Map<string, string[]>();
   for (const param of parameters) {
-    const [inName, outName] = param.trim().split("to");
+    const [inName, outName] = param.trim().split(" to ");
     if (!map.has(outName.trim())) {
       map.set(outName.trim(), []);
     }

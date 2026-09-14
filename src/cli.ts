@@ -15,6 +15,7 @@ import { SCTX } from "./grammar/generated/ast.js";
 
 const filePath = process.argv[2];
 const wonly = process.argv.includes("-Wonly");
+const IOonly = process.argv.includes("-IOonly");
 const jsonInputs = process.argv.includes("-i")
   ? process.argv[process.argv.indexOf("-i") + 1]
   : undefined;
@@ -25,7 +26,7 @@ if (wonly) {
 
 function usage_error() {
   console.error(
-    "Usage: npm run cli -- <path-to-model.json> [-Wonly] [-i inputs-list]",
+    "Usage: npm run cli -- <path-to-model.json> [-Wonly] [-IOonly] [-i inputs-list]",
   );
 }
 
@@ -149,12 +150,17 @@ if (jsonInputs == undefined) {
 
   const prompt = () => {
     rl.question("Input (JSON): ", async (answer) => {
-      if (!answer.trim()) {
+      let input: Item;
+
+      if (answer.trim() == "") {
+        answer = "{}";
+      }
+
+      if (answer.trim() == "exit") {
         rl.close();
         process.exit(0);
       }
 
-      let input: Item;
       try {
         input = JSON.parse(answer);
       } catch (err) {
@@ -165,6 +171,18 @@ if (jsonInputs == undefined) {
       }
 
       const result = tick(globalContext, input);
+      if (IOonly) {
+        // Output variables only
+        var outputVars: Record<string, any> = {};
+        for (const varName of globalContext.outputVariables) {
+          outputVars[varName] = result.variables[varName];
+        }
+        for (const varName of globalContext.inputVariables) {
+          outputVars[varName] = result.variables[varName];
+        }
+
+        result.variables = outputVars;
+      }
       console.log(JSON.stringify(result, null, 2));
 
       if (result.terminated) {
@@ -193,6 +211,18 @@ if (jsonInputs == undefined) {
 
   for (const input of inputs) {
     const result = tick(globalContext, input);
+    if (IOonly) {
+      // Output variables only
+      var outputVars: Record<string, any> = {};
+      for (const varName of globalContext.outputVariables) {
+        outputVars[varName] = result.variables[varName];
+      }
+      for (const varName of globalContext.inputVariables) {
+        outputVars[varName] = result.variables[varName];
+      }
+
+      result.variables = outputVars;
+    }
     console.log(JSON.stringify(result, null, 2));
 
     if (result.terminated) {

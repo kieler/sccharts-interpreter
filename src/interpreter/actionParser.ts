@@ -1,4 +1,4 @@
-import { modelPrint, pre } from "./utils.js";
+import { getScope, modelPrint, pre } from "./utils.js";
 import { Context, Severity, StateNode, Variable } from "./types.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
 import {
@@ -125,6 +125,7 @@ export function parseAction(
       variable = "";
       expression = part;
     }
+
     const result = parseExpression(
       expression,
       context,
