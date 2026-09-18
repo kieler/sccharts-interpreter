@@ -3,7 +3,6 @@ import type {
   StateNode,
   StateGraph,
   TransitionEdge,
-  Variable,
 } from "./types.js";
 import type {
   Region,
@@ -71,21 +70,7 @@ function constructRegion(
       state: state,
       graph: graph,
     };
-    if (isSuper) {
-      stateNode.subgraphs = [];
-      for (const subRegion of state.regions) {
-        stateNode.subgraphs.push(
-          constructRegion(
-            stateNode,
-            subRegion,
-            context,
-            wonly,
-            filePath,
-            referenceMapping,
-          ),
-        );
-      }
-    }
+
     if (state.isInitial) graph.initalNode = stateNode;
     context.nodeMap.set(
       JSON.stringify({ id: state.id, scope: getScope(graph) }),
@@ -130,6 +115,22 @@ function constructRegion(
         case "exit":
           stateNode.exitActions.push(action);
           break;
+      }
+    }
+
+    if (isSuper) {
+      stateNode.subgraphs = [];
+      for (const subRegion of state.regions) {
+        stateNode.subgraphs.push(
+          constructRegion(
+            stateNode,
+            subRegion,
+            context,
+            wonly,
+            filePath,
+            referenceMapping,
+          ),
+        );
       }
     }
 

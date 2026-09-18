@@ -40,7 +40,7 @@ export function parseExpression(
 
   const specialFns: Record<string, (arg: string) => unknown> = {
     pre: (v: string) => pre(context, v, node),
-    print: (v: string) => modelPrint(v),
+    print: (v: string) => modelPrint(context, v, node),
     // future: prev: (v) => ..., changed: (v) => ...
   };
 

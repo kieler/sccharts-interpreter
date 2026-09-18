@@ -168,6 +168,7 @@ export function getLocalVariableMap(
   node: StateNode,
 ): Map<string, Variable> {
   const localVars = new Map<string, Variable>();
+
   for (const id of context.variables.keys()) {
     localVars.set(id, getVariable(id, node, context));
   }

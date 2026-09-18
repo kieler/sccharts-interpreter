@@ -8,7 +8,7 @@ Chart:
     name=ID STRING? '{' (elements+=(Element|Region))* '}';
 
 State:
-    isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (('{' (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID'(' (refAssignments+=RefVariableAssignment ','?)* ')')? (transitions+=Transition)*;
+    isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (('{' (elements+=Variable)* (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID'(' (refAssignments+=RefVariableAssignment ','?)* ')')? (transitions+=Transition)*;
 
 RefVariableAssignment:
     to=(ID|Literal) ('to' from=ID)?;

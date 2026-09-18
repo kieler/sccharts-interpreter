@@ -1,0 +1,9 @@
+scchart Test {
+    output int A = 100
+    output int C
+
+    initial state Init {
+        int B = A
+        during do C = B
+    }
+}

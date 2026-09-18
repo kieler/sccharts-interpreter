@@ -159,7 +159,7 @@ export interface State extends langium.AstNode {
     readonly $container: Chart | Region | State;
     readonly $type: 'State';
     actions: Array<Action>;
-    elements: Array<Element | Region>;
+    elements: Array<Element | Region | Variable>;
     isConnector: boolean;
     isFinal: boolean;
     isInitial: boolean;

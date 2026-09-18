@@ -2,7 +2,7 @@ import { validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
 import { Context, StateGraph, StateNode } from "./types.js";
 import { constructStateGraph } from "./constructor.js";
-import { getVariablePre, setVariable } from "./variables.js";
+import { getVariable, getVariablePre, setVariable } from "./variables.js";
 
 export function isSuper(stateNode: StateNode): boolean {
   return stateNode.subgraphs !== undefined;
@@ -139,8 +139,14 @@ export function pre(
   return getVariablePre(variable, node, context);
 }
 
-export function modelPrint(value: string): void {
-  console.log("[MODEL PRINT]", value);
+export function modelPrint(
+  context: Context,
+  value: string,
+  node: StateNode,
+): void {
+  const possibleValue = getVariable(value, node, context);
+  if (possibleValue !== undefined) console.log("[MODEL PRINT]", possibleValue);
+  else console.log("[MODEL PRINT]", value);
 }
 
 export function getScope(graph: StateGraph): string {
