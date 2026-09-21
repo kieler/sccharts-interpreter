@@ -176,6 +176,7 @@ function constructRegion(
 
       stateNode.referencedVarMap = mapReferenceVariables(
         state.reference.parameters,
+        stateNode.referencedContext,
       );
     }
   }
@@ -183,11 +184,35 @@ function constructRegion(
   return graph;
 }
 
-function mapReferenceVariables(parameters: string[]): Map<string, string[]> {
+function mapReferenceVariables(
+  parameters: string[],
+  referencedContext: Context,
+): Map<string, string[]> {
   // "in to I", "out to O"
   const map = new Map<string, string[]>();
+
+  const varList: string[] = [];
+  let listIndex = 0;
+  for (const variable of referencedContext.variables.keys()) {
+    if (
+      referencedContext.inputVariables.includes(variable) ||
+      referencedContext.outputVariables.includes(variable)
+    ) {
+      varList.push(variable);
+    }
+  }
+
   for (const param of parameters) {
-    const [inName, outName] = param.trim().split(" to ");
+    let [inName, outName] = param.trim().split(" to ");
+    if (inName == "null") {
+      if (listIndex >= varList.length) {
+        throw new Error(
+          `Insufficient number of variables for parameter: ${param}`,
+        );
+      }
+      inName = varList[listIndex++];
+    }
+
     if (!map.has(outName.trim())) {
       map.set(outName.trim(), []);
     }

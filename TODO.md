@@ -94,10 +94,11 @@ Also see the blocklist for models that have unsupported features.
 - [x] tests/Ref: If the model is converted to json with KiCo, the model doesn't build in the interpreter, because Sub34 is not found. 
 - [x] tests/Ref: The model doesn't properly terminate
 - [x] tests/langium_Ref: When calling it via the cli, it cant find 'langium_Ref.sctx' (because it doesn't exist). So this needs to change that if it is called from a json, it doens't change the path to sctx.
-- [ ] aas/referenced/arrays/BindArray.ktrace: The new testing uses the cli which doesn't like "{I[0]:true}" as an input, this should be supported (and should be pretty easy).
+- [x] aas/referenced/arrays/BindArray.ktrace: The new testing uses the cli which doesn't like "{I[0]:true}" as an input, this should be supported (and should be pretty easy).
+- [x] ssm/reference/ExternalReference: The langium converter doesn't like the automatic mapping for reference charts. Maybe we can do something there, pretty sure it just goes throgh in order if explicit mapping is mussing.
 
 ### features
-- [x] ssm/reference/ExternalReference, aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
+- [x] aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
     - [x] It works, but the tests all use "in" as a variable name, which crashes the parser, because it is a js keyword.
 - [x] Reference Charts can be of models in the same file.
 	- also deal with the 'import' statements when converting with langium

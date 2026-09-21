@@ -4,7 +4,7 @@ import { parseAction, parseExpression } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
-import { assignInputVariables, getScope } from "./utils.js";
+import { assignInputVariables } from "./utils.js";
 import { getVariable, setPreVariables, setVariable } from "./variables.js";
 
 function addRegionsToRuntime(
@@ -184,9 +184,13 @@ function processNode(
 
 export function tick(
   context: Context,
-  inputs: any,
+  inputs: Record<string, unknown>,
   assignInputs: boolean = true,
 ): TickResult {
+  // assignInputs: True by default and only set to false, when the
+  //   tick of a reference chart is called, because that has its own
+  //   state and the inputs are set manually via the variable mapping
+
   if (!context.graph.activeNode)
     return {
       terminated: false,

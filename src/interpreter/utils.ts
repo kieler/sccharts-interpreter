@@ -2,7 +2,12 @@ import { validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
 import { Context, StateGraph, StateNode } from "./types.js";
 import { constructStateGraph } from "./constructor.js";
-import { getVariable, getVariablePre, setVariable } from "./variables.js";
+import {
+  getVariable,
+  getVariablePre,
+  setVariable,
+  setVariableArrayByIndex,
+} from "./variables.js";
 
 export function isSuper(stateNode: StateNode): boolean {
   return stateNode.subgraphs !== undefined;
@@ -81,16 +86,29 @@ export function emptyContext(model: SCChartModel, id: string): Context {
   };
 }
 
-export function assignInputVariables(context: Context, inputs: any): void {
-  for (const variable of context.inputVariables) {
-    if (inputs[variable] !== undefined) {
+export function assignInputVariables(
+  context: Context,
+  inputs: Record<string, unknown>,
+): void {
+  for (const variableName of Object.keys(inputs)) {
+    if (context.inputVariables.includes(variableName)) {
       setVariable(
-        variable,
-        inputs[variable],
+        variableName,
+        inputs[variableName],
         context.graph.initalNode!,
         context,
       );
-      // context.variables.get(variable)!.value = inputs[variable];
+    } else if (variableName.includes("[")) {
+      const match = variableName.match(/^([^\[]+)\[(\d+)\]$/);
+      const name = match?.[1]!;
+      const index = parseInt(match?.[2]!, 10);
+      setVariableArrayByIndex(
+        name,
+        index,
+        inputs[variableName],
+        context.graph.initalNode!,
+        context,
+      );
     }
   }
 }

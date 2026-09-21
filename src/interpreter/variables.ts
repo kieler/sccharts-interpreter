@@ -78,6 +78,28 @@ export function setVariable(
   possibleVars.value = value;
 }
 
+export function setVariableArrayByIndex(
+  id: string,
+  index: number,
+  value: any,
+  node: StateNode,
+  context: Context,
+): void {
+  var array: any[];
+  const possibleVars = context.variables.get(id);
+  if (possibleVars == undefined) return;
+
+  if (Array.isArray(possibleVars)) {
+    const scope = getVariableScope(node);
+    const bestMatch = findBestMatch(possibleVars, scope);
+    array = bestMatch.value;
+  } else {
+    array = possibleVars.value;
+  }
+
+  array[index] = value;
+}
+
 function initialArrayValues(
   cardinalities: number[],
   defaultValue: unknown,
