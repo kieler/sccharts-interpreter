@@ -41,7 +41,7 @@ for the PoC, these should probably be left out unless it is easy.
 	- [x] basic structure for that 
 	- Explicitly what should throw an error: 
 		- [x] Ending a tick in a connector
-		- [ ] multiple inital stated
+		- [ ] multiple inital states
 		- [x] using undeclared variables
 			- Error or warning?
 		- [ ] ...
@@ -110,6 +110,7 @@ Also see the blocklist for models that have unsupported features.
 ### other
 - [ ] Commenting and documenting the code.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
+    - [x] Testing framwork is inplace. Adding directories with kico prepasses in the config, should be all that is needed.
 - [ ] Do one big benchmark model like Steamboiler
 	- Basics seem to work, adapted the exisitng SteamBoiler, but that one does nothing with Steam, so gotta see what to do there. Currently Water is just converted to Steam ad absurdum
 - [ ] Maybe do an optional debugging web view with a semi-interactive graph of the model. Basic would be ugly, but maybe we can use ELK?
@@ -122,7 +123,7 @@ Also see the blocklist for models that have unsupported features.
 ### for daniel
 - [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 
 	- This is kind of intentional, regions dont have variables in the json schema
-- [ ] aas/referenced/arrays/bind-array-and-index/MainChart.sctx: when compiling it binds 'A[3] to A' and my interpreter does not like that. That's also the test that fails with KiCo json but not with my converter (because my converter just does 'A to A').
+- [?] aas/referenced/arrays/bind-array-and-index/MainChart.sctx: when compiling it binds 'A[3] to A' and my interpreter does not like that. That's also the test that fails with KiCo json but not with my converter (because my converter just does 'A to A').
 
 ### notes
 - no dataflow, because it is not model order

@@ -29,6 +29,13 @@ def main() -> None:
         help="Recompile the JSON",
     )
     _ = parser.add_argument(
+        "--reset-prepass",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Redo the sctx to sctx prePasses",
+    )
+    _ = parser.add_argument(
         "--langium",
         required=False,
         default=False,
@@ -62,6 +69,8 @@ def main() -> None:
         os.environ["CACHE_LANGIUM_JSON"] = "1"
     if args.no_ktraces:
         os.environ["NO_KTRACES"] = "1"
+    if args.reset_prepass:
+        os.environ["FORCE_RESET_PREPASS"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 

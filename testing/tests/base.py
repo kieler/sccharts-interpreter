@@ -25,6 +25,10 @@ def _reset_json_mode() -> bool:
     return os.environ.get("FORCE_RESET_JSON") != None
 
 
+def _reset_pre_pass_mode() -> bool:
+    return os.environ.get("FORCE_RESET_PREPASS") != None
+
+
 def _cache_langium_mode() -> bool:
     return os.environ.get("CACHE_LANGIUM_JSON") != None
 
@@ -121,14 +125,7 @@ class TestRunner:
                 f"Failed to compile {sctx_path} using JAR at {self.jar_path}:\n{result.stderr}"
             )
 
-    def kico_compile_sctx_to_exe(
-        self, sctx_path: Path, output_path: Path | None = None
-    ):
-        """
-        If the output path is not set, it defaults to save the json file
-        in the same place as the sctx and with the same name
-        """
-
+    def __run_kico_system(self, input: Path, output: Path, system: str):
         if not self.jar_path:
             raise FileNotFoundError("KiCo not found\n")
 
@@ -138,12 +135,10 @@ class TestRunner:
                 "-jar",
                 self.jar_path,
                 "-s",
-                "de.cau.cs.kieler.sccharts.simulation.netlist.c",
+                system,
                 "-o",
-                str(sctx_path.with_suffix(".exe"))
-                if output_path is None
-                else output_path,
-                str(sctx_path),
+                str(output),
+                str(input),
             ],
             check=False,
             capture_output=True,
@@ -152,8 +147,23 @@ class TestRunner:
 
         if result.returncode != 0:
             raise RuntimeError(
-                f"Failed to compile {sctx_path} using JAR at {self.jar_path}:\n{result.stderr}"
+                f"Failed to run system {system} on {input} using JAR at {self.jar_path}:\n{result.stderr}"
             )
+
+    def kico_compile_sctx_to_exe(
+        self, sctx_path: Path, output_path: Path | None = None
+    ):
+        """
+        If the output path is not set, it defaults to save the json file
+        in the same place as the sctx and with the same name
+        """
+
+        output_path = (
+            sctx_path.with_suffix(".exe") if output_path is None else output_path
+        )
+        self.__run_kico_system(
+            sctx_path, output_path, "de.cau.cs.kieler.sccharts.simulation.netlist.c"
+        )
 
     def langium_compile_sctx_to_json(
         self, sctx_path: Path, output_path: Path | None = None
@@ -185,7 +195,7 @@ class TestRunner:
                 f"Failed to compile {sctx_path} using langium converter:\n{result.stderr}"
             )
 
-    def _run_json(self, inputs: list[dict[str, Any]]):
+    def __run_json(self, inputs: list[dict[str, Any]]):
         path = self.model_path
         if _cache_langium_mode():
             name = "langium_" + self.model_path.name
@@ -204,7 +214,7 @@ class TestRunner:
 
         return result
 
-    def _run_sctx(self, inputs: list[dict[str, Any]]):
+    def __run_sctx(self, inputs: list[dict[str, Any]]):
         result = run_npm(self.model_path.with_suffix(".sctx"), inputs, self.wonly)
 
         if result.returncode != 0:
@@ -237,13 +247,24 @@ class TestRunner:
 
         return outputs
 
+    def prePass(self, system: str):
+        if system == "":
+            return
+
+        path = self.model_path.parent / ("prePass_" + self.model_path.name)
+
+        if _reset_pre_pass_mode() or not os.path.exists(path):
+            self.__run_kico_system(self.model_path, path, system)
+
+        self.model_path = path
+
     def run(self, inputs: list[dict[str, Any]]):
         result: subprocess.CompletedProcess[str]
         try:
             if (not _langium_mode()) or _cache_langium_mode():
-                result = self._run_json(inputs)
+                result = self.__run_json(inputs)
             else:
-                result = self._run_sctx(inputs)
+                result = self.__run_sctx(inputs)
 
         except Exception as e:
             return [{"status": "error", "error": str(e)}]
