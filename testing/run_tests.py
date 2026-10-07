@@ -57,6 +57,14 @@ def main() -> None:
         help="Do not execute the ktrace based tests from the provate models repository",
     )
 
+    _ = parser.add_argument(
+        "--profile",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Profile the test execution",
+    )
+
     args, extra = parser.parse_known_args()
 
     if args.reset_exe:
@@ -71,6 +79,8 @@ def main() -> None:
         os.environ["NO_KTRACES"] = "1"
     if args.reset_prepass:
         os.environ["FORCE_RESET_PREPASS"] = "1"
+    if args.profile:
+        os.environ["PROFILE"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 

@@ -33,6 +33,10 @@ def _cache_langium_mode() -> bool:
     return os.environ.get("CACHE_LANGIUM_JSON") != None
 
 
+def _profile_mode() -> bool:
+    return os.environ.get("PROFILE") != None
+
+
 def get_java_jar_path() -> str:
     """Read the configured Java JAR path from kico_config.json."""
     if not CONFIG_FILE.exists():
@@ -47,7 +51,10 @@ def get_java_jar_path() -> str:
 
 
 def run_npm(
-    model_path: Path, inputs: list[dict[str, Any]], wonly: bool
+    model_path: Path,
+    inputs: list[dict[str, Any]],
+    wonly: bool,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
 
     string_inputs = (
@@ -58,7 +65,7 @@ def run_npm(
         [
             "npm",
             "run",
-            "cli",
+            "cli" if not _profile_mode() else "cli-test-prof",
             "--",
             str(model_path),
             f"{'-Wonly' if wonly else ''}",
@@ -68,6 +75,7 @@ def run_npm(
         check=False,
         capture_output=True,
         text=True,
+        env=env,
     )
 
     return result

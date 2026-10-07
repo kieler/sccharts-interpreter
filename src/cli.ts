@@ -16,6 +16,7 @@ import { SCTX } from "./grammar/generated/ast.js";
 const filePath = process.argv[2];
 const wonly = process.argv.includes("-Wonly");
 const IOonly = process.argv.includes("-IOonly");
+// const profiling = process.argv.includes("--profile");
 const jsonInputs = process.argv.includes("-i")
   ? process.argv[process.argv.indexOf("-i") + 1]
   : undefined;
@@ -226,7 +227,9 @@ if (jsonInputs == undefined) {
     console.log(JSON.stringify(result, null, 2));
 
     if (result.terminated) {
-      final_message(result);
+      console.log("Model terminated - Final Variables:", result.variables);
+      process.exit(0);
     }
   }
+  // Flush timing data even if the model didn't terminate
 }

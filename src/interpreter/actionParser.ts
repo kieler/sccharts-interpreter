@@ -38,6 +38,11 @@ export function parseExpression(
   const keys = Array.from(localVarMap.keys());
   const values = Array.from(localVarMap.values());
 
+  const possibleFunction = context.functionCache.get(node.id + expression);
+  if (possibleFunction != undefined) {
+    return possibleFunction(...values);
+  }
+
   const specialFns: Record<string, (arg: string) => unknown> = {
     pre: (v: string) => pre(context, v, node),
     print: (v: string) => modelPrint(context, v, node),
@@ -85,6 +90,7 @@ export function parseExpression(
   let result;
   try {
     const fn = new Function(...safeKeys, `return (${safeExpr})`);
+    context.functionCache.set(node.id + expression, fn);
     result = fn(...values);
   } catch (e) {
     raise(

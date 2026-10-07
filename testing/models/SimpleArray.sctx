@@ -1,9 +1,10 @@
 scchart SimpleArray {
 	output int O[3] = {5, 7, 1}
+	int i = 1
 
 	initial state init
 	if O[2] == 0 go to end
-	do O[0]++; O[1]--;O[2]=O[0]*O[1] go to init
+	do O[i-1]++; O[i]--;O[2]=O[0]*O[1] go to init
 
 	final state end
 }

@@ -10,6 +10,7 @@
 		"build": "tsc",
 		"start": "node dist/web_server.js",
 		"cli": "node dist/cli.js",
+		"cli-test-prof": "node --cpu-prof --cpu-prof-dir=testing/logs/profiles dist/cli.js",
 		"compiler-server": "node dist/compiler_server.js",
 		"web-dev": "vite --port 5173",
 		"web-build": "vite build",

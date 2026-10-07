@@ -1,8 +1,9 @@
 import ast
+import json
+import os
 import random
 import re
 import string
-import sys
 
 from typing_extensions import Any
 
@@ -93,15 +94,6 @@ def parse_side(side: str) -> dict:
     return result
 
 
-if __name__ == "__main__":
-    path = sys.argv[1]
-    with open(path, "r") as f:
-        ktrace = f.read()
-
-    trace = parse_ktrace(ktrace)
-    print(trace)
-
-
 def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) -> None:
     """Assert actual matches expected as a subset (extra fields in actual ignored).
     Extra trailing empty dicts in either list are silently allowed.
@@ -164,3 +156,12 @@ def _assert_subset_dict(
 
 def generate_random_string(n: int, random: random.Random) -> str:
     return "".join(random.choices(string.ascii_letters, k=n))
+
+
+def create_custom_log(data: dict | list, name: str):
+    if not os.path.exists("logs/custom"):
+        os.makedirs("logs/custom", exist_ok=True)
+
+    path = "logs/custom/" + name + ".json"
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)

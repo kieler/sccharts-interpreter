@@ -96,6 +96,7 @@ Also see the blocklist for models that have unsupported features.
 - [x] tests/langium_Ref: When calling it via the cli, it cant find 'langium_Ref.sctx' (because it doesn't exist). So this needs to change that if it is called from a json, it doens't change the path to sctx.
 - [x] aas/referenced/arrays/BindArray.ktrace: The new testing uses the cli which doesn't like "{I[0]:true}" as an input, this should be supported (and should be pretty easy).
 - [x] ssm/reference/ExternalReference: The langium converter doesn't like the automatic mapping for reference charts. Maybe we can do something there, pretty sure it just goes throgh in order if explicit mapping is mussing.
+- [ ] The new testing with pre passes doesn't work properly if you use the kico sctx2json because it looks for the wrong file I think
 
 ### features
 - [x] aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts

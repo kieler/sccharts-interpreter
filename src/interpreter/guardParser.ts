@@ -1,6 +1,6 @@
 import { raise } from "./errors.js";
 import { sanitizeKeysAndExpr } from "./jsKeywords.js";
-import { Context, Severity, StateNode, Variable } from "./types.js";
+import { Context, Severity, StateNode } from "./types.js";
 import { getLocalVariableMap } from "./variables.js";
 
 export function parseGuard(
@@ -14,10 +14,16 @@ export function parseGuard(
   const keys = Array.from(localVarMap.keys());
   const values = Array.from(localVarMap.values());
 
+  const possibleFunction = context.functionCache.get(node.id + guard);
+  if (possibleFunction != undefined) {
+    return possibleFunction(...values);
+  }
+
   const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
 
   try {
     const fn = new Function(...safeKeys, `return (${safeExpr})`);
+    context.functionCache.set(node.id + guard, fn);
     return fn(...values);
   } catch (e) {
     raise(

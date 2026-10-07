@@ -83,6 +83,7 @@ export function emptyContext(model: SCChartModel, id: string): Context {
     errorMode: "strict" as const,
     messages: [],
     activeNodes: new Set(),
+    functionCache: new Map(),
   };
 }
 

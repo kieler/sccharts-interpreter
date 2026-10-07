@@ -67,6 +67,8 @@ export interface Context {
   errorMode: "strict" | "warnings-only";
   messages: Message[];
   activeNodes: Set<StateNode>;
+
+  functionCache: Map<string, Function>;
 }
 
 export interface TickResult {

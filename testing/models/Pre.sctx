@@ -1,0 +1,5 @@
+scchart Pre {
+    output int A, B
+    immediate during do A++
+    immediate during do B = pre(A)
+}
