@@ -27,6 +27,9 @@ def test_steam_boiler():
     inputs.insert(waterLevelBroken, {"SimulateDefectWaterLevel": True})
     inputs.insert(waterLevelBroken + 50, {"SimulateDefectWaterLevel": False})
 
+    # The model should go to emergency stop here
+    inputs.insert(900, {"SimulateDefectSteamLevel": True})
+    inputs.insert(900, {"SimulateDefectWaterLevel": True})
+
     result = runner.run(inputs)
-    result = [{"pump": pumpBroken, "water_level": waterLevelBroken}] + result
     create_custom_log(result, "steam_boiler")

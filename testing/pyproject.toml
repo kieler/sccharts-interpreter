@@ -6,4 +6,6 @@ dependencies = [
     "requests",
     "pytest",
     "typing-extensions>=4.15.0",
+    "matplotlib",
+    "numpy"
 ]
