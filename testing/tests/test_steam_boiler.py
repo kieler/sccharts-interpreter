@@ -11,7 +11,7 @@ from tests.utils import create_custom_log
 
 
 def test_steam_boiler():
-    runner = TestRunner("../../models-private/sccharts/grille/SteamBoiler2/Plant")
+    runner = TestRunner("../../models-private/sccharts/grille/SteamBoiler/Plant")
 
     inputs = [{"Second": True}, {"PowerUp": True}, {}, {"PowerUp": False}] + [
         {} for _ in range(1000)
@@ -32,4 +32,12 @@ def test_steam_boiler():
     inputs.insert(900, {"SimulateDefectWaterLevel": True})
 
     result = runner.run(inputs)
+    create_custom_log(inputs, "steam_boiler_inputs")
     create_custom_log(result, "steam_boiler")
+
+    runnerComp = TestRunner("../../models-private/sccharts/grille/SteamBoilerDF/Plant")
+    resultComp = runnerComp.generate_expected(
+        inputs,
+        ["Mode", "WaterLevel", "SteamLevel", "PowerUp", "Second"],
+    )
+    create_custom_log(resultComp, "steam_boiler_comp")
