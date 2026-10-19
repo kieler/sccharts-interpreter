@@ -437,82 +437,89 @@ function convertAstRegionToSchema(
   knownModels: Map<string, string>,
 ): Region {
   const regionName = astRegion.name || `_regionR${counter.val++}`;
-  const innerStates: State[] = [];
+
+  // Pre-collect elements by type so the hierarchy is assembled correctly
+  // regardless of element order in the source.
+  const nestedStates: AstState[] = [];
+  const nestedRegions: AstRegion[] = [];
+  const nestedVariables: AstVariable[] = [];
 
   for (const element of astRegion.elements) {
     if (element.$type === "State") {
-      const schemaState = convertAstStateToSchema(
-        element,
-        counter,
-        knownModels,
-      );
-      innerStates.push(schemaState);
+      nestedStates.push(element);
     } else if (element.$type === "Variable") {
-      // Variables inside a region attached to the region itself somehow
-      // Since regions don't have variables in our schema, we create a holder state
-      const variables: Variable[] = [];
-
-      for (const assignment of element.assignments) {
-        const varEntry: Variable = {
-          id: assignment.name,
-          type: element.type,
-          isInput: element.isInput,
-          isOutput: element.isOutput,
-          cardinalities: assignment.cardinalities,
-        };
-
-        if (assignment.initialValue !== undefined) {
-          varEntry.initialValue = assignment.initialValue
-            .replaceAll("#", "")
-            .trim();
-        }
-
-        variables.push(varEntry);
-      }
-
-      // Check if there's already a holder state in this region for variables
-      const existingHolder = innerStates.find((s) =>
-        s.id.startsWith("__varholder_"),
-      );
-      if (existingHolder) {
-        convertVariablesToSchema(element, existingHolder.variables);
-      } else {
-        innerStates.push({
-          id: `__varholder_${regionName}`,
-          label: "",
-          actions: [],
-          transitions: [],
-          variables: variables,
-          isInitial: false,
-          isFinal: false,
-          isConnector: false,
-          regions: [],
-        });
-      }
+      nestedVariables.push(element);
     } else if (element.$type === "Region") {
-      const nestedSchemaRegion = convertAstRegionToSchema(
-        element,
-        counter,
-        knownModels,
-      );
-      innerStates.push({
-        id: element.name || `_regionR${counter.val++}`,
-        label: "",
-        actions: [],
-        transitions: [],
-        variables: [],
-        isInitial: false,
-        isFinal: false,
-        isConnector: false,
-        regions: [nestedSchemaRegion],
-      });
+      nestedRegions.push(element);
     }
+  }
+
+  // Collect all variables from this region into one array
+  const allVars: Variable[] = [];
+  for (const v of nestedVariables) {
+    convertVariablesToSchema(v, allVars);
+  }
+
+  // Build the varholder if this region has any variables
+  let varholder: State | null = null;
+  if (allVars.length > 0) {
+    varholder = {
+      id: `__varholder_${regionName}`,
+      label: "",
+      actions: [],
+      transitions: [],
+      variables: allVars,
+      isInitial: false,
+      isFinal: false,
+      isConnector: false,
+      regions: [],
+    };
+  }
+
+  // Convert nested regions and states into a flat list of child schemas
+  const innerStatesList: State[] = [];
+
+  for (const region of nestedRegions) {
+    const schemaRegion = convertAstRegionToSchema(region, counter, knownModels);
+    innerStatesList.push({
+      id: region.name || `_regionR${counter.val++}`,
+      label: "",
+      actions: [],
+      transitions: [],
+      variables: [],
+      isInitial: false,
+      isFinal: false,
+      isConnector: false,
+      regions: [schemaRegion],
+    });
+  }
+
+  for (const element of nestedStates) {
+    innerStatesList.push(convertAstStateToSchema(element, counter, knownModels));
+  }
+
+  // Assemble the final hierarchy based on whether a varholder exists:
+  // - If there is a varholder, all other states go under it so they share scope
+  let finalStates: State[];
+  if (varholder) {
+    if (innerStatesList.length > 0) {
+      const dummyRegion: Region = {
+        id: `_regionWr_${regionName}_${counter.val++}`,
+        label: `_regionWr_${regionName}_${counter.val - 1}`,
+        states: innerStatesList,
+      };
+      varholder.regions.push(dummyRegion);
+    }
+    finalStates = [varholder];
+  } else {
+    // No variables in this region — just return all children flat
+    finalStates = innerStatesList;
   }
 
   return {
     id: regionName,
     label: regionName,
-    states: innerStates,
+    states: finalStates,
   };
 }
 

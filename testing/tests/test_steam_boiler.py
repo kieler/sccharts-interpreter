@@ -38,6 +38,26 @@ def test_steam_boiler():
     runnerComp = TestRunner("../../models-private/sccharts/grille/SteamBoilerDF/Plant")
     resultComp = runnerComp.generate_expected(
         inputs,
-        ["Mode", "WaterLevel", "SteamLevel", "PowerUp", "Second"],
+        [
+            "Mode",
+            "WaterLevel",
+            "SteamLevel",
+            "PowerUp",
+            "Second",
+            "M1",
+            "M2",
+            "N1",
+            "N2",
+            "Pump1Flow",
+            "Pump2Flow",
+            "Pump3Flow",
+            "Pump4Flow",
+        ],
     )
     create_custom_log(resultComp, "steam_boiler_comp")
+
+    runnerExp = TestRunner(
+        "../../models-private/sccharts/grille/SteamBoilerDF/expanded_and_manual_Plant"
+    )
+    resultsExp = runnerExp.run(inputs)
+    create_custom_log(resultsExp, "steam_boiler_exp")

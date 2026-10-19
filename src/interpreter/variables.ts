@@ -23,6 +23,7 @@ function __getVariable(
 
   if (Array.isArray(possibleVars)) {
     const scope = getScope(node.graph) + node.id;
+    // console.log("VAR:", id, node.id, possibleVars, scope);
     return findBestMatch(possibleVars, scope);
   }
 
