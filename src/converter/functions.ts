@@ -469,7 +469,7 @@ function convertAstRegionToSchema(
       actions: [],
       transitions: [],
       variables: allVars,
-      isInitial: false,
+      isInitial: true,
       isFinal: false,
       isConnector: false,
       regions: [],
@@ -495,7 +495,9 @@ function convertAstRegionToSchema(
   }
 
   for (const element of nestedStates) {
-    innerStatesList.push(convertAstStateToSchema(element, counter, knownModels));
+    innerStatesList.push(
+      convertAstStateToSchema(element, counter, knownModels),
+    );
   }
 
   // Assemble the final hierarchy based on whether a varholder exists:
