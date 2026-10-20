@@ -335,7 +335,6 @@ function convertAstStateToSchema(
 
   // Very janky
   // TODO: do this in a way that it works in the browser
-  // TODO: What about the imports?
   if (astState.reference) {
     const path = knownModels.get(astState.reference);
     if (path === undefined) {

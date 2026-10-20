@@ -48,10 +48,10 @@ for the PoC, these should probably be left out unless it is easy.
 	- [x] A Wonly (warning only) flag which is more leanient, does not throw an error upon encountering an illigal state, tries it's best and throws a warning, so the developer can deal with it
 
 ## missing
-- [ ] varible types
+- [x] varible types
 	- [x] arrays
 		- ~~They need to be implmented in the json converter first~~
-	- [ ] enums
+	- [ ] ~~enums~~
 
 
 ## issues
@@ -89,14 +89,14 @@ Also see the blocklist for models that have unsupported features.
 - [ ] When reseting the model that was compiled in the browser the tick buttons still are grayed out. I assume that if the model is compiled instead of uploaded, it isn't stored so the reset can load it.
 - [x] If an action assigns a variable that doesn't exist, the interpreter is happy to create it. should that be a warning / error?
 	- Also see above in "exceptions"
-- [ ] Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.
+- [x] ~~Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.~~
 - [x] aas/arrays/IndexVariable2.ktrace: O[i[0]] throws an error, because "i" is not a number (see action parser ~l.103)
 - [x] tests/Ref: If the model is converted to json with KiCo, the model doesn't build in the interpreter, because Sub34 is not found. 
 - [x] tests/Ref: The model doesn't properly terminate
 - [x] tests/langium_Ref: When calling it via the cli, it cant find 'langium_Ref.sctx' (because it doesn't exist). So this needs to change that if it is called from a json, it doens't change the path to sctx.
 - [x] aas/referenced/arrays/BindArray.ktrace: The new testing uses the cli which doesn't like "{I[0]:true}" as an input, this should be supported (and should be pretty easy).
 - [x] ssm/reference/ExternalReference: The langium converter doesn't like the automatic mapping for reference charts. Maybe we can do something there, pretty sure it just goes throgh in order if explicit mapping is mussing.
-- [ ] The new testing with pre passes doesn't work properly if you use the kico sctx2json because it looks for the wrong file I think
+- [x] The new testing with pre passes doesn't work properly if you use the kico sctx2json because it looks for the wrong file I think
 
 ### features
 - [x] aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
@@ -112,7 +112,7 @@ Also see the blocklist for models that have unsupported features.
 - [ ] Commenting and documenting the code.
 - [ ] Go through as many models in the models repo as possible to have many test. Also with random inputs to see what works and what doesn't.
     - [x] Testing framwork is inplace. Adding directories with kico prepasses in the config, should be all that is needed.
-- [ ] Do one big benchmark model like Steamboiler
+- [x] Do one big benchmark model like Steamboiler
 	- Basics seem to work, adapted the exisitng SteamBoiler, but that one does nothing with Steam, so gotta see what to do there. Currently Water is just converted to Steam ad absurdum
 - [ ] Maybe do an optional debugging web view with a semi-interactive graph of the model. Basic would be ugly, but maybe we can use ELK?
 - [x] Redo the testing to not use an api, but just the cli. The cli now allows the inputs all at once again. This should fix some stuff and make things with references easier.
@@ -120,6 +120,8 @@ Also see the blocklist for models that have unsupported features.
 	- [x] get all the tests to the new version
 - [ ] The API server still seems useful, so make it better, especially with response codes.
 	- [ ] 501 Multi File Reference Charts not implemented / supported
+- [ ] The converter/functions.ts needs to be split up and organised
+
 
 ### for daniel
 - [x] ~~For Daniel: The KiCo sctx2json swallows local variables if the variables are declared in a region instead of state.~~ 
