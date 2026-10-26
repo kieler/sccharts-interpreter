@@ -6,7 +6,7 @@ from pathlib import Path
 
 from typing_extensions import Any
 
-from tests.utils import generate_random_string
+from tests.utils import create_custom_log, generate_random_string
 
 BASE_DIR = Path(__file__).parent.parent.resolve()
 PROJECT_ROOT = BASE_DIR.parent
@@ -84,7 +84,13 @@ def run_npm(
 class TestRunner:
     __test__: bool = False
 
-    def __init__(self, model_path: Path | str, seed: int = 42, wonly: bool = False):
+    def __init__(
+        self,
+        model_path: Path | str,
+        seed: int = 42,
+        wonly: bool = False,
+        no_log: bool = False,
+    ):
         self.jar_path: str = get_java_jar_path()
         if not self.jar_path or self.jar_path == "":
             raise FileNotFoundError("KiCo not found\n")
@@ -95,6 +101,7 @@ class TestRunner:
 
         self.model_path: Path = model_path
         self.wonly: bool = wonly
+        self.no_log: bool = no_log
 
         if not _langium_mode() or _cache_langium_mode():
             self.model_path = self.model_path.with_suffix(".json")
@@ -277,7 +284,12 @@ class TestRunner:
         except Exception as e:
             return [{"status": "error", "error": str(e)}]
 
-        return self.parse_interpreter_output(result.stdout)
+        parsed_output = self.parse_interpreter_output(result.stdout)
+
+        if _profile_mode() and not self.no_log:
+            create_custom_log(parsed_output, str(self.model_path.name), "interpreter")
+
+        return parsed_output
 
     def generate_expected(
         self,
@@ -336,6 +348,7 @@ class TestRunner:
                 {
                     "terminated": terminated,
                     "variables": {v: result.get(v) for v in variables},
+                    "telemetry": {"ticktime": result.get("#ticktime") / 1_000_000},
                 }
             )
 
@@ -348,6 +361,9 @@ class TestRunner:
         except Exception:
             proc.kill()
             proc.wait()
+
+        if _profile_mode() and not self.no_log:
+            create_custom_log(outputs, str(self.model_path.name), "kico")
 
         return outputs
 

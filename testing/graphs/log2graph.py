@@ -212,3 +212,79 @@ def _extract_series(entries: list[dict[str, Any]], var_name: str) -> np.ndarray:
             except (TypeError, ValueError):
                 series.append(np.nan)
     return np.array(series)
+
+
+def extract_ticktimes(entries: list[dict[str, Any]]) -> np.ndarray:
+    """Extract ticktime values from a single log file.
+
+    Args:
+        entries: Parsed JSON log entries (list of dicts).
+
+    Returns:
+        numpy array of ticktime values in microseconds.
+    """
+
+    values: list[float] = []
+    for entry in entries:
+        telemetry = entry.get("telemetry", entry)
+        val = telemetry.get("ticktime")
+
+        if val is None:
+            continue
+        values.append(float(val))
+
+    return np.array(values)
+
+
+def plot_timings(
+    log_configs: list[tuple[str | Path, str] | tuple[str | Path,]],
+    output_path: str | Path = "timing_comparison.png",
+) -> None:
+    """Compare mean ticktime across multiple log files.
+
+    Produces a single bar chart with one bar per file (mean ± std dev).
+
+    Args:
+        log_configs: List of ``(log_path)`` or ``(log_path, label)`` tuples.
+        The optional third element is the x-axis label; when omitted it
+        falls back to the file stem.
+        output_path: Where to save the PNG image.
+    """
+    if not log_configs:
+        raise ValueError(
+            "log_configs must contain at least one (path, source_type) tuple."
+        )
+
+    # ---- extract timing data per file ----
+    ticks_per_file = []
+    labels = []
+    for entry in log_configs:
+        p = Path(entry[0])
+        if not p.exists():
+            raise FileNotFoundError(f"Log file not found: {p}")
+        with open(p) as f:
+            entries = json.load(f)
+        ticks = extract_ticktimes(entries)
+        if len(ticks) == 0:
+            raise ValueError(f"No ticktime values found in {p}.")
+        ticks_per_file.append(ticks)
+        labels.append(entry[2] if len(entry) > 2 else p.stem)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    n_files = len(ticks_per_file)
+    x_ticks = np.arange(n_files)
+
+    means = [t.mean() for t in ticks_per_file]
+    stds = [t.std() if len(t) > 1 else 0.0 for t in ticks_per_file]
+
+    ax.bar(x_ticks, means, yerr=stds, capsize=4)
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels(labels, fontsize=10)
+    ax.set_ylabel("Mean tick time (ms)")
+    ax.set_title("Mean ticktime")
+    ax.grid(True, axis="y", alpha=0.3)
+    ax.set_yscale("log")
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)

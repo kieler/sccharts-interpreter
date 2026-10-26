@@ -1,4 +1,4 @@
-from tests.base import TestRunner
+from tests.base import TestRunner, _profile_mode
 from tests.utils import assert_subset, parse_ktrace
 
 
@@ -25,6 +25,9 @@ def test_model_with_ktrace(test_model: tuple[str, str, str]):
 
         runner.prePass(test_model[2])
         output = runner.run(inputs=model_input)
+
+        if _profile_mode():
+            runner.generate_expected(model_input, [])
 
         expected_ouputs = [{"variables": vars} for vars in model_output]
 

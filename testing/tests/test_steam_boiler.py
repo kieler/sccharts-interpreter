@@ -52,12 +52,14 @@ def test_steam_boiler():
             "Pump2Flow",
             "Pump3Flow",
             "Pump4Flow",
+            "#ticktime",
         ],
     )
     create_custom_log(resultComp, "steam_boiler_comp")
 
     runnerExp = TestRunner(
-        "../../models-private/sccharts/grille/SteamBoilerDF/expanded_and_manual_Plant"
+        "../../models-private/sccharts/grille/SteamBoilerDF/expanded_and_manual_Plant",
+        no_log=True,
     )
     resultsExp = runnerExp.run(inputs)
     create_custom_log(resultsExp, "steam_boiler_exp")

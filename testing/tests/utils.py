@@ -113,6 +113,9 @@ def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) 
             f"Step {i}: expected keys not subset of actual: {e.keys()}"
         )
         for k, v in e.items():
+            if k == "telemetry":
+                continue
+
             if isinstance(v, dict):
                 assert isinstance(a[k], dict), f"Step {i}: {k} is not a dict"
                 _assert_subset_dict(a[k], v, f"step {i}.{k}")
@@ -123,6 +126,7 @@ def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) 
 def _assert_subset_dict(
     actual: dict[str, Any], expected: dict[str, Any], prefix: str
 ) -> None:
+
     for k, v in expected.items():
         full_key = f"{prefix}.{k}"
 
@@ -158,10 +162,10 @@ def generate_random_string(n: int, random: random.Random) -> str:
     return "".join(random.choices(string.ascii_letters, k=n))
 
 
-def create_custom_log(data: dict | list, name: str):
-    if not os.path.exists("logs/custom"):
-        os.makedirs("logs/custom", exist_ok=True)
+def create_custom_log(data: dict | list, name: str, dir: str = "custom"):
+    if not os.path.exists(f"logs/{dir}"):
+        os.makedirs(f"logs/{dir}", exist_ok=True)
 
-    path = "logs/custom/" + name + ".json"
+    path = f"logs/{dir}/" + name + ".json"
     with open(path, "w") as f:
         json.dump(data, f, indent=2)

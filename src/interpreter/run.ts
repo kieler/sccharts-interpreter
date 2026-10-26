@@ -191,11 +191,14 @@ export function tick(
   //   tick of a reference chart is called, because that has its own
   //   state and the inputs are set manually via the variable mapping
 
+  const startTime = performance.now();
+
   if (!context.graph.activeNode)
     return {
       terminated: false,
       variables: {},
       messages: [],
+      telemetry: { ticktime: performance.now() - startTime },
     };
 
   setPreVariables(context);
@@ -233,5 +236,6 @@ export function tick(
     terminated: context.graph.terminated,
     variables: returnVars,
     messages: messages,
+    telemetry: { ticktime: performance.now() - startTime },
   };
 }

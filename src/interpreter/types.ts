@@ -75,4 +75,5 @@ export interface TickResult {
   terminated: boolean;
   variables: Record<string, unknown>;
   messages: Message[];
+  telemetry: Record<string, unknown>;
 }

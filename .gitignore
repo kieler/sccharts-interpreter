@@ -13,6 +13,5 @@ testing/config.json
 kico_config.json
 testing/models/*.json
 testing/models/*.exe
-testing/logs/custom
-testing/logs/profiles/*.cpuprofile
+testing/logs/
 kieler-gen
