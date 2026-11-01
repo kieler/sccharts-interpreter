@@ -6,7 +6,7 @@ from pathlib import Path
 
 from typing_extensions import Any
 
-from tests.utils import create_custom_log, generate_random_string
+from tests.utils import create_custom_log, generate_random_string, get_model_info
 
 BASE_DIR = Path(__file__).parent.parent.resolve()
 PROJECT_ROOT = BASE_DIR.parent
@@ -102,6 +102,9 @@ class TestRunner:
         self.model_path: Path = model_path
         self.wonly: bool = wonly
         self.no_log: bool = no_log
+        self._model_info: dict | None = None
+        # Keep reference to original path (before suffix changes)
+        self._original_model_path: Path = model_path
 
         if not _langium_mode() or _cache_langium_mode():
             self.model_path = self.model_path.with_suffix(".json")
@@ -273,6 +276,16 @@ class TestRunner:
 
         self.model_path = path
 
+    def _get_model_info(self) -> dict | None:
+        """Lazily compute and cache model metadata."""
+        if self._model_info is None:
+            # Compute on the original .sctx path (before suffix changes)
+            sctx_path = Path(self.model_path)
+            if not sctx_path.suffix in (".json", ".exe"):
+                sctx_path = sctx_path.with_suffix(".sctx")
+            self._model_info = get_model_info(sctx_path)
+        return self._model_info
+
     def run(self, inputs: list[dict[str, Any]]):
         result: subprocess.CompletedProcess[str]
         try:
@@ -287,7 +300,13 @@ class TestRunner:
         parsed_output = self.parse_interpreter_output(result.stdout)
 
         if _profile_mode() and not self.no_log:
-            create_custom_log(parsed_output, str(self.model_path.name), "interpreter")
+            model_info = self._get_model_info()
+            create_custom_log(
+                parsed_output,
+                str(self.model_path.name),
+                "interpreter",
+                model_info=model_info,
+            )
 
         return parsed_output
 
@@ -348,7 +367,9 @@ class TestRunner:
                 {
                     "terminated": terminated,
                     "variables": {v: result.get(v) for v in variables},
-                    "telemetry": {"ticktime": result.get("#ticktime") / 1_000_000},
+                    "telemetry": {
+                        "ticktime": result.get("#ticktime") / 1_000_000
+                    },  # KiCo Simulations use nano seconds, we use milliseconds
                 }
             )
 
@@ -363,7 +384,13 @@ class TestRunner:
             proc.wait()
 
         if _profile_mode() and not self.no_log:
-            create_custom_log(outputs, str(self.model_path.name), "kico")
+            model_info = self._get_model_info()
+            create_custom_log(
+                outputs,
+                str(self.model_path.name),
+                "kico",
+                model_info=model_info,
+            )
 
         return outputs
 

@@ -89,6 +89,10 @@ def log_to_graph(
     if not entries:
         raise ValueError("Log file contains no data.")
 
+    # Handle both new wrapper format {"outputs": [...], "model_info": ...} and legacy flat list.
+    if isinstance(entries, dict) and "outputs" in entries:
+        entries = entries["outputs"]
+
     n_ticks = len(entries)
 
     # ---- normalize plot spec into (type, attrs_dict, axis_key) ----
@@ -218,11 +222,15 @@ def extract_ticktimes(entries: list[dict[str, Any]]) -> np.ndarray:
     """Extract ticktime values from a single log file.
 
     Args:
-        entries: Parsed JSON log entries (list of dicts).
+        entries: Parsed JSON log entries (list of dicts) - will auto-unwrap
+            the {"outputs": [...], "model_info": ...} wrapper if present.
 
     Returns:
         numpy array of ticktime values in microseconds.
     """
+    # Auto-unwrap new log format if a list was not passed directly.
+    if isinstance(entries, dict) and "outputs" in entries:
+        entries = entries["outputs"]
 
     values: list[float] = []
     for entry in entries:
@@ -264,6 +272,8 @@ def plot_timings(
             raise FileNotFoundError(f"Log file not found: {p}")
         with open(p) as f:
             entries = json.load(f)
+        if isinstance(entries, dict) and "outputs" in entries:
+            entries = entries["outputs"]
         ticks = extract_ticktimes(entries)
         if len(ticks) == 0:
             raise ValueError(f"No ticktime values found in {p}.")

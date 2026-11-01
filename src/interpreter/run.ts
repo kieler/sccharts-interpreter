@@ -220,6 +220,8 @@ export function tick(
   clearMessages();
   context.messages = [];
 
+  const ticktime = performance.now() - startTime;
+
   var returnVars: Record<string, any> = {};
   for (const varName of context.variables.keys()) {
     const value = context.variables.get(varName);
@@ -236,6 +238,6 @@ export function tick(
     terminated: context.graph.terminated,
     variables: returnVars,
     messages: messages,
-    telemetry: { ticktime: performance.now() - startTime },
+    telemetry: { ticktime: ticktime },
   };
 }

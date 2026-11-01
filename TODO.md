@@ -97,6 +97,8 @@ Also see the blocklist for models that have unsupported features.
 - [x] aas/referenced/arrays/BindArray.ktrace: The new testing uses the cli which doesn't like "{I[0]:true}" as an input, this should be supported (and should be pretty easy).
 - [x] ssm/reference/ExternalReference: The langium converter doesn't like the automatic mapping for reference charts. Maybe we can do something there, pretty sure it just goes throgh in order if explicit mapping is mussing.
 - [x] The new testing with pre passes doesn't work properly if you use the kico sctx2json because it looks for the wrong file I think
+- [ ] Constants for array size in variable creation not supported with langium
+	- Changing the grammar file should be all that's needed and should just work
 
 ### features
 - [x] aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts
