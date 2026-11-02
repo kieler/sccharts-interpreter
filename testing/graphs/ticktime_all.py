@@ -123,11 +123,6 @@ if __name__ == "__main__":
 
     counts = [len(vals) for _, vals in cat_data]
 
-    # Y-axis: auto-range based on data percentiles
-    q_lo = np.percentile(all_values, 2) if len(all_values) > 0 else 1
-    q_hi = np.percentile(all_values, 98) if len(all_values) > 0 else 100
-    ax.set_ylim(0, 7000)
-
     xtick_labels = []
     for i, (label, _) in enumerate(cat_data):
         xtick_labels.append(f"{label}\n(n={counts[i]})")

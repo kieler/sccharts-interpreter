@@ -9,9 +9,10 @@ import * as langium from 'langium';
 export const SCChartsTerminals = {
     VarType: /bool|int|float|string/,
     ExpressionString: /\#([^\#\#]*)\#/,
+    BOOL: /true|false/,
+    FLOAT: /[0-9]+\.[0-9]+/,
     INT: /[0-9]+/,
     STRING: /"[^"]*"|'[^']*'/,
-    Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)|(?:"[^"]*"|'[^']*')/,
     ID: /[_a-zA-Z0-9][\w]*/,
     WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,
@@ -45,6 +46,7 @@ export type SCChartsKeywordNames =
     | "input"
     | "is"
     | "join"
+    | "label"
     | "output"
     | "region"
     | "scchart"
@@ -109,12 +111,14 @@ export interface RefVariableAssignment extends langium.AstNode {
     readonly $container: State;
     readonly $type: 'RefVariableAssignment';
     from?: string;
-    to: string;
+    indices: Array<number | string>;
+    to: number | string;
 }
 
 export const RefVariableAssignment = {
     $type: 'RefVariableAssignment',
     from: 'from',
+    indices: 'indices',
     to: 'to'
 } as const;
 
@@ -312,6 +316,11 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
             properties: {
                 from: {
                     name: RefVariableAssignment.from,
+                    optional: true
+                },
+                indices: {
+                    name: RefVariableAssignment.indices,
+                    defaultValue: [],
                     optional: true
                 },
                 to: {

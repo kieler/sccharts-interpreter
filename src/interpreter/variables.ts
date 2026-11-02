@@ -2,6 +2,33 @@ import { parseExpression } from "./actionParser.js";
 import { Context, StateNode, Variable } from "./types.js";
 import { getScope, getVariableScope } from "./utils.js";
 
+// Navigate to the parent container of a specific indexed element for in-place modification.
+function getArrayContainer(
+  value: any,
+  indices: (number | string)[],
+  context: Context,
+  node: StateNode,
+): { container: any[]; finalIndex: number } | undefined {
+  let current = value;
+  for (let i = 0; i < indices.length - 1; i++) {
+    if (!Array.isArray(current)) return undefined;
+    const idx = indices[i];
+    const resolvedIndex =
+      typeof idx === "string"
+        ? (parseExpression(idx, context, "int", node) as number)
+        : idx;
+    current = current[resolvedIndex];
+  }
+  const lastIdx = indices[indices.length - 1];
+  const finalResolved =
+    typeof lastIdx === "string"
+      ? (parseExpression(lastIdx, context, "int", node) as number)
+      : lastIdx;
+
+  if (!Array.isArray(current)) return undefined;
+  return { container: current, finalIndex: finalResolved };
+}
+
 function findBestMatch(possibleVars: Variable[], scope: string): Variable {
   const matchingScopes: Variable[] = [];
   for (const variable of possibleVars) {
@@ -99,6 +126,68 @@ export function setVariableArrayByIndex(
   }
 
   array[index] = value;
+}
+
+export function setVariableByIndex(
+  id: string,
+  indices: (number | string)[],
+  value: any,
+  node: StateNode,
+  context: Context,
+): void {
+  if (indices.length === 0) {
+    // No indices — just set the whole variable (existing behavior)
+    setVariable(id, value, node, context);
+    return;
+  }
+
+  const possibleVars = context.variables.get(id);
+  if (possibleVars == undefined) return;
+
+  let container: any[] | undefined;
+  if (Array.isArray(possibleVars)) {
+    // Find the variable whose id matches and that is an array
+    for (const v of possibleVars) {
+      if (v.id === id && Array.isArray(v.value)) {
+        const result = getArrayContainer(v.value, indices, context, node);
+        container = result?.container;
+        break;
+      }
+    }
+    // Fallback to first match
+    if (!container) {
+      const bestMatch = findBestMatch(possibleVars, getVariableScope(node));
+      if (Array.isArray(bestMatch.value)) {
+        const result = getArrayContainer(
+          bestMatch.value,
+          indices,
+          context,
+          node,
+        );
+        container = result?.container;
+      }
+    }
+  } else {
+    if (Array.isArray(possibleVars.value)) {
+      const result = getArrayContainer(
+        possibleVars.value,
+        indices,
+        context,
+        node,
+      );
+      container = result?.container;
+    }
+  }
+
+  // If we found a valid container, set the final index
+  if (container) {
+    const lastIdx = indices[indices.length - 1];
+    const resolvedIdx: number =
+      typeof lastIdx === "string"
+        ? (parseExpression(lastIdx, context, "int", node) as number)
+        : lastIdx;
+    container[resolvedIdx] = value;
+  }
 }
 
 function initialArrayValues(

@@ -1,4 +1,4 @@
-import { Action, SCChartModel, State, Transition } from "../schema/types.js";
+import { Action, SCChartModel, State, Transition, ReferenceParameter } from "../schema/types.js";
 
 export enum Severity {
   Error,
@@ -32,7 +32,7 @@ export interface StateNode {
   state: State;
 
   referencedContext?: Context;
-  referencedVarMap?: Map<string, string[]>;
+  referencedVarMap?: Map<string, ReferenceParameter[]>;
 }
 
 export interface StateGraph {

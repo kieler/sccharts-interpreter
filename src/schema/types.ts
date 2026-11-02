@@ -44,10 +44,16 @@ export interface State {
   reference?: Reference;
 }
 
+export interface ReferenceParameter {
+  targetName: string; // outer variable (ID or Literal in AST.to field)
+  indices: (number | string)[]; // direct element access per bracket, e.g. [3] or ["i"]
+  from?: string; // inner variable name (null if no 'from' clause)
+}
+
 export interface Reference {
   targetID: string;
   targetFile?: string;
-  parameters: string[];
+  parameters: ReferenceParameter[]; // replaces string[]
 }
 
 export type SCChartModel = State[];

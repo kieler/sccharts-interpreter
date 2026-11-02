@@ -7,6 +7,7 @@ import type {
 import type {
   Region,
   SCChartModel,
+  ReferenceParameter,
   Variable as SchemaVariable,
   State,
 } from "../schema/types.js";
@@ -185,38 +186,36 @@ function constructRegion(
 }
 
 function mapReferenceVariables(
-  parameters: string[],
+  parameters: ReferenceParameter[],
   referencedContext: Context,
-): Map<string, string[]> {
-  // "in to I", "out to O"
-  const map = new Map<string, string[]>();
+): Map<string, ReferenceParameter[]> {
+  const map = new Map<string, ReferenceParameter[]>();
 
-  const varList: string[] = [];
-  let listIndex = 0;
-  for (const variable of referencedContext.variables.keys()) {
-    if (
-      referencedContext.inputVariables.includes(variable) ||
-      referencedContext.outputVariables.includes(variable)
-    ) {
-      varList.push(variable);
+  // Resolve any unassigned "null" inputs to actual input variables in the referenced context.
+  const availableInputs: string[] = [];
+  for (const v of referencedContext.variables.keys()) {
+    if (referencedContext.inputVariables.includes(v)) {
+      availableInputs.push(v);
     }
   }
 
-  for (const param of parameters) {
-    let [inName, outName] = param.trim().split(" to ");
-    if (inName == "null") {
-      if (listIndex >= varList.length) {
-        throw new Error(
-          `Insufficient number of variables for parameter: ${param}`,
-        );
-      }
-      inName = varList[listIndex++];
+  let nullIndex = 0;
+  const resolvedParams: ReferenceParameter[] = parameters.map((p) => ({
+    ...p,
+  }));
+  for (const p of resolvedParams) {
+    if (!p.from && nullIndex < availableInputs.length) {
+      p.from = availableInputs[nullIndex++];
     }
+  }
 
-    if (!map.has(outName.trim())) {
-      map.set(outName.trim(), []);
+  // Build the mapping: outer name → list of parameters targeting it.
+  for (const param of resolvedParams) {
+    const outerName = param.targetName;
+    if (!map.has(outerName)) {
+      map.set(outerName, []);
     }
-    map.get(outName.trim())!.push(inName.trim());
+    map.get(outerName)!.push(param);
   }
 
   return map;

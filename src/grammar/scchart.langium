@@ -8,10 +8,10 @@ Chart:
     name=ID STRING? '{' (elements+=(Element|Region))* '}';
 
 State:
-    isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (('{' (elements+=Variable)* (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID'(' (refAssignments+=RefVariableAssignment ','?)* ')')? (transitions+=Transition)*;
+    isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (ID|STRING)? (('{' (elements+=Variable)* (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID'(' (refAssignments+=RefVariableAssignment ','?)* ')')? (transitions+=Transition)*;
 
 RefVariableAssignment:
-    to=(ID|Literal) ('to' from=ID)?;
+    to=(ID | BOOL | FLOAT | INT | STRING) ('['indices+=(INT|ID)']')* ('to' from=ID)?;
 
 Variable:
     'const'? isInput?='input'? isOutput?='output'? type=VarType assignments+=VariableAssignment (',' assignments+=VariableAssignment)*;
@@ -20,13 +20,13 @@ VariableAssignment:
     name=ID ('['cardinalities+=(INT|ID)']')* ('=' initialValue=ExpressionString)?;
 
 Transition:
-    isImmediate?='immediate'? ('if' guard=ExpressionString)? ('do' action=ExpressionString)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')?;
+    isImmediate?='immediate'? ('if' guard=ExpressionString)? ('do' action=ExpressionString)? type=('go'|'join'|'abort') 'to' target=[State:ID] (history?='history')? ('label' (ID|STRING))?;
 
 Action:
     ('weak'|'strong')? isImmediate?='immediate'? type=('entry'|'during'|'exit') ('if' guard=ExpressionString)?  ('do' action=ExpressionString) ;
 
 Region:
-    'final'? 'region' name=(ID|STRING)? (('{' (elements+=(Element|Region))* '}')?|':' (elements+=Element)* );
+    'final'? 'region' name=(ID|STRING)? (ID|STRING)? (('{' (elements+=(Element|Region))* '}')?|':' (elements+=Element)* );
 
 // Region is separated out because of the "region A:" sytax.
 // It does the region until the next region, so it has to separate,
@@ -45,7 +45,6 @@ terminal BOOL: 'true'|'false';
 terminal FLOAT returns number: /[0-9]+\.[0-9]+/;
 terminal INT returns number: /[0-9]+/;
 terminal STRING returns string: /"[^"]*"|'[^']*'/;
-terminal Literal: BOOL | FLOAT | INT | STRING;
 
 terminal ID returns string: /[_a-zA-Z0-9][\w]*/;
 

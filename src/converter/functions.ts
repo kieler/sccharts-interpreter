@@ -18,7 +18,7 @@ import {
 } from "../grammar/generated/ast.js";
 import path from "node:path";
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 
 import { EmptyFileSystem } from "langium";
 import { parseHelper } from "langium/test";
@@ -249,6 +249,26 @@ export async function parseModelFile(filePath: string): Promise<SCTX> {
   return document.parseResult.value;
 }
 
+/** Recursively find all .sctx files under a directory, returning paths relative to the base dir */
+function findSctxFiles(baseDir: string): string[] {
+  const results: string[] = [];
+
+  function walk(dir: string) {
+    for (const entry of readdirSync(dir)) {
+      const fullPath = path.join(dir, entry);
+      const stat = statSync(fullPath);
+      if (stat.isDirectory()) {
+        walk(fullPath);
+      } else if (entry.endsWith(".sctx")) {
+        results.push(path.relative(baseDir, fullPath));
+      }
+    }
+  }
+
+  walk(baseDir);
+  return results;
+}
+
 async function manageImports(
   imports: string[],
   directory: string,
@@ -257,7 +277,30 @@ async function manageImports(
   let models: Map<string, string> = new Map();
 
   for (const imp of imports) {
-    const fullPath = path.resolve(path.join(directory, imp + ".sctx"));
+    // Don't double-append .sctx if the import already has the extension
+    const impFile = imp.endsWith(".sctx") ? imp : imp + ".sctx";
+    let fullPath = path.resolve(path.join(directory, impFile));
+
+    // If the direct path doesn't exist and the import is a bare name
+    // (no directory separators), fall back to recursive search
+    if (!existsSync(fullPath) && !imp.includes("/") && !imp.includes("\\")) {
+      const candidates = findSctxFiles(directory).filter((p) =>
+        p === impFile || path.basename(p) === impFile,
+      );
+
+      if (candidates.length === 0) {
+        // No match found — keep the original direct path so it fails with a clear error below
+      } else if (candidates.length === 1) {
+        fullPath = path.resolve(path.join(directory, candidates[0]));
+      } else {
+        console.error(
+          `Error: import "${imp}" matches multiple files:\n`,
+          candidates.map((c) => `  ${path.join(directory, c)}`).join("\n"),
+        );
+        throw new Error(`Ambiguous import: "${imp}"`);
+      }
+    }
+
     console.log("Importing", fullPath);
 
     const parsedModel = await parseModelFile(fullPath);
@@ -351,9 +394,14 @@ function convertAstStateToSchema(
     }
 
     for (const param of astState.refAssignments) {
-      schemaState.reference.parameters.push(
-        (param.from ?? "null") + " to " + param.to,
-      );
+      const targetName: string =
+        typeof param.to == "string" ? param.to : param.to.toString();
+
+      schemaState.reference.parameters.push({
+        targetName: targetName,
+        indices: param.indices,
+        from: param.from !== undefined ? param.from : undefined,
+      });
     }
   }
 
