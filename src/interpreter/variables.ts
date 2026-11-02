@@ -102,8 +102,10 @@ export function setVariableArrayByIndex(
 }
 
 function initialArrayValues(
-  cardinalities: number[],
+  cardinalities: (number | string)[],
   defaultValue: unknown,
+  context: Context,
+  node: StateNode,
 ): unknown[] {
   if (cardinalities.length == 0) {
     return [];
@@ -112,11 +114,18 @@ function initialArrayValues(
   const [size, ...rest] = cardinalities;
   const array: any[] = [];
 
-  for (let i = 0; i < size; i++) {
+  var sizeInt: number;
+  if (typeof size == "string") {
+    sizeInt = parseExpression(size, context, "int", node);
+  } else {
+    sizeInt = size;
+  }
+
+  for (let i = 0; i < sizeInt; i++) {
     if (rest.length == 0) {
       array.push(defaultValue);
     } else {
-      array.push(initialArrayValues(rest, defaultValue));
+      array.push(initialArrayValues(rest, defaultValue, context, node));
     }
   }
 
@@ -129,7 +138,7 @@ export function createVariable(
   node: StateNode,
   type: string,
   value: any | undefined = undefined,
-  cardinalities: number[] = [],
+  cardinalities: (number | string)[] = [],
 ): void {
   const defaultValues: Record<string, unknown> = {
     int: 0,
@@ -142,7 +151,12 @@ export function createVariable(
 
   if (!value) {
     if (isArray) {
-      value = initialArrayValues(cardinalities, defaultValues[type]);
+      value = initialArrayValues(
+        cardinalities,
+        defaultValues[type],
+        context,
+        node,
+      );
     } else {
       value = defaultValues[type];
     }

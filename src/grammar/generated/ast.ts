@@ -235,7 +235,7 @@ export function isVariable(item: unknown): item is Variable {
 export interface VariableAssignment extends langium.AstNode {
     readonly $container: Variable;
     readonly $type: 'VariableAssignment';
-    cardinalities: Array<number>;
+    cardinalities: Array<number | string>;
     initialValue?: string;
     name: string;
 }

@@ -165,7 +165,7 @@ class TestRunner:
 
         if result.returncode != 0:
             raise RuntimeError(
-                f"Failed to run system {system} on {input} using JAR at {self.jar_path}:\n{result.stderr}"
+                f"Failed to run system {system} on {input} using JAR at {self.jar_path}:\n{result.returncode}, {result.stderr}"
             )
 
     def kico_compile_sctx_to_exe(
@@ -329,7 +329,7 @@ class TestRunner:
         exe_path: Path = self.model_path.with_suffix(".exe")
 
         if not exe_path.exists() or _reset_exe_mode():
-            self.kico_compile_sctx_to_exe(exe_path.with_suffix(".sctx"))
+            self.kico_compile_sctx_to_exe(self.model_path.with_suffix(".sctx"))
 
         proc = subprocess.Popen(
             [str(exe_path)],

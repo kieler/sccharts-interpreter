@@ -131,7 +131,7 @@
 				"cardinalities": {
 					"type": "array",
 					"items": {
-						"type": "integer"
+						"type": ["integer", "string"]
 					}
 				}
 			},

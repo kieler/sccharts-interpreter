@@ -509,11 +509,23 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                 "feature": "cardinalities",
                 "operator": "+=",
                 "terminal": {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@14"
-                  },
-                  "arguments": []
+                  "$type": "Alternatives",
+                  "elements": [
+                    {
+                      "$type": "RuleCall",
+                      "rule": {
+                        "$ref": "#/rules@14"
+                      },
+                      "arguments": []
+                    },
+                    {
+                      "$type": "RuleCall",
+                      "rule": {
+                        "$ref": "#/rules@17"
+                      },
+                      "arguments": []
+                    }
+                  ]
                 }
               },
               {
