@@ -191,12 +191,34 @@ function mapReferenceVariables(
 ): Map<string, ReferenceParameter[]> {
   const map = new Map<string, ReferenceParameter[]>();
 
-  // Resolve any unassigned "null" inputs to actual input variables in the referenced context.
-  const availableInputs: string[] = [];
-  for (const v of referencedContext.variables.keys()) {
-    if (referencedContext.inputVariables.includes(v)) {
-      availableInputs.push(v);
+  if (parameters.length == 0) {
+    // For implicit variable assigments of reference charts
+    // stata Ref is Ref
+    // Here the variables get assigned to those with the same name.
+    // Non existing variables are ignored here, they should be caught
+    // as an error during access as they are undefined.
+    for (const v of referencedContext.inputVariables) {
+      parameters.push({
+        targetName: v,
+        from: v,
+        indices: [],
+      });
     }
+
+    for (const v of referencedContext.outputVariables) {
+      parameters.push({
+        targetName: v,
+        from: v,
+        indices: [],
+      });
+    }
+  }
+
+  // Resolve any unassigned "null" inputs to actual input variables
+  // in the referenced context.
+  const availableInputs: string[] = [];
+  for (const v of referencedContext.inputVariables) {
+    availableInputs.push(v);
   }
 
   let nullIndex = 0;

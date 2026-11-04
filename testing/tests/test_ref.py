@@ -22,3 +22,19 @@ def test_bind_array():
     expected = runner.generate_expected(inputs, ["Array"])
 
     assert_subset(runner.run(inputs), expected)
+
+
+def test_bind_implicit():
+    """
+    When the reference chart is stated as
+    state A is A
+    then all variables get mapped implicitly based on those
+    with the same name getting assigned to each other.
+    """
+    runner = TestRunner("./models/RefBindImplicit")
+
+    inputs = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
+
+    expected = runner.generate_expected(inputs, ["A"])
+
+    assert_subset(runner.run(inputs), expected)

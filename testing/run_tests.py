@@ -36,11 +36,11 @@ def main() -> None:
         help="Redo the sctx to sctx prePasses",
     )
     _ = parser.add_argument(
-        "--langium",
+        "--no-langium",
         required=False,
         default=False,
         action="store_true",
-        help="Use the langium based sctx2json converter for the tests",
+        help="Don't use the langium based sctx2json converter for the tests",
     )
     _ = parser.add_argument(
         "--cache-langium",
@@ -71,8 +71,8 @@ def main() -> None:
         os.environ["FORCE_RESET_EXE"] = "1"
     if args.reset_json:
         os.environ["FORCE_RESET_JSON"] = "1"
-    if args.langium:
-        os.environ["LANGIUM"] = "1"
+    if args.no_langium:
+        os.environ["NO_LANGIUM"] = "1"
     if args.cache_langium:
         os.environ["CACHE_LANGIUM_JSON"] = "1"
     if args.no_ktraces:

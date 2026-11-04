@@ -304,35 +304,41 @@ export const SCChartGrammar = (): Grammar => loadedSCChartGrammar ?? (loadedSCCh
                     }
                   },
                   {
-                    "$type": "Keyword",
-                    "value": "("
-                  },
-                  {
                     "$type": "Group",
                     "elements": [
                       {
-                        "$type": "Assignment",
-                        "feature": "refAssignments",
-                        "operator": "+=",
-                        "terminal": {
-                          "$type": "RuleCall",
-                          "rule": {
-                            "$ref": "#/rules@3"
+                        "$type": "Keyword",
+                        "value": "("
+                      },
+                      {
+                        "$type": "Group",
+                        "elements": [
+                          {
+                            "$type": "Assignment",
+                            "feature": "refAssignments",
+                            "operator": "+=",
+                            "terminal": {
+                              "$type": "RuleCall",
+                              "rule": {
+                                "$ref": "#/rules@3"
+                              },
+                              "arguments": []
+                            }
                           },
-                          "arguments": []
-                        }
+                          {
+                            "$type": "Keyword",
+                            "value": ",",
+                            "cardinality": "?"
+                          }
+                        ],
+                        "cardinality": "*"
                       },
                       {
                         "$type": "Keyword",
-                        "value": ",",
-                        "cardinality": "?"
+                        "value": ")"
                       }
                     ],
-                    "cardinality": "*"
-                  },
-                  {
-                    "$type": "Keyword",
-                    "value": ")"
+                    "cardinality": "?"
                   }
                 ]
               }

@@ -14,7 +14,7 @@ CONFIG_FILE = PROJECT_ROOT / "kico_config.json"
 
 
 def _langium_mode() -> bool:
-    return os.environ.get("LANGIUM") != None
+    return os.environ.get("NO_LANGIUM") is None
 
 
 def _reset_exe_mode() -> bool:
