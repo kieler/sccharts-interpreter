@@ -16,7 +16,9 @@ import { SCTX } from "./grammar/generated/ast.js";
 const filePath = process.argv[2];
 const wonly = process.argv.includes("-Wonly");
 const IOonly = process.argv.includes("-IOonly");
-// const profiling = process.argv.includes("--profile");
+const Ionly = process.argv.includes("-Ionly");
+const Oonly = process.argv.includes("-Oonly");
+
 const jsonInputs = process.argv.includes("-i")
   ? process.argv[process.argv.indexOf("-i") + 1]
   : undefined;
@@ -172,18 +174,23 @@ if (jsonInputs == undefined) {
       }
 
       const result = tick(globalContext, input);
-      if (IOonly) {
+      var outputVars: Record<string, any> = {};
+      if (Oonly || IOonly) {
         // Output variables only
-        var outputVars: Record<string, any> = {};
         for (const varName of globalContext.outputVariables) {
           outputVars[varName] = result.variables[varName];
         }
+      } else if (Ionly || IOonly) {
+        // Input variables only
         for (const varName of globalContext.inputVariables) {
           outputVars[varName] = result.variables[varName];
         }
-
-        result.variables = outputVars;
+      } else {
+        outputVars = result.variables;
       }
+
+      result.variables = outputVars;
+
       console.log(JSON.stringify(result, null, 2));
 
       if (result.terminated) {

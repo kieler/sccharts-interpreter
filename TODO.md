@@ -99,7 +99,7 @@ Also see the blocklist for models that have unsupported features.
 - [x] The new testing with pre passes doesn't work properly if you use the kico sctx2json because it looks for the wrong file I think
 - [x] Constants for array size in variable creation not supported with langium
 	- Had to change the json-schema, as it expected cardinalities to be intigers.
-- [ ] testing/models/Pre.sctx: When pre() is in the guard, we get a reference error
+- [x] testing/models/Pre.sctx: When pre() is in the guard, we get a reference error
 	- The guardParser is mising the function substitution from the actionParser
 
 ### features

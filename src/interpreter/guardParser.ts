@@ -1,8 +1,10 @@
 import { raise } from "./errors.js";
-import { sanitizeKeysAndExpr } from "./jsKeywords.js";
 import { Context, Severity, StateNode } from "./types.js";
-import { getLocalVariableMap } from "./variables.js";
+import { parseExpression } from "./actionParser.js";
 
+/**
+ * Evaluate a guard expression and return a boolean result.
+ */
 export function parseGuard(
   guard: string,
   context: Context,
@@ -10,21 +12,11 @@ export function parseGuard(
 ): boolean {
   if (!guard || guard.trim() === "") return true;
 
-  const localVarMap = getLocalVariableMap(context, node);
-  const keys = Array.from(localVarMap.keys());
-  const values = Array.from(localVarMap.values());
-
-  const possibleFunction = context.functionCache.get(node.id + guard);
-  if (possibleFunction != undefined) {
-    return possibleFunction(...values);
-  }
-
-  const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
-
   try {
-    const fn = new Function(...safeKeys, `return (${safeExpr})`);
-    context.functionCache.set(node.id + guard, fn);
-    return fn(...values);
+    const result = parseExpression(guard, context, "bool", node);
+    // Guards always expect boolean; coerce numeric results.
+    if (result === 0 || result === false || result == null) return false;
+    return true;
   } catch (e) {
     raise(
       context,
