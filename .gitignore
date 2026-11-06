@@ -13,5 +13,6 @@ testing/config.json
 kico_config.json
 testing/models/*.json
 testing/models/*.exe
+testing/prePassCache/*
 testing/logs/
 kieler-gen

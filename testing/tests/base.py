@@ -11,6 +11,7 @@ from tests.utils import create_custom_log, generate_random_string, get_model_inf
 BASE_DIR = Path(__file__).parent.parent.resolve()
 PROJECT_ROOT = BASE_DIR.parent
 CONFIG_FILE = PROJECT_ROOT / "kico_config.json"
+PRE_PASS_DIR = BASE_DIR / "prePassCache"
 
 
 def _langium_mode() -> bool:
@@ -245,7 +246,7 @@ class TestRunner:
     def parse_interpreter_output(self, stdout: str) -> list[dict[str, Any]]:
         # The stdout can begin with 'Ambiguous Alternatives Detected ...'
         # from langium, which can include a '{' so this needs to be filtered out
-        output_start = stdout.index("Setting up model:")
+        output_start = stdout.index("Setup successful")
         output_start = stdout[output_start:].index("{") + output_start
 
         if "Model terminated - Final Variables:" in stdout:
@@ -269,7 +270,12 @@ class TestRunner:
         if system == "":
             return
 
-        path = self.model_path.parent / ("prePass_" + self.model_path.name)
+        PRE_PASS_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Add path to file name to avoid collisions
+        parent_key = str(self.model_path.parent).replace(os.sep, "-")
+        safe_name = f"{parent_key}-{self.model_path.stem}.sctx"
+        path = PRE_PASS_DIR / safe_name
 
         if _reset_pre_pass_mode() or not os.path.exists(path):
             self.__run_kico_system(self.model_path, path, system)
