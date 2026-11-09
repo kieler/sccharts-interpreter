@@ -288,6 +288,15 @@ def plot_timings(
     stds = [t.std() if len(t) > 1 else 0.0 for t in ticks_per_file]
 
     ax.bar(x_ticks, means, yerr=stds, capsize=4)
+    for i, m in enumerate(means):
+        ax.text(
+            i + 0.23,
+            m * 1.02,
+            f"{m:,.5f} ms",
+            ha="center",
+            va="bottom",
+            fontdict={"fontsize": 12},
+        )
     ax.set_xticks(x_ticks)
     ax.set_xticklabels(labels, fontsize=10)
     ax.set_ylabel("Mean tick time (ms)")
