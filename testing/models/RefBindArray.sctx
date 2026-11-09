@@ -1,0 +1,36 @@
+import SubChart
+
+scchart RefBindArray {
+    output int Array[3] = {0,0,0}
+    
+    region:
+        initial state Init
+        go to Sub1
+
+        state Sub1 is Sub1(Array[1] to A)
+        join to End
+
+        final state End
+
+    region B:
+        initial state Init
+        go to Sub3
+
+        state Sub3 is Sub3(Array to Array)
+        join to End
+
+        final state End 
+}
+
+scchart Sub3 {
+    input output int Array[3] = {0,0,0}
+
+    initial state A
+    do Array[0]++; Array[2] = Array[0]*2 go to B
+
+    state B
+    immediate if Array[2] > 5 go to C 
+    immediate go to A
+
+    final state C
+}

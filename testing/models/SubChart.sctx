@@ -1,0 +1,25 @@
+scchart Sub1 {
+    input output int A
+
+    initial state A
+    do A++ go to B
+
+    state B
+    immediate if A > 5 go to C 
+    immediate go to A
+
+    final state C
+}
+
+scchart Sub2 {
+    input output int A
+
+    initial state A
+    do A+=2 go to B
+
+    state B
+    immediate if A > 15 go to C 
+    immediate go to A
+
+    final state C
+}

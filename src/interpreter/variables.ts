@@ -1,0 +1,302 @@
+import { parseExpression } from "./actionParser.js";
+import { Context, StateNode, Variable } from "./types.js";
+import { getScope, getVariableScope } from "./utils.js";
+
+// Navigate to the parent container of a specific indexed element for in-place modification.
+function getArrayContainer(
+  value: any,
+  indices: (number | string)[],
+  context: Context,
+  node: StateNode,
+): { container: any[]; finalIndex: number } | undefined {
+  let current = value;
+  for (let i = 0; i < indices.length - 1; i++) {
+    if (!Array.isArray(current)) return undefined;
+    const idx = indices[i];
+    const resolvedIndex =
+      typeof idx === "string"
+        ? (parseExpression(idx, context, "int", node) as number)
+        : idx;
+    current = current[resolvedIndex];
+  }
+  const lastIdx = indices[indices.length - 1];
+  const finalResolved =
+    typeof lastIdx === "string"
+      ? (parseExpression(lastIdx, context, "int", node) as number)
+      : lastIdx;
+
+  if (!Array.isArray(current)) return undefined;
+  return { container: current, finalIndex: finalResolved };
+}
+
+function findBestMatch(possibleVars: Variable[], scope: string): Variable {
+  const matchingScopes: Variable[] = [];
+  for (const variable of possibleVars) {
+    if (scope.includes(variable.scope)) {
+      matchingScopes.push(variable);
+    }
+  }
+
+  return matchingScopes.sort((a, b) => b.scope.length - a.scope.length)[0];
+}
+
+function __getVariable(
+  id: string,
+  node: StateNode,
+  context: Context,
+): Variable | undefined {
+  const possibleVars = context.variables.get(id.trim());
+  if (possibleVars == undefined) return undefined;
+
+  if (Array.isArray(possibleVars)) {
+    const scope = getScope(node.graph) + node.id;
+    // console.log("VAR:", id, node.id, possibleVars, scope);
+    return findBestMatch(possibleVars, scope);
+  }
+
+  return possibleVars;
+}
+
+export function getVariable(
+  id: string,
+  node: StateNode,
+  context: Context,
+): any | undefined {
+  const variable = __getVariable(id, node, context);
+  if (variable == undefined) return undefined;
+  return variable.value;
+}
+
+export function getVariablePre(
+  id: string,
+  node: StateNode,
+  context: Context,
+): any | undefined {
+  const variable = __getVariable(id, node, context);
+  if (variable == undefined) return undefined;
+  return variable.preValue;
+}
+
+export function getVariableType(
+  id: string,
+  node: StateNode,
+  context: Context,
+): string | undefined {
+  const variable = __getVariable(id, node, context);
+  if (variable == undefined) return undefined;
+  return variable.type;
+}
+
+export function setVariable(
+  id: string,
+  value: any,
+  node: StateNode,
+  context: Context,
+): void {
+  const possibleVars = context.variables.get(id);
+  if (possibleVars == undefined) return;
+
+  if (Array.isArray(possibleVars)) {
+    const scope = getVariableScope(node);
+    const bestMatch = findBestMatch(possibleVars, scope);
+    bestMatch.value = value;
+    return;
+  }
+
+  possibleVars.value = value;
+}
+
+export function setVariableArrayByIndex(
+  id: string,
+  index: number,
+  value: any,
+  node: StateNode,
+  context: Context,
+): void {
+  var array: any[];
+  const possibleVars = context.variables.get(id);
+  if (possibleVars == undefined) return;
+
+  if (Array.isArray(possibleVars)) {
+    const scope = getVariableScope(node);
+    const bestMatch = findBestMatch(possibleVars, scope);
+    array = bestMatch.value;
+  } else {
+    array = possibleVars.value;
+  }
+
+  array[index] = value;
+}
+
+export function setVariableByIndex(
+  id: string,
+  indices: (number | string)[],
+  value: any,
+  node: StateNode,
+  context: Context,
+): void {
+  if (indices.length === 0) {
+    // No indices — just set the whole variable (existing behavior)
+    setVariable(id, value, node, context);
+    return;
+  }
+
+  const possibleVars = context.variables.get(id);
+  if (possibleVars == undefined) return;
+
+  let container: any[] | undefined;
+  if (Array.isArray(possibleVars)) {
+    // Find the variable whose id matches and that is an array
+    for (const v of possibleVars) {
+      if (v.id === id && Array.isArray(v.value)) {
+        const result = getArrayContainer(v.value, indices, context, node);
+        container = result?.container;
+        break;
+      }
+    }
+    // Fallback to first match
+    if (!container) {
+      const bestMatch = findBestMatch(possibleVars, getVariableScope(node));
+      if (Array.isArray(bestMatch.value)) {
+        const result = getArrayContainer(
+          bestMatch.value,
+          indices,
+          context,
+          node,
+        );
+        container = result?.container;
+      }
+    }
+  } else {
+    if (Array.isArray(possibleVars.value)) {
+      const result = getArrayContainer(
+        possibleVars.value,
+        indices,
+        context,
+        node,
+      );
+      container = result?.container;
+    }
+  }
+
+  // If we found a valid container, set the final index
+  if (container) {
+    const lastIdx = indices[indices.length - 1];
+    const resolvedIdx: number =
+      typeof lastIdx === "string"
+        ? (parseExpression(lastIdx, context, "int", node) as number)
+        : lastIdx;
+    container[resolvedIdx] = value;
+  }
+}
+
+function initialArrayValues(
+  cardinalities: (number | string)[],
+  defaultValue: unknown,
+  context: Context,
+  node: StateNode,
+): unknown[] {
+  if (cardinalities.length == 0) {
+    return [];
+  }
+
+  const [size, ...rest] = cardinalities;
+  const array: any[] = [];
+
+  var sizeInt: number;
+  if (typeof size == "string") {
+    sizeInt = parseExpression(size, context, "int", node);
+  } else {
+    sizeInt = size;
+  }
+
+  for (let i = 0; i < sizeInt; i++) {
+    if (rest.length == 0) {
+      array.push(defaultValue);
+    } else {
+      array.push(initialArrayValues(rest, defaultValue, context, node));
+    }
+  }
+
+  return array;
+}
+
+export function createVariable(
+  context: Context,
+  id: string,
+  node: StateNode,
+  type: string,
+  value: any | undefined = undefined,
+  cardinalities: (number | string)[] = [],
+): void {
+  const defaultValues: Record<string, unknown> = {
+    int: 0,
+    bool: false,
+    string: null,
+    float: 0.0,
+  };
+
+  const isArray = cardinalities.length > 0;
+
+  if (!value) {
+    if (isArray) {
+      value = initialArrayValues(
+        cardinalities,
+        defaultValues[type],
+        context,
+        node,
+      );
+    } else {
+      value = defaultValues[type];
+    }
+  } else {
+    value = parseExpression(value, context, type, node);
+  }
+
+  const variable: Variable = {
+    id,
+    scope: getVariableScope(node),
+    type: isArray ? type + "[]" : type,
+    value,
+    preValue: value,
+  };
+
+  const possibleVars = context.variables.get(id);
+  if (possibleVars) {
+    // Variable of the same name exists
+    if (Array.isArray(possibleVars)) {
+      possibleVars.push(variable);
+    } else {
+      context.variables.set(id, [possibleVars, variable]);
+    }
+  } else {
+    // First Variable of its name
+    context.variables.set(id, variable);
+  }
+}
+
+export function setPreVariables(context: Context): void {
+  for (const id of context.variables.keys()) {
+    const possibleVars = context.variables.get(id)!;
+
+    if (Array.isArray(possibleVars)) {
+      for (const variable of possibleVars) {
+        variable.preValue = variable.value;
+      }
+    } else {
+      possibleVars.preValue = possibleVars.value;
+    }
+  }
+}
+
+export function getLocalVariableMap(
+  context: Context,
+  node: StateNode,
+): Map<string, Variable> {
+  const localVars = new Map<string, Variable>();
+
+  for (const id of context.variables.keys()) {
+    localVars.set(id, getVariable(id, node, context));
+  }
+  return localVars;
+}

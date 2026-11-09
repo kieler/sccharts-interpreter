@@ -1,7 +1,13 @@
 import { validateSCChart } from "../schema/utils.js";
 import { Region, SCChartModel, State } from "../schema/types.js";
-import { Context, StateNode } from "./types.js";
+import { Context, StateGraph, StateNode } from "./types.js";
 import { constructStateGraph } from "./constructor.js";
+import {
+  getVariable,
+  getVariablePre,
+  setVariable,
+  setVariableArrayByIndex,
+} from "./variables.js";
 
 export function isSuper(stateNode: StateNode): boolean {
   return stateNode.subgraphs !== undefined;
@@ -71,43 +77,74 @@ export function emptyContext(model: SCChartModel, id: string): Context {
       terminated: false,
     },
     variables: new Map(),
-    preVariables: new Map(),
-    variableTypes: new Map(),
     outputVariables: [],
     inputVariables: [],
     nodeMap: new Map(),
     errorMode: "strict" as const,
     messages: [],
     activeNodes: new Set(),
+    functionCache: new Map(),
   };
 }
 
-export function assignInputVariables(context: Context, inputs: any): void {
-  for (const variable of context.inputVariables) {
-    if (inputs[variable] !== undefined) {
-      context.variables.set(variable, inputs[variable]);
+export function assignInputVariables(
+  context: Context,
+  inputs: Record<string, unknown>,
+): void {
+  for (const variableName of Object.keys(inputs)) {
+    if (context.inputVariables.includes(variableName)) {
+      setVariable(
+        variableName,
+        inputs[variableName],
+        context.graph.initalNode!,
+        context,
+      );
+    } else if (variableName.includes("[")) {
+      const match = variableName.match(/^([^\[]+)\[(\d+)\]$/);
+      const name = match?.[1]!;
+      const index = parseInt(match?.[2]!, 10);
+      setVariableArrayByIndex(
+        name,
+        index,
+        inputs[variableName],
+        context.graph.initalNode!,
+        context,
+      );
     }
   }
 }
 
-export function setupContext(model: SCChartModel, wonly: boolean): Context {
+export function setupContext(
+  model: SCChartModel,
+  wonly: boolean,
+  filePath: string | undefined = undefined,
+  referenceMapping: Record<string, SCChartModel> | undefined = undefined,
+): Context {
   const valid = validateSCChart(model);
   if (!valid) throw new Error("Invalid SCChart Model JSON");
 
-  const chartModel = model as SCChartModel;
-
-  const context = constructStateGraph(chartModel);
+  const context = constructStateGraph(
+    model,
+    wonly,
+    filePath,
+    "",
+    referenceMapping,
+  );
   context.graph.activeNode = context.graph.initalNode;
-  context.errorMode = wonly ? "warnings-only" : "strict";
 
   return context;
 }
 
-export function pre(context: Context, variable: string): unknown {
+export function pre(
+  context: Context,
+  variable: string,
+  node: StateNode,
+): unknown {
   if (variable.includes("[")) {
     const [base, ...indicesStr] = variable.split("[");
     const indices = indicesStr.map((i) => Number(i.replace("]", "")));
-    let value = context.preVariables.get(base);
+    let value = getVariablePre(base, node, context);
+    // let value = context.variables.get(base)?.preValue;
 
     let i = 0;
     while (value instanceof Array) {
@@ -118,5 +155,30 @@ export function pre(context: Context, variable: string): unknown {
     return value;
   }
 
-  return context.preVariables.get(variable);
+  return getVariablePre(variable, node, context);
+}
+
+export function modelPrint(
+  context: Context,
+  value: string,
+  node: StateNode,
+): void {
+  const possibleValue = getVariable(value, node, context);
+  if (possibleValue !== undefined) console.log("[MODEL PRINT]", possibleValue);
+  else console.log("[MODEL PRINT]", value);
+}
+
+export function getScope(graph: StateGraph): string {
+  let scope = "";
+
+  while (graph.parent) {
+    scope = graph.parent.id + "." + graph.id + "." + scope;
+    graph = graph.parent.graph;
+  }
+
+  return scope;
+}
+
+export function getVariableScope(node: StateNode): string {
+  return getScope(node.graph) + node.id;
 }

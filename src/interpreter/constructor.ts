@@ -1,98 +1,25 @@
-import { Context, StateNode, StateGraph, TransitionEdge } from "./types.js";
-import type { Region, SCChartModel, Variable } from "../schema/types.js";
-import { createFakeRootRegion, emptyContext } from "./utils.js";
+import type {
+  Context,
+  StateNode,
+  StateGraph,
+  TransitionEdge,
+} from "./types.js";
+import type {
+  Region,
+  SCChartModel,
+  ReferenceParameter,
+  Variable as SchemaVariable,
+  State,
+} from "../schema/types.js";
+import { createFakeRootRegion, emptyContext, getScope } from "./utils.js";
 import { readFileSync } from "node:fs";
-import { parseExpression } from "./actionParser.js";
+import { createVariable, getVariable, setPreVariables } from "./variables.js";
 
-function initialArrayValues(
-  cardinalities: number[],
-  defaultValue: unknown,
-): unknown[] {
-  if (cardinalities.length == 0) {
-    return [];
-  }
-
-  const [size, ...rest] = cardinalities;
-  const array: any[] = [];
-
-  for (let i = 0; i < size; i++) {
-    if (rest.length == 0) {
-      array.push(defaultValue);
-    } else {
-      array.push(initialArrayValues(rest, defaultValue));
-    }
-  }
-
-  return array;
-}
-
-function parseScalar(value: any, type: string, context: Context): unknown {
-  const parsed_value = parseExpression(value, context, type);
-  return parsed_value;
-  console.log(parsed_value, typeof parsed_value);
-
-  if (type === "int") return Number(value);
-  if (type === "float") return Number(value);
-  if (type === "bool") return value === "true";
-  if (type === "string") return value;
-  return value;
-}
-
-function parseArrayValues(valueStr: string): unknown[] {
-  valueStr = valueStr.replaceAll("{", "[").replaceAll("}", "]");
-
-  return eval(valueStr);
-}
-
-function variableDefaults(
+function addVariable(
   context: Context,
-  variable: Variable,
-  isArray: boolean,
+  variable: SchemaVariable,
+  node: StateNode,
 ) {
-  const defaultValues: Record<string, unknown> = {
-    int: 0,
-    bool: false,
-    string: null,
-    float: 0.0,
-  };
-
-  if (isArray) {
-    const array = initialArrayValues(
-      variable.cardinalities,
-      defaultValues[variable.type],
-    );
-    context.variables.set(variable.id, array);
-
-    return;
-  }
-
-  context.variables.set(variable.id, defaultValues[variable.type]);
-}
-
-function variableValues(
-  context: Context,
-  variable: Variable,
-  isArray: boolean,
-) {
-  if (isArray && typeof variable.initialValue === "string") {
-    const parsed = parseArrayValues(variable.initialValue!);
-    context.variables.set(variable.id, parsed);
-  } else {
-    context.variables.set(
-      variable.id,
-      parseScalar(variable.initialValue!, variable.type, context),
-    );
-  }
-}
-
-function addVariable(context: Context, variable: Variable) {
-  const isArray = variable.cardinalities.length != 0;
-  if (isArray) {
-    context.variableTypes.set(variable.id, variable.type + "[]");
-  } else {
-    context.variableTypes.set(variable.id, variable.type);
-  }
-
   if (variable.isOutput) {
     context.outputVariables.push(variable.id);
   }
@@ -100,28 +27,23 @@ function addVariable(context: Context, variable: Variable) {
     context.inputVariables.push(variable.id);
   }
 
-  if (variable.initialValue === undefined) {
-    variableDefaults(context, variable, isArray);
-  } else {
-    variableValues(context, variable, isArray);
-  }
-}
-
-function getScope(graph: StateGraph): string {
-  let scope = "";
-
-  while (graph.parent) {
-    scope = graph.parent.id + "." + graph.id + "." + scope;
-    graph = graph.parent.graph;
-  }
-
-  return scope;
+  createVariable(
+    context,
+    variable.id,
+    node,
+    variable.type,
+    variable.initialValue,
+    variable.cardinalities,
+  );
 }
 
 function constructRegion(
   parentState: StateNode | undefined,
   region: Region,
   context: Context,
+  wonly: boolean,
+  filePath: string | undefined,
+  referenceMapping: Record<string, SCChartModel> | undefined = undefined,
 ): StateGraph {
   let graph: StateGraph = {
     id: region.id,
@@ -149,14 +71,7 @@ function constructRegion(
       state: state,
       graph: graph,
     };
-    if (isSuper) {
-      stateNode.subgraphs = [];
-      for (const subRegion of state.regions) {
-        stateNode.subgraphs.push(
-          constructRegion(stateNode, subRegion, context),
-        );
-      }
-    }
+
     if (state.isInitial) graph.initalNode = stateNode;
     context.nodeMap.set(
       JSON.stringify({ id: state.id, scope: getScope(graph) }),
@@ -184,7 +99,7 @@ function constructRegion(
 
     // Add variables
     for (const variable of state.variables) {
-      addVariable(context, variable);
+      addVariable(context, variable, stateNode);
     }
 
     for (const action of state.actions) {
@@ -204,28 +119,65 @@ function constructRegion(
       }
     }
 
+    if (isSuper) {
+      stateNode.subgraphs = [];
+      for (const subRegion of state.regions) {
+        stateNode.subgraphs.push(
+          constructRegion(
+            stateNode,
+            subRegion,
+            context,
+            wonly,
+            filePath,
+            referenceMapping,
+          ),
+        );
+      }
+    }
+
     if (state.reference) {
       if (!readFileSync) {
         throw new Error("File loading not supported");
       }
+      if (!filePath) {
+        throw new Error("File path not provided");
+      }
 
       let refModel;
-      try {
-        const jsonPath = state.reference.targetFile
-          .replace(".sctx", ".json")
-          .replace("file:", "");
-        refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
-      } catch (e) {
-        throw new Error(
-          `Reference missing - ${e} - ${state.reference.targetFile}`,
-        );
+      let path = state.reference.targetFile
+        ? state.reference.targetFile.replace("file:", "")
+        : filePath;
+      path = path.replace(".sctx", ".json").trim();
+
+      if (referenceMapping) {
+        if (!referenceMapping[path])
+          throw new Error(`Reference missing: ${path}`);
+
+        refModel = referenceMapping[path];
+      } else {
+        try {
+          const jsonPath = state.reference
+            .targetFile!.replace(".sctx", ".json")
+            .replace("file:", "");
+          refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
+        } catch (e) {
+          throw new Error(`Reference missing - ${e}: ${path}`);
+        }
       }
-      stateNode.referencedContext = constructStateGraph(refModel);
+
+      stateNode.referencedContext = constructStateGraph(
+        refModel,
+        wonly,
+        filePath,
+        state.reference.targetID,
+        referenceMapping,
+      );
       stateNode.referencedContext.graph.activeNode =
         stateNode.referencedContext.graph.initalNode;
 
       stateNode.referencedVarMap = mapReferenceVariables(
         state.reference.parameters,
+        stateNode.referencedContext,
       );
     }
   }
@@ -233,15 +185,59 @@ function constructRegion(
   return graph;
 }
 
-function mapReferenceVariables(parameters: string[]): Map<string, string[]> {
-  // "in to I", "out to O"
-  const map = new Map<string, string[]>();
-  for (const param of parameters) {
-    const [inName, outName] = param.trim().split("to");
-    if (!map.has(outName.trim())) {
-      map.set(outName.trim(), []);
+function mapReferenceVariables(
+  parameters: ReferenceParameter[],
+  referencedContext: Context,
+): Map<string, ReferenceParameter[]> {
+  const map = new Map<string, ReferenceParameter[]>();
+
+  if (parameters.length == 0) {
+    // For implicit variable assigments of reference charts
+    // stata Ref is Ref
+    // Here the variables get assigned to those with the same name.
+    // Non existing variables are ignored here, they should be caught
+    // as an error during access as they are undefined.
+    for (const v of referencedContext.inputVariables) {
+      parameters.push({
+        targetName: v,
+        from: v,
+        indices: [],
+      });
     }
-    map.get(outName.trim())!.push(inName.trim());
+
+    for (const v of referencedContext.outputVariables) {
+      parameters.push({
+        targetName: v,
+        from: v,
+        indices: [],
+      });
+    }
+  }
+
+  // Resolve any unassigned "null" inputs to actual input variables
+  // in the referenced context.
+  const availableInputs: string[] = [];
+  for (const v of referencedContext.inputVariables) {
+    availableInputs.push(v);
+  }
+
+  let nullIndex = 0;
+  const resolvedParams: ReferenceParameter[] = parameters.map((p) => ({
+    ...p,
+  }));
+  for (const p of resolvedParams) {
+    if (!p.from && nullIndex < availableInputs.length) {
+      p.from = availableInputs[nullIndex++];
+    }
+  }
+
+  // Build the mapping: outer name → list of parameters targeting it.
+  for (const param of resolvedParams) {
+    const outerName = param.targetName;
+    if (!map.has(outerName)) {
+      map.set(outerName, []);
+    }
+    map.get(outerName)!.push(param);
   }
 
   return map;
@@ -266,26 +262,51 @@ function finishEdges(graph: StateGraph, context: Context): void {
   }
 }
 
-export function constructStateGraph(model: SCChartModel): Context {
-  if (model.length != 1) {
-    throw new Error("Model must have exactly one state");
+export function constructStateGraph(
+  model: SCChartModel,
+  wonly: boolean,
+  filePath: string | undefined,
+  name: string = "", // The name of the chart that should be constructed
+  referenceMapping: Record<string, SCChartModel> | undefined = undefined,
+): Context {
+  let rootState: State | undefined;
+  if (name == "") {
+    rootState = model[0];
+  } else {
+    for (const state of model) {
+      if (state.id == name) {
+        rootState = state;
+      }
+    }
   }
 
-  console.log("Setting up model: ", model[0].id);
+  if (rootState === undefined) {
+    throw new Error(`State ${name} not found`);
+  }
 
-  const rootRegion: Region = createFakeRootRegion(model);
+  console.log("Setting up model: ", rootState.id);
 
-  let context: Context = emptyContext(model, rootRegion.id);
+  const rootRegion: Region = createFakeRootRegion([rootState]);
+
+  let context: Context = emptyContext([rootState], rootRegion.id);
+  context.errorMode = wonly ? "warnings-only" : "strict";
 
   // Go over all States once and add them and the transitions to the graph
-  context.graph = constructRegion(undefined, rootRegion, context);
+  context.graph = constructRegion(
+    undefined,
+    rootRegion,
+    context,
+    wonly,
+    filePath,
+    referenceMapping,
+  );
 
-  if (context.model[0].label) context.label = context.model[0].label;
+  if (rootState.label) context.label = rootState.label;
 
   // Go over them a second time and link the edges properly
   finishEdges(context.graph, context);
 
-  context.preVariables = new Map(context.variables);
+  setPreVariables(context);
 
   return context;
 }

@@ -131,7 +131,7 @@
 				"cardinalities": {
 					"type": "array",
 					"items": {
-						"type": "integer"
+						"type": ["integer", "string"]
 					}
 				}
 			},
@@ -158,6 +158,25 @@
 			},
 			"required": ["type", "isImmediate", "action"]
 		},
+		"referenceParameter": {
+			"type": "object",
+			"properties": {
+				"targetName": {
+					"type": "string"
+				},
+				"indices": {
+					"type": "array",
+					"items": {
+						"type": ["integer", "string"]
+					}
+				},
+				"from": {
+					"type": "string"
+				}
+			},
+			"required": ["targetName", "indices"],
+			"additionalProperties": false
+		},
 		"reference": {
 			"type": "object",
 			"properties": {
@@ -170,7 +189,7 @@
 				"parameters": {
 					"type": "array",
 					"items": {
-						"type": "string"
+						"$ref": "#/$defs/referenceParameter"
 					}
 				}
 			},

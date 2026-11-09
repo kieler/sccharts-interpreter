@@ -1,0 +1,9 @@
+scchart ConstArray {
+    const int A = 3
+    int Array[A] = {1,2,4}
+    input int I
+    output int O
+
+    initial state Init
+    do O = Array[I] go to Init
+}

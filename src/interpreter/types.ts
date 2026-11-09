@@ -1,4 +1,4 @@
-import { Action, SCChartModel, State, Transition } from "../schema/types.js";
+import { Action, SCChartModel, State, Transition, ReferenceParameter } from "../schema/types.js";
 
 export enum Severity {
   Error,
@@ -32,7 +32,7 @@ export interface StateNode {
   state: State;
 
   referencedContext?: Context;
-  referencedVarMap?: Map<string, string[]>;
+  referencedVarMap?: Map<string, ReferenceParameter[]>;
 }
 
 export interface StateGraph {
@@ -45,14 +45,21 @@ export interface StateGraph {
   activeNode: StateNode | undefined;
 }
 
+export interface Variable {
+  id: string;
+  scope: string; // Mainly for local varibales
+  type: string;
+  value: any;
+  preValue: any;
+}
+
 export interface Context {
   label: string;
   model: SCChartModel;
   graph: StateGraph;
 
-  variables: Map<string, unknown>;
-  preVariables: Map<string, unknown>;
-  variableTypes: Map<string, string>;
+  // name -> var / vars if multiple have the same name but different scope
+  variables: Map<string, Variable | Variable[]>;
   outputVariables: string[];
   inputVariables: string[];
 
@@ -60,10 +67,13 @@ export interface Context {
   errorMode: "strict" | "warnings-only";
   messages: Message[];
   activeNodes: Set<StateNode>;
+
+  functionCache: Map<string, Function>;
 }
 
 export interface TickResult {
   terminated: boolean;
   variables: Record<string, unknown>;
   messages: Message[];
+  telemetry: Record<string, unknown>;
 }

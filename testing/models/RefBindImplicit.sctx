@@ -1,0 +1,7 @@
+import SubChart
+
+scchart RefBindImplicit {
+    output int A
+
+    initial state Sub1 is Sub1
+}

@@ -1,19 +1,8 @@
-import os
-from pathlib import Path
-
-from tests.base import TestRunner, assert_subset
-from tests.utils import parse_ktrace
+from tests.base import TestRunner, _profile_mode
+from tests.utils import assert_subset, parse_ktrace
 
 
-def _make_json_name(ktrace_sctx_path: str) -> str:
-    """Convert .sctx path to .json cache name, applying langium_ prefix if in langium mode."""
-    stem = Path(ktrace_sctx_path).stem + ".json"
-    if os.environ.get("USE_LANGIUM", "false").lower() == "true":
-        return "langium_" + stem[:-5] + ".json"
-    return stem
-
-
-def test_model_with_ktrace(test_model: tuple[str, str]):
+def test_model_with_ktrace(test_model: tuple[str, str, str]):
     with open(test_model[1]) as f:
         ktrace = f.read()
 
@@ -32,17 +21,13 @@ def test_model_with_ktrace(test_model: tuple[str, str]):
     model_outputs.append(trace["outputs"][j:])
 
     for model_input, model_output in zip(model_inputs, model_outputs):
-        sctx_path = Path(test_model[0])
-        if os.environ.get("USE_LANGIUM", "false").lower() == "true":
-            json_name = f"langium_{sctx_path.stem}.json"
-        else:
-            json_name = f"{sctx_path.stem}.json"
-        json_path = sctx_path.parent / json_name
+        runner = TestRunner(test_model[0])
 
-        runner = TestRunner(name="", path=json_path)
-        runner.setup()
-
+        runner.prePass(test_model[2])
         output = runner.run(inputs=model_input)
+
+        if _profile_mode():
+            runner.generate_expected(model_input, [])
 
         expected_ouputs = [{"variables": vars} for vars in model_output]
 

@@ -1,10 +1,10 @@
-from tests.base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_abro_basic():
     """Test ABRO model"""
-    runner = TestRunner("ABRO")
-    runner.setup()
+    runner = TestRunner("./models/ABRO")
 
     inputs = [
         {"A": False, "B": False, "R": False},
@@ -16,6 +16,6 @@ def test_abro_basic():
         {"A": False, "B": False, "R": False},
     ]
 
-    expected = generate_expected("ABRO", inputs, ["A", "B", "R", "O"])
+    expected = runner.generate_expected(inputs, ["A", "B", "R", "O"])
 
     assert_subset(runner.run(inputs), expected)

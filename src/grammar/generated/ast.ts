@@ -9,9 +9,10 @@ import * as langium from 'langium';
 export const SCChartsTerminals = {
     VarType: /bool|int|float|string/,
     ExpressionString: /\#([^\#\#]*)\#/,
+    BOOL: /true|false/,
+    FLOAT: /[0-9]+\.[0-9]+/,
     INT: /[0-9]+/,
     STRING: /"[^"]*"|'[^']*'/,
-    Literal: /(?:true|false)|(?:[0-9]+\.[0-9]+)|(?:[0-9]+)|(?:"[^"]*"|'[^']*')/,
     ID: /[_a-zA-Z0-9][\w]*/,
     WS: /\s+/,
     ML_COMMENT: /\/\*[\s\S]*?\*\//,
@@ -45,6 +46,7 @@ export type SCChartsKeywordNames =
     | "input"
     | "is"
     | "join"
+    | "label"
     | "output"
     | "region"
     | "scchart"
@@ -58,7 +60,7 @@ export type SCChartsKeywordNames =
 export type SCChartsTokenNames = SCChartsTerminalNames | SCChartsKeywordNames;
 
 export interface Action extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'Action';
     action: string;
     guard?: string;
@@ -78,6 +80,23 @@ export function isAction(item: unknown): item is Action {
     return reflection.isInstance(item, Action.$type);
 }
 
+export interface Chart extends langium.AstNode {
+    readonly $container: SCTX;
+    readonly $type: 'Chart';
+    elements: Array<Element | Region>;
+    name: string;
+}
+
+export const Chart = {
+    $type: 'Chart',
+    elements: 'elements',
+    name: 'name'
+} as const;
+
+export function isChart(item: unknown): item is Chart {
+    return reflection.isInstance(item, Chart.$type);
+}
+
 export type Element = Action | State | Variable;
 
 export const Element = {
@@ -92,12 +111,14 @@ export interface RefVariableAssignment extends langium.AstNode {
     readonly $container: State;
     readonly $type: 'RefVariableAssignment';
     from?: string;
-    to: string;
+    indices: Array<number | string>;
+    to: number | string;
 }
 
 export const RefVariableAssignment = {
     $type: 'RefVariableAssignment',
     from: 'from',
+    indices: 'indices',
     to: 'to'
 } as const;
 
@@ -106,7 +127,7 @@ export function isRefVariableAssignment(item: unknown): item is RefVariableAssig
 }
 
 export interface Region extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'Region';
     elements: Array<Element | Region>;
     name?: string;
@@ -124,16 +145,14 @@ export function isRegion(item: unknown): item is Region {
 
 export interface SCTX extends langium.AstNode {
     readonly $type: 'SCTX';
-    elements: Array<Element | Region>;
+    charts: Array<Chart>;
     imports: Array<string>;
-    name: string;
 }
 
 export const SCTX = {
     $type: 'SCTX',
-    elements: 'elements',
-    imports: 'imports',
-    name: 'name'
+    charts: 'charts',
+    imports: 'imports'
 } as const;
 
 export function isSCTX(item: unknown): item is SCTX {
@@ -141,10 +160,10 @@ export function isSCTX(item: unknown): item is SCTX {
 }
 
 export interface State extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'State';
     actions: Array<Action>;
-    elements: Array<Element | Region>;
+    elements: Array<Element | Region | Variable>;
     isConnector: boolean;
     isFinal: boolean;
     isInitial: boolean;
@@ -197,7 +216,7 @@ export function isTransition(item: unknown): item is Transition {
 }
 
 export interface Variable extends langium.AstNode {
-    readonly $container: Region | SCTX | State;
+    readonly $container: Chart | Region | State;
     readonly $type: 'Variable';
     assignments: Array<VariableAssignment>;
     isInput: boolean;
@@ -220,7 +239,7 @@ export function isVariable(item: unknown): item is Variable {
 export interface VariableAssignment extends langium.AstNode {
     readonly $container: Variable;
     readonly $type: 'VariableAssignment';
-    cardinalities: Array<number>;
+    cardinalities: Array<number | string>;
     initialValue?: string;
     name: string;
 }
@@ -238,6 +257,7 @@ export function isVariableAssignment(item: unknown): item is VariableAssignment 
 
 export type SCChartsAstType = {
     Action: Action
+    Chart: Chart
     Element: Element
     RefVariableAssignment: RefVariableAssignment
     Region: Region
@@ -271,6 +291,20 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
             },
             superTypes: [Element.$type]
         },
+        Chart: {
+            name: Chart.$type,
+            properties: {
+                elements: {
+                    name: Chart.elements,
+                    defaultValue: [],
+                    optional: true
+                },
+                name: {
+                    name: Chart.name
+                }
+            },
+            superTypes: []
+        },
         Element: {
             name: Element.$type,
             properties: {
@@ -282,6 +316,11 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
             properties: {
                 from: {
                     name: RefVariableAssignment.from,
+                    optional: true
+                },
+                indices: {
+                    name: RefVariableAssignment.indices,
+                    defaultValue: [],
                     optional: true
                 },
                 to: {
@@ -308,8 +347,8 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
         SCTX: {
             name: SCTX.$type,
             properties: {
-                elements: {
-                    name: SCTX.elements,
+                charts: {
+                    name: SCTX.charts,
                     defaultValue: [],
                     optional: true
                 },
@@ -317,9 +356,6 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                     name: SCTX.imports,
                     defaultValue: [],
                     optional: true
-                },
-                name: {
-                    name: SCTX.name
                 }
             },
             superTypes: []

@@ -1,0 +1,7 @@
+scchart Pre {
+    output int A, B
+    output bool C
+    immediate during do A++
+    immediate during do B = pre(A)
+    immediate during if pre(A) > 5 do C = !pre(C)
+}

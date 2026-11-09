@@ -1,21 +1,41 @@
 import json
 import os
 import random
-import re
 import subprocess
 from pathlib import Path
-from typing import Any
 
-import requests
+from typing_extensions import Any
 
-URL = "http://localhost:3001"
+from tests.utils import create_custom_log, generate_random_string, get_model_info
+
 BASE_DIR = Path(__file__).parent.parent.resolve()
 PROJECT_ROOT = BASE_DIR.parent
 CONFIG_FILE = PROJECT_ROOT / "kico_config.json"
+PRE_PASS_DIR = BASE_DIR / "prePassCache"
 
 
-def _get_langium_mode() -> bool:
-    return os.environ.get("USE_LANGIUM", "false").lower() == "true"
+def _langium_mode() -> bool:
+    return os.environ.get("NO_LANGIUM") is None
+
+
+def _reset_exe_mode() -> bool:
+    return os.environ.get("FORCE_RESET_EXE") != None
+
+
+def _reset_json_mode() -> bool:
+    return os.environ.get("FORCE_RESET_JSON") != None
+
+
+def _reset_pre_pass_mode() -> bool:
+    return os.environ.get("FORCE_RESET_PREPASS") != None
+
+
+def _cache_langium_mode() -> bool:
+    return os.environ.get("CACHE_LANGIUM_JSON") != None
+
+
+def _profile_mode() -> bool:
+    return os.environ.get("PROFILE") != None
 
 
 def get_java_jar_path() -> str:
@@ -23,7 +43,7 @@ def get_java_jar_path() -> str:
     if not CONFIG_FILE.exists():
         return ""
     with open(CONFIG_FILE) as f:
-        config = json.load(f)
+        config: dict[str, str] = json.load(f)
     jar_path = config.get("java_jar_path", "")
 
     if jar_path and not Path(jar_path).is_absolute():
@@ -31,155 +51,354 @@ def get_java_jar_path() -> str:
     return jar_path
 
 
-def load_model_name(name: str, no_reset: bool = False) -> list[dict[str, Any]]:
-    if _get_langium_mode():
-        json_path = BASE_DIR / "json" / f"langium_{name}.json"
-    else:
-        json_path = BASE_DIR / "json" / f"{name}.json"
+def run_npm(
+    model_path: Path,
+    inputs: list[dict[str, Any]],
+    wonly: bool,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
 
-    return load_model(json_path, "sctx", no_reset)
-
-
-def _resolve_sctx(path: Path, sctx_dir: str) -> Path:
-    """Derive the .sctx file path from a JSON cache file path."""
-    stem = path.stem
-    # Strip langium_ prefix if present
-    base_stem = stem[len("langium_") :] if stem.startswith("langium_") else stem
-
-    if sctx_dir:
-        return path.parent.parent / sctx_dir / f"{base_stem}.sctx"
-    else:
-        return path.parent / f"{base_stem}.sctx"
-
-
-def _derive_json_path(sctx_path: Path, langium_mode: bool) -> Path:
-    """Derive the expected JSON cache path next to the .sctx file."""
-    stem = sctx_path.stem
-    if langium_mode:
-        json_name = f"langium_{stem}.json"
-    else:
-        json_name = f"{stem}.json"
-    return sctx_path.parent / json_name
-
-
-def load_model(
-    path: Path, sctx_dir: str = "", no_reset: bool = False
-) -> list[dict[str, Any]]:
-    langium_mode = _get_langium_mode()
-
-    if (
-        no_reset
-        or (
-            not os.environ.get("FORCE_RESET") and not os.environ.get("FORCE_RESET_JSON")
-        )
-    ) and path.exists():
-        with open(path) as f:
-            return json.load(f)
-
-    sctx_path = _resolve_sctx(path, sctx_dir)
-
-    if langium_mode:
-        compile_sctx_to_langium(sctx_path, path)
-    else:
-        compile_sctx_to_json(sctx_path, path)
-
-    with open(path) as f:
-        return json.load(f)
-
-
-def compile_sctx_to_json(sctx_path: Path, output_path: Path | None = None):
-    jar_path = get_java_jar_path()
-
-    if not jar_path:
-        raise FileNotFoundError("KiCo Jar not found\n")
-
-    result = subprocess.run(
-        [
-            "java",
-            "-jar",
-            jar_path,
-            "-s",
-            "de.cau.cs.kieler.sccharts.SCTXToJSON",
-            "-o",
-            str(sctx_path.with_suffix(".json"))
-            if output_path is None
-            else output_path.with_suffix(".json"),
-            str(sctx_path),
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
+    string_inputs = (
+        str(inputs).replace("'", '"').replace("False", "false").replace("True", "true")
     )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"Failed to compile {sctx_path} using JAR at {jar_path}:\n{result.stderr}"
-        )
-
-
-def compile_sctx_to_langium(sctx_path: Path, output_path: Path | None = None):
-    if output_path is not None:
-        out_path = output_path
-    else:
-        out_path = _derive_json_path(sctx_path, langium_mode=True)
-
-    out_path.parent.mkdir(parents=True, exist_ok=True)
 
     result = subprocess.run(
         [
             "npm",
             "run",
-            "convert-sctx",
-            str(sctx_path),
-            str(out_path),
+            "cli" if not _profile_mode() else "cli-test-prof",
+            "--",
+            str(model_path),
+            f"{'-Wonly' if wonly else ''}",
+            "-i",
+            f"{string_inputs}",
         ],
         check=False,
         capture_output=True,
         text=True,
+        env=env,
     )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"Failed to compile {sctx_path} using langium converter:\n{result.stderr}"
-        )
+
+    return result
 
 
 class TestRunner:
-    __test__ = False
+    __test__: bool = False
 
-    def __init__(self, name: str, path: Path | None = None, no_reset: bool = False):
-        self.name = name
-        if path is not None:
-            self.model = load_model(path, no_reset=no_reset)
-        else:
-            self.model = load_model_name(name, no_reset)
+    def __init__(
+        self,
+        model_path: Path | str,
+        seed: int = 42,
+        wonly: bool = False,
+        no_log: bool = False,
+    ):
+        self.jar_path: str = get_java_jar_path()
+        if not self.jar_path or self.jar_path == "":
+            raise FileNotFoundError("KiCo not found\n")
 
-    def setup(self, wonly=False, seed: int = 42):
-        self.random = random.Random(seed)
+        self.random: random.Random = random.Random(42)
+        if isinstance(model_path, str):
+            model_path = Path(model_path).resolve()
 
-        resp = requests.post(
-            f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+        self.model_path: Path = model_path
+        self.wonly: bool = wonly
+        self.no_log: bool = no_log
+        self._model_info: dict | None = None
+        # Keep reference to original path (before suffix changes)
+        self._original_model_path: Path = model_path
+
+        if not _langium_mode() or _cache_langium_mode():
+            self.model_path = self.model_path.with_suffix(".json")
+
+    def kico_compile_sctx_to_json(
+        self, sctx_path: Path, output_path: Path | None = None
+    ):
+        """
+        If the output path is not set, it defaults to save the json file
+        in the same place as the sctx and with the same name
+        """
+
+        if not self.jar_path:
+            raise FileNotFoundError("KiCo not found\n")
+
+        result = subprocess.run(
+            [
+                "java",
+                "-jar",
+                self.jar_path,
+                "-s",
+                "de.cau.cs.kieler.sccharts.SCTXToJSON",
+                "-o",
+                str(sctx_path.with_suffix(".json"))
+                if output_path is None
+                else output_path,
+                str(sctx_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
         )
 
-        if resp.status_code == 500 and "reference" in resp.json():
-            sctx_ref = Path(resp.json()["reference"][5:])
-            # string starts with file: #TOOD: not always
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to compile {sctx_path} using JAR at {self.jar_path}:\n{result.stderr}"
+            )
 
-            if _get_langium_mode():
-                compile_sctx_to_langium(sctx_ref)
+    def __run_kico_system(self, input: Path, output: Path, system: str):
+        if not self.jar_path:
+            raise FileNotFoundError("KiCo not found\n")
+
+        result = subprocess.run(
+            [
+                "java",
+                "-jar",
+                self.jar_path,
+                "-s",
+                system,
+                "-o",
+                str(output),
+                str(input),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to run system {system} on {input} using JAR at {self.jar_path}:\n{result.returncode}, {result.stderr}"
+            )
+
+    def kico_compile_sctx_to_exe(
+        self, sctx_path: Path, output_path: Path | None = None
+    ):
+        """
+        If the output path is not set, it defaults to save the json file
+        in the same place as the sctx and with the same name
+        """
+
+        output_path = (
+            sctx_path.with_suffix(".exe") if output_path is None else output_path
+        )
+        self.__run_kico_system(
+            sctx_path, output_path, "de.cau.cs.kieler.sccharts.simulation.netlist.c"
+        )
+
+    def langium_compile_sctx_to_json(
+        self, sctx_path: Path, output_path: Path | None = None
+    ):
+        """
+        If the output path is not set, it defaults to save the json file
+        in the same place as the sctx and with the same name
+        with the prefix 'langium_'
+        """
+
+        if output_path is None:
+            name = "langium_" + sctx_path.with_suffix(".json").name
+            output_path = sctx_path.parent / name
+
+        result = subprocess.run(
+            [
+                "npm",
+                "run",
+                "convert-sctx",
+                str(sctx_path),
+                output_path,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to compile {sctx_path} using langium converter:\n{result.stderr}"
+            )
+
+    def __run_json(self, inputs: list[dict[str, Any]]):
+        path = self.model_path
+        if _cache_langium_mode():
+            name = "langium_" + self.model_path.name
+            path = self.model_path.parent / name
+
+        if _reset_json_mode() or not os.path.exists(path):
+            if _langium_mode():
+                self.langium_compile_sctx_to_json(self.model_path.with_suffix(".sctx"))
             else:
-                compile_sctx_to_json(sctx_ref)
+                self.kico_compile_sctx_to_json(self.model_path.with_suffix(".sctx"))
 
-            resp2 = requests.post(
-                f"{URL}/setup", json={"model": self.model, "temp_wonly": wonly}
+        result = run_npm(path, inputs, self.wonly)
+
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to run model {path}:\n{result.stderr}")
+
+        return result
+
+    def __run_sctx(self, inputs: list[dict[str, Any]]):
+        result = run_npm(self.model_path.with_suffix(".sctx"), inputs, self.wonly)
+
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to run model {self.model_path}:\n{result.stderr}"
             )
 
-            assert resp2.status_code == 200, (
-                f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
-            )
+        return result
+
+    def parse_interpreter_output(self, stdout: str) -> list[dict[str, Any]]:
+        # The stdout can begin with 'Ambiguous Alternatives Detected ...'
+        # from langium, which can include a '{' so this needs to be filtered out
+        output_start = stdout.index("Setup successful")
+        output_start = stdout[output_start:].index("{") + output_start
+
+        if "Model terminated - Final Variables:" in stdout:
+            stdout = stdout[: stdout.index("Model terminated - Final Variables:")]
+
+        # Remove lines starting with [...] key words
+        filter_words = ["[WARNING]", "[MODEL PRINT]"]
+        for word in filter_words:
+            if word in stdout:
+                stdout = "\n".join(
+                    [line for line in stdout.splitlines() if not line.startswith(word)]
+                )
+
+        stdout = stdout[output_start:].replace("}\n{", "},{")
+
+        outputs: list[dict[str, Any]] = json.loads(f"[{stdout}]")[1:]
+
+        return outputs
+
+    def prePass(self, system: str):
+        if system == "":
             return
 
-        assert resp.status_code == 200, (
-            f"{resp.status_code}, Setup failed for {self.name}: {resp.text}"
+        PRE_PASS_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Add path to file name to avoid collisions
+        parent_key = str(self.model_path.parent).replace(os.sep, "-")
+        safe_name = f"{parent_key}-{self.model_path.stem}.sctx"
+        path = PRE_PASS_DIR / safe_name
+
+        if _reset_pre_pass_mode() or not os.path.exists(path):
+            self.__run_kico_system(self.model_path, path, system)
+
+        self.model_path = path
+
+    def _get_model_info(self) -> dict | None:
+        """Lazily compute and cache model metadata."""
+        if self._model_info is None:
+            # Compute on the original .sctx path (before suffix changes)
+            sctx_path = Path(self.model_path)
+            if not sctx_path.suffix in (".json", ".exe"):
+                sctx_path = sctx_path.with_suffix(".sctx")
+            self._model_info = get_model_info(sctx_path)
+        return self._model_info
+
+    def run(self, inputs: list[dict[str, Any]]):
+        result: subprocess.CompletedProcess[str]
+        try:
+            if (not _langium_mode()) or _cache_langium_mode():
+                result = self.__run_json(inputs)
+            else:
+                result = self.__run_sctx(inputs)
+
+        except Exception as e:
+            return [{"status": "error", "error": str(e)}]
+
+        parsed_output = self.parse_interpreter_output(result.stdout)
+
+        if _profile_mode() and not self.no_log:
+            model_info = self._get_model_info()
+            create_custom_log(
+                parsed_output,
+                str(self.model_path.name),
+                "interpreter",
+                model_info=model_info,
+            )
+
+        return parsed_output
+
+    def generate_expected(
+        self,
+        inputs: list[dict[str, Any]],
+        variables: list[str],
+    ) -> list[dict[str, Any]]:
+        """Run kico.jar compiled model tick-by-tick and return filtered outputs.
+
+        Compiles the .sctx file to an ELF executable,
+        feeds each input via stdin and parses JSON output from stdout
+
+        Usage in tests:
+            # Generate expected output without saving to file
+            expected = generate_expected("ABO", inputs, ["A", "B", "O1", "O2"])
+            assert runner.run(inputs) == expected
+        """
+
+        exe_path: Path = self.model_path.with_suffix(".exe")
+
+        if not exe_path.exists() or _reset_exe_mode():
+            self.kico_compile_sctx_to_exe(self.model_path.with_suffix(".sctx"))
+
+        proc = subprocess.Popen(
+            [str(exe_path)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
+
+        assert proc.stdin is not None
+        assert proc.stdout is not None
+
+        # Discard initial state output
+        proc.stdout.readline()
+
+        outputs: list[dict[str, Any]] = []
+        for i, inp in enumerate(inputs):
+            try:
+                _ = proc.stdin.write(json.dumps(inp) + "\r\n")
+                proc.stdin.flush()
+                line = proc.stdout.readline()
+
+                if not line:
+                    break
+
+                result = json.loads(line)
+
+            except (json.JSONDecodeError, BrokenPipeError) as e:
+                raise RuntimeError(
+                    f"Failed to process tick {i} for '{exe_path}': {e}"
+                ) from e
+
+            terminated: bool = result.get("_TERM", result.get("terminated", False))
+            outputs.append(
+                {
+                    "terminated": terminated,
+                    "variables": {v: result.get(v) for v in variables},
+                    "telemetry": {
+                        "ticktime": result.get("#ticktime") / 1_000_000
+                    },  # KiCo Simulations use nano seconds, we use milliseconds
+                }
+            )
+
+            if terminated:
+                break
+
+        try:
+            proc.stdin.close()
+            proc.wait(timeout=10)
+        except Exception:
+            proc.kill()
+            proc.wait()
+
+        if _profile_mode() and not self.no_log:
+            model_info = self._get_model_info()
+            create_custom_log(
+                outputs,
+                str(self.model_path.name),
+                "kico",
+                model_info=model_info,
+            )
+
+        return outputs
 
     def add_random_inputs(
         self,
@@ -224,197 +443,19 @@ class TestRunner:
                 ]
             case "bool":
                 return [{name: self.random.choice([True, False])} for _ in range(n)]
+            case "string":
+                if number_range is None:
+                    raise ValueError("number_range must be specified for int type")
+                return [
+                    {
+                        name: generate_random_string(
+                            self.random.randint(
+                                int(number_range[0]), int(number_range[1])
+                            ),
+                            self.random,
+                        )
+                    }
+                    for _ in range(n)
+                ]
             case _:
                 return []
-
-    def run(self, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        output = []
-        for _, inp in enumerate(inputs):
-            resp = requests.post(f"{URL}/tick", json={"inputs": inp})
-
-            output.append(resp.json())
-            if resp.status_code == 200:
-                output[-1]["status"] = "fine"
-            elif resp.status_code == 500:
-                output[-1]["status"] = "error"
-                break
-            else:
-                output[-1]["status"] = "unknown"
-
-            if resp.json().get("terminated"):
-                break
-
-        return output
-
-    def reset(self):
-        resp = requests.get(f"{URL}/reset")
-        assert resp.status_code == 200, (
-            f"{resp.status_code}, Reset failed for {self.name}: {resp.text}"
-        )
-
-
-def assert_subset(actual: list[dict[str, Any]], expected: list[dict[str, Any]]) -> None:
-    """Assert actual matches expected as a subset (extra fields in actual ignored).
-    Extra trailing empty dicts in either list are silently allowed.
-    This is because of the differing behaviour of the interpreter cli and the KiCo simulation cli, which continues even if the model is terminated.
-    """
-    for item in actual[len(expected) :]:
-        assert item["variables"] == {}, (
-            f"Length mismatch: extra step(s) in actual with content: {item}"
-        )
-    for item in expected[len(actual) :]:
-        assert item["variables"] == {}, (
-            f"Length mismatch: extra step(s) in expected with content: {item}"
-        )
-
-    for i, (a, e) in enumerate(zip(actual, expected)):
-        assert set(e.keys()).issubset(set(a.keys())), (
-            f"Step {i}: expected keys not subset of actual: {e.keys()}"
-        )
-        for k, v in e.items():
-            if isinstance(v, dict):
-                assert isinstance(a[k], dict), f"Step {i}: {k} is not a dict"
-                _assert_subset_dict(a[k], v, f"step {i}.{k}")
-            else:
-                assert a[k] == v, f"Step {i}.{k}: expected {v}, got {a[k]}"
-
-
-def _assert_subset_dict(
-    actual: dict[str, Any], expected: dict[str, Any], prefix: str
-) -> None:
-    for k, v in expected.items():
-        full_key = f"{prefix}.{k}"
-
-        match = re.match(r"^(.+?)(\[.*\])+$", k)
-
-        if match:
-            var_name = match.group(1)
-            indices_str = match.group(2)
-            assert var_name in actual, f"{full_key}: key missing"
-
-            source = actual[var_name]
-
-            indices = re.findall(r"\[(\d+)\]", indices_str)
-            for idx_str in indices:
-                idx = int(idx_str)
-                assert isinstance(source, list), f"{full_key}: expected a list"
-                assert idx < len(source), (
-                    f"{full_key}: index {idx} out of range (length {len(source)})"
-                )
-                source = source[idx]
-
-            assert source == v, f"{full_key}: expected {v}, got {source}"
-        elif isinstance(v, dict):
-            assert k in actual, f"{full_key}: key missing"
-            assert isinstance(actual[k], dict), f"{full_key} is not a dict"
-            _assert_subset_dict(actual[k], v, full_key)
-        else:
-            assert k in actual, f"{full_key}: key missing"
-            assert actual[k] == v, f"{full_key}: expected {v}, got {actual[k]}"
-
-
-def generate_expected(
-    name: str,
-    inputs: list[dict[str, Any]],
-    variables: list[str],
-    jar_path: str | None = None,
-    sctx_dir: Path | None = None,
-) -> list[dict[str, Any]]:
-    """Run kico.jar compiled model tick-by-tick and return filtered outputs.
-
-    Compiles the .sctx file to an ELF executable (stored at <BASE_DIR>/exe/<name>),
-    feeds each input via stdin and parses JSON output from stdout,
-    then writes the expected output as JSON to <output_dir>/<name>.json (if output_dir is set).
-
-    Usage in tests:
-        # Generate expected output without saving to file
-        expected = generate_expected("ABO", inputs, ["A", "B", "O1", "O2"])
-        assert runner.run(inputs) == expected
-    """
-    exe_cache_dir = BASE_DIR / "exe"
-    exe_path = exe_cache_dir / f"{name}.exe"
-
-    if jar_path is None:
-        jar_path = get_java_jar_path()
-
-    sctx_file = (sctx_dir or (BASE_DIR / "sctx")) / f"{name}.sctx"
-
-    if not exe_path.exists() or os.environ.get("FORCE_RESET"):
-        if not jar_path:
-            raise FileNotFoundError(
-                f"Java JAR not configured in {CONFIG_FILE}. "
-                f"Set 'java_jar_path' or place a compiled {exe_cache_dir}/{name}.exe"
-            )
-        if not sctx_file.exists():
-            raise FileNotFoundError(
-                f"Source .sctx file not found at {sctx_file} and no JAR configured."
-            )
-        exe_cache_dir.mkdir(parents=True, exist_ok=True)
-        result = subprocess.run(
-            [
-                "java",
-                "-jar",
-                jar_path,
-                "-s",
-                "de.cau.cs.kieler.sccharts.simulation.netlist.c",
-                "-o",
-                str(exe_path),
-                str(sctx_file),
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to compile {name} using JAR at {jar_path}:\n{result.stderr}"
-            )
-
-    proc = subprocess.Popen(
-        [str(exe_path)],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-
-    assert proc.stdin is not None
-    assert proc.stdout is not None
-
-    # Discard initial state output
-    proc.stdout.readline()
-
-    outputs: list[dict[str, Any]] = []
-    for i, inp in enumerate(inputs):
-        try:
-            proc.stdin.write(json.dumps(inp) + "\r\n")
-            proc.stdin.flush()
-            line = proc.stdout.readline()
-
-            if not line:
-                break
-
-            result = json.loads(line)
-
-        except (json.JSONDecodeError, BrokenPipeError) as e:
-            raise RuntimeError(f"Failed to process tick {i} for '{name}': {e}") from e
-
-        terminated = result.get("_TERM", result.get("terminated", False))
-        outputs.append(
-            {
-                "terminated": terminated,
-                "variables": {v: result.get(v) for v in variables},
-            }
-        )
-
-        if terminated:
-            break
-
-    try:
-        proc.stdin.close()
-        proc.wait(timeout=10)
-    except Exception:
-        proc.kill()
-        proc.wait()
-
-    return outputs

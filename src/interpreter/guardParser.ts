@@ -1,16 +1,28 @@
-import { sanitizeKeysAndExpr } from "./jsKeywords.js";
+import { raise } from "./errors.js";
+import { Context, Severity, StateNode } from "./types.js";
+import { parseExpression } from "./actionParser.js";
 
+/**
+ * Evaluate a guard expression and return a boolean result.
+ */
 export function parseGuard(
   guard: string,
-  variables: Map<string, unknown>,
+  context: Context,
+  node: StateNode,
 ): boolean {
   if (!guard || guard.trim() === "") return true;
 
-  const keys = Array.from(variables.keys());
-  const values = Array.from(variables.values());
-
-  const { safeKeys, safeExpr } = sanitizeKeysAndExpr(keys, guard);
-
-  const fn = new Function(...safeKeys, `return (${safeExpr})`);
-  return fn(...values);
+  try {
+    const result = parseExpression(guard, context, "bool", node);
+    // Guards always expect boolean; coerce numeric results.
+    if (result === 0 || result === false || result == null) return false;
+    return true;
+  } catch (e) {
+    raise(
+      context,
+      Severity.Error,
+      `Failed to parse guard: ${guard} at node ${node.id}, Error: ${e}`,
+    );
+    return false;
+  }
 }

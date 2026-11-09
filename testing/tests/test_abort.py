@@ -1,10 +1,10 @@
-from tests.base import TestRunner, assert_subset, generate_expected
+from tests.base import TestRunner
+from tests.utils import assert_subset
 
 
 def test_join():
     """Test Joins"""
-    runner = TestRunner("Abort")
-    runner.setup()
+    runner = TestRunner("./models/Abort")
 
     inputs = [
         {"A": False, "Strong": False, "Weak": False, "Join": False},
@@ -14,8 +14,8 @@ def test_join():
         {"A": False, "Strong": False, "Weak": False, "Join": False},
     ]
 
-    expected = generate_expected(
-        "Abort", inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
+    expected = runner.generate_expected(
+        inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
     )
 
     assert_subset(runner.run(inputs), expected)
@@ -23,8 +23,7 @@ def test_join():
 
 def test_strong():
     """Test Strong Aborts"""
-    runner = TestRunner("Abort")
-    runner.setup()
+    runner = TestRunner("./models/Abort")
 
     inputs = [
         {"A": False, "Strong": False, "Weak": False, "Join": False},
@@ -32,8 +31,8 @@ def test_strong():
         {"A": False, "Strong": False, "Weak": False, "Join": False},
     ]
 
-    expected = generate_expected(
-        "Abort", inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
+    expected = runner.generate_expected(
+        inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
     )
 
     assert_subset(runner.run(inputs), expected)
@@ -41,8 +40,7 @@ def test_strong():
 
 def test_weak():
     """Test Weak Aborts"""
-    runner = TestRunner("Abort")
-    runner.setup()
+    runner = TestRunner("./models/Abort")
 
     inputs = [
         {"A": False, "Strong": False, "Weak": False, "Join": False},
@@ -50,8 +48,8 @@ def test_weak():
         {"A": False, "Strong": False, "Weak": False, "Join": False},
     ]
 
-    expected = generate_expected(
-        "Abort", inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
+    expected = runner.generate_expected(
+        inputs, ["A", "Join", "Weak", "Strong", "O1", "OJ", "OW", "OS"]
     )
 
     assert_subset(runner.run(inputs), expected)

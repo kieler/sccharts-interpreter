@@ -1,10 +1,23 @@
 import { Severity, TickResult } from "./types.js";
 import { clearMessages, raise } from "./errors.js";
-import { parseAction } from "./actionParser.js";
+import { parseAction, parseExpression } from "./actionParser.js";
 import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
 import { assignInputVariables } from "./utils.js";
+import { getVariable, setPreVariables, setVariable, setVariableByIndex } from "./variables.js";
+
+// Navigate through array elements to get a specific indexed value.
+function getIndexedValue(value: any, indices: (number | string)[], context: Context, node: StateNode): any {
+  if (indices.length === 0) return value;
+  let current = value;
+  for (const idx of indices) {
+    if (!Array.isArray(current)) return undefined;
+    const resolvedIndex = typeof idx === "string" ? parseExpression(idx, context, "int", node) : idx;
+    current = current[resolvedIndex];
+  }
+  return current;
+}
 
 function addRegionsToRuntime(
   graphs: StateGraph[] | undefined,
@@ -48,27 +61,33 @@ function walkEdge(
 
   const guardPass =
     !edge.transition.guard ||
-    parseGuard(edge.transition.guard, context.variables);
+    parseGuard(edge.transition.guard, context, edge.from);
 
   if (!guardPass) return false;
   if (!edge.to) return false;
 
   if (edge.transition.preemption == "termination") {
-    // edge.from.subgraphs == undefined should never be the case in a properly defined model
-    // If the guard passes and the inner behaviour is done, walk the Edge
+    // Join edges can come from states and regions or from reference charts
 
-    const subGraphDone = edge.from.subgraphs
-      ?.flatMap((graph) => graph.terminated)
-      .every((x) => x);
-    if (!subGraphDone) return false;
+    if (edge.from.subgraphs != undefined) {
+      // This is a regular subgraph from a states inner logic or region
+      const subGraphsDone = edge.from.subgraphs
+        ?.flatMap((graph) => graph.terminated)
+        .every((x) => x);
+      if (!subGraphsDone) return false;
+    } else {
+      // This is with Reference Charts
+      if (!edge.from.referencedContext?.graph.terminated) return false;
+    }
   }
 
   // Clear the history of the state upon entry and all subgraphs
   if (!edge.transition.history) resetNode(edge.to, context);
 
-  doActions(edge.from.exitActions, context);
+  doActions(edge.from.exitActions, context, edge.from);
 
-  if (edge.transition.action) parseAction(edge.transition.action, context);
+  if (edge.transition.action)
+    parseAction(edge.transition.action, context, edge.from);
 
   if (!edge.to.state.isFinal) edge.to.graph.terminated = false;
   edge.to.graph.activeNode = edge.to;
@@ -82,16 +101,16 @@ function walkEdge(
 
   processNode(edge.to, context, true);
 
-  // Implicitly consider all edges from a connector to be immediate for now.
+  // Implicitly consider all edges from a connector to be immediate
   if (edge.to.state.isConnector) processNode(edge.to, context);
 
   return true;
 }
 
-function doActions(actions: Action[], context: Context) {
+function doActions(actions: Action[], context: Context, node: StateNode) {
   for (const action of actions) {
-    if (!action.guard || parseGuard(action.guard, context.variables)) {
-      parseAction(action.action, context);
+    if (!action.guard || parseGuard(action.guard, context, node)) {
+      parseAction(action.action, context, node);
     }
   }
 }
@@ -107,7 +126,7 @@ function processNode(
   context.activeNodes.add(node);
 
   if (entering) {
-    doActions(node.entryActions, context);
+    doActions(node.entryActions, context, node);
   }
 
   for (const edge of node.strongEdges) {
@@ -116,7 +135,7 @@ function processNode(
   }
 
   if (!entering) {
-    doActions(node.duringActions, context);
+    doActions(node.duringActions, context, node);
   }
 
   if (entering) {
@@ -133,26 +152,50 @@ function processNode(
       }
     }
 
-    const subGraphDone = node.subgraphs
+    const subGraphsDone = node.subgraphs
       ?.flatMap((graph) => graph.terminated)
       .every((x) => x);
-    if (subGraphDone) {
-      doActions(node.exitActions, context);
+    if (subGraphsDone) {
+      doActions(node.exitActions, context, node);
     }
   }
 
   if (node.referencedContext && node.referencedVarMap) {
-    for (const [outer, inner] of node.referencedVarMap.entries()) {
-      for (const i of inner) {
-        node.referencedContext.variables.set(i, context.variables.get(outer));
+    // INPUT PASS: outer → inner
+    for (const [outer, mappings] of node.referencedVarMap.entries()) {
+      for (const mapping of mappings) {
+        if (!node.referencedContext.inputVariables.includes(mapping.from!)) continue;
+
+        let outerVal = getVariable(outer, node, context);
+        if (outerVal === undefined) {
+          outerVal = parseExpression(outer, context, "", node);
+        }
+
+        // If indices exist, extract the specific element from the outer array; 
+        // otherwise use the whole value.
+        const innerVal = mapping.indices.length > 0
+          ? getIndexedValue(outerVal, mapping.indices, context, node)
+          : outerVal;
+
+        setVariable(mapping.from!, innerVal, node, node.referencedContext);
       }
     }
 
-    const results = tick(node.referencedContext, {}, false);
+    const _results = tick(node.referencedContext, {}, false);
 
-    for (const [outer, inner] of node.referencedVarMap.entries()) {
-      for (const i of inner) {
-        context.variables.set(outer, node.referencedContext.variables.get(i));
+    // OUTPUT PASS: inner → outer
+    for (const [outer, mappings] of node.referencedVarMap.entries()) {
+      for (const mapping of mappings) {
+        if (!node.referencedContext.outputVariables.includes(mapping.from!)) continue;
+
+        const innerVal = getVariable(mapping.from!, node, node.referencedContext);
+
+        // If indices exist, write to the specific element; otherwise replace whole variable.
+        if (mapping.indices.length > 0) {
+          setVariableByIndex(outer, mapping.indices, innerVal, node, context);
+        } else {
+          setVariable(outer, innerVal, node, context);
+        }
       }
     }
   }
@@ -168,17 +211,25 @@ function processNode(
 
 export function tick(
   context: Context,
-  inputs: any,
+  inputs: Record<string, unknown>,
   assignInputs: boolean = true,
 ): TickResult {
+  // assignInputs: True by default and only set to false, when the
+  //   tick of a reference chart is called, because that has its own
+  //   state and the inputs are set manually via the variable mapping
+
+  const startTime = performance.now();
+
   if (!context.graph.activeNode)
     return {
       terminated: false,
       variables: {},
       messages: [],
+      telemetry: { ticktime: performance.now() - startTime },
     };
 
-  context.preVariables = new Map(context.variables);
+  setPreVariables(context);
+
   if (assignInputs) assignInputVariables(context, inputs);
   processNode(context.graph.activeNode, context);
 
@@ -195,9 +246,25 @@ export function tick(
   const messages = context.messages;
   clearMessages();
   context.messages = [];
+
+  const ticktime = performance.now() - startTime;
+
+  var returnVars: Record<string, any> = {};
+  for (const varName of context.variables.keys()) {
+    const value = context.variables.get(varName);
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        returnVars[v.scope + "_" + varName] = v.value;
+      }
+    } else {
+      returnVars[varName] = value!.value;
+    }
+  }
+
   return {
     terminated: context.graph.terminated,
-    variables: Object.fromEntries(context.variables),
+    variables: returnVars,
     messages: messages,
+    telemetry: { ticktime: ticktime },
   };
 }

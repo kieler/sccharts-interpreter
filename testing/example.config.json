@@ -1,3 +1,10 @@
-{
-	"model_path": ""
-}
+[
+	{
+		"model_path": "/path/to/directory",
+		"prePass": ""
+	},
+	{
+		"model_path": "/path/to/directory",
+		"prePass": "kico-system"
+	}
+]

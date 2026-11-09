@@ -8,44 +8,84 @@ import pytest
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run integration tests with pytest")
-    parser.add_argument(
+    _ = parser.add_argument(
         "tests",
         nargs="*",
         default=["all"],
         help='Test names (e.g. "abo ao im") or "all"',
     )
-    parser.add_argument(
-        "-r",
-        "--reset",
+    _ = parser.add_argument(
+        "--reset-exe",
         required=False,
         default=False,
         action="store_true",
-        help="Always recompile the JSON and EXE",
+        help="Recompile the EXE",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--reset-json",
         required=False,
         default=False,
         action="store_true",
-        help="Only recompile the JSON (not EXE)",
+        help="Recompile the JSON",
     )
+    _ = parser.add_argument(
+        "--reset-prepass",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Redo the sctx to sctx prePasses",
+    )
+    _ = parser.add_argument(
+        "--no-langium",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Don't use the langium based sctx2json converter for the tests",
+    )
+    _ = parser.add_argument(
+        "--cache-langium",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Cache the sctx2json convertion results",
+    )
+    _ = parser.add_argument(
+        "--no-ktraces",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Do not execute the ktrace based tests from the provate models repository",
+    )
+
+    _ = parser.add_argument(
+        "--profile",
+        required=False,
+        default=False,
+        action="store_true",
+        help="Profile the test execution",
+    )
+
     args, extra = parser.parse_known_args()
 
-    if args.reset:
-        os.environ["FORCE_RESET"] = "1"
-    elif args.reset_json:
+    if args.reset_exe:
+        os.environ["FORCE_RESET_EXE"] = "1"
+    if args.reset_json:
         os.environ["FORCE_RESET_JSON"] = "1"
+    if args.no_langium:
+        os.environ["NO_LANGIUM"] = "1"
+    if args.cache_langium:
+        os.environ["CACHE_LANGIUM_JSON"] = "1"
+    if args.no_ktraces:
+        os.environ["NO_KTRACES"] = "1"
+    if args.reset_prepass:
+        os.environ["FORCE_RESET_PREPASS"] = "1"
+    if args.profile:
+        os.environ["PROFILE"] = "1"
 
     tests_dir = Path(__file__).parent / "tests"
 
     test_paths = []
     pytest_extra = ["-v"]
-
-    # Pass through --langium and --no-ktraces as-is for conftest to pick up
-    if "--langium" in extra:
-        pytest_extra.append("--langium")
-    if "--no-ktraces" in extra:
-        pytest_extra.append("--no-ktraces")
 
     if "all" in args.tests:
         test_paths = ["tests/"]
