@@ -45,7 +45,6 @@ import { EmptyFileSystem } from "langium";
 import { parseHelper } from "langium/test";
 
 const fileInput = document.getElementById("json-file") as HTMLInputElement;
-const sctxTabButton = document.getElementById("sctx-tab") as HTMLButtonElement;
 
 const toggleBtn = document.getElementById("toggle-log") as HTMLButtonElement;
 const variablesPanel = document.getElementById(
@@ -83,9 +82,6 @@ const sctxTextInput = document.getElementById(
 const compileButton = document.getElementById(
   "compile-button",
 ) as HTMLButtonElement;
-const diagramButton = document.getElementById(
-  "diagram-button",
-) as HTMLButtonElement;
 const diagramImage = document.getElementById(
   "diagram-image",
 ) as HTMLImageElement;
@@ -95,36 +91,6 @@ let tickCount = 0;
 let loopInputs = false;
 let context: Context | unknown;
 let scchartModel: SCChartModel | undefined;
-// let compilerAvailable: boolean = await checkCompilerAvailability();
-
-// async function checkCompilerAvailability() {
-//   log("[Compiler] Checking connection...");
-//   try {
-//     const resp = await fetch("http://localhost:8080/ping", {
-//       signal: AbortSignal.timeout(5000),
-//     });
-//     const data = await resp.json();
-//     if (data.message === "pong") {
-//       log("[Compiler] connected");
-//       return true;
-//     }
-//     throw new Error("not connected: " + JSON.stringify(data));
-//   } catch (err: any) {
-//     log("[Compiler] Connection failed");
-//     return false;
-//   }
-// }
-
-// if (compilerAvailable) {
-//   sctxTabButton.disabled = false;
-// } else {
-//   sctxTabButton.disabled = true;
-// }
-
-// sctxTabButton.addEventListener("click", () => {
-//   sctxPanel.style.display =
-//     sctxPanel.style.display === "none" ? "flex" : "none";
-// });
 
 function createVarCard(
   name: string,
@@ -324,44 +290,6 @@ compileButton.addEventListener("click", async () => {
     const result = convertSCTXtoSchema(document.parseResult.value, "");
 
     loadModel(result);
-  } catch (err: any) {
-    log(`[Compiler] Compilation failed: ${(err as Error).message}`, "error");
-    return false;
-  }
-});
-
-diagramButton.addEventListener("click", async () => {
-  log("[Compiler] Creating Diagram...");
-  const text = sctxTextInput.value;
-
-  try {
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(text);
-    const base64 = arrayBufferToBase64(bytes.buffer);
-
-    const resp = await fetch("http://localhost:8080/diagram", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sctx_base64: base64, filename: "model.sctx" }),
-    });
-
-    if (!resp.ok) {
-      log(`[Compiler] ${await resp.text()}`, "error");
-      return false;
-    }
-
-    const result = (await resp.json()) as {
-      type: string;
-      data?: unknown;
-      message?: string;
-    };
-
-    if (result.type === "error") {
-      log(`[Compiler] ${result.message}`, "error");
-      return false;
-    }
-
-    diagramImage.src = `data:image/png;base64,${result.data}`;
   } catch (err: any) {
     log(`[Compiler] Compilation failed: ${(err as Error).message}`, "error");
     return false;
