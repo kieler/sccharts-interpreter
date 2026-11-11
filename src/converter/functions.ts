@@ -271,43 +271,51 @@ function findSctxFiles(baseDir: string): string[] {
 
 async function manageImports(
   imports: string[],
-  directory: string,
+  directoryOrImportPaths: string | string[],
 ): Promise<Map<string, string>> {
-  // chart_name -> file_path
   let models: Map<string, string> = new Map();
 
-  for (const imp of imports) {
-    // Don't double-append .sctx if the import already has the extension
-    const impFile = imp.endsWith(".sctx") ? imp : imp + ".sctx";
-    let fullPath = path.resolve(path.join(directory, impFile));
+  if (typeof directoryOrImportPaths === "string") {
+    const directory = directoryOrImportPaths;
+    for (const imp of imports) {
+      const impFile = imp.endsWith(".sctx") ? imp : imp + ".sctx";
+      let fullPath = path.resolve(path.join(directory, impFile));
 
-    // If the direct path doesn't exist and the import is a bare name
-    // (no directory separators), fall back to recursive search
-    if (!existsSync(fullPath) && !imp.includes("/") && !imp.includes("\\")) {
-      const candidates = findSctxFiles(directory).filter((p) =>
-        p === impFile || path.basename(p) === impFile,
-      );
-
-      if (candidates.length === 0) {
-        // No match found — keep the original direct path so it fails with a clear error below
-      } else if (candidates.length === 1) {
-        fullPath = path.resolve(path.join(directory, candidates[0]));
-      } else {
-        console.error(
-          `Error: import "${imp}" matches multiple files:\n`,
-          candidates.map((c) => `  ${path.join(directory, c)}`).join("\n"),
+      if (!existsSync(fullPath) && !imp.includes("/") && !imp.includes("\\")) {
+        const candidates = findSctxFiles(directory).filter(
+          (p) => p === impFile || path.basename(p) === impFile,
         );
-        throw new Error(`Ambiguous import: "${imp}"`);
+
+        if (candidates.length === 0) {
+        } else if (candidates.length === 1) {
+          fullPath = path.resolve(path.join(directory, candidates[0]));
+        } else {
+          console.error(
+            `Error: import "${imp}" matches multiple files:\n`,
+            candidates.map((c) => `  ${path.join(directory, c)}`).join("\n"),
+          );
+          throw new Error(`Ambiguous import: "${imp}"`);
+        }
+      }
+
+      console.log("Importing", fullPath);
+
+      const parsedModel = await parseModelFile(fullPath);
+      const jsonModels = await convertSCTXtoSchema(parsedModel, fullPath);
+
+      for (const model of jsonModels) {
+        models.set(model.id, fullPath);
       }
     }
+  } else {
+    for (const impFile of directoryOrImportPaths) {
+      console.log("Importing", impFile);
+      const parsedModel = await parseModelFile(impFile);
+      const jsonModels = await convertSCTXtoSchema(parsedModel, impFile);
 
-    console.log("Importing", fullPath);
-
-    const parsedModel = await parseModelFile(fullPath);
-    const jsonModels = await convertSCTXtoSchema(parsedModel, fullPath);
-
-    for (const model of jsonModels) {
-      models.set(model.id, fullPath);
+      for (const model of jsonModels) {
+        models.set(model.id, impFile);
+      }
     }
   }
 
@@ -316,15 +324,21 @@ async function manageImports(
 
 export async function convertSCTXtoSchema(
   parsed: SCTX,
-  inputFilePath: string,
+  inputDirOrImportPaths: string | string[],
 ): Promise<SCChartModel> {
   const charts: State[] = [];
-  const directory = path.resolve(path.dirname(inputFilePath));
 
-  const knownModels: Map<string, string> = await manageImports(
-    parsed.imports,
-    directory,
-  );
+  let knownModels: Map<string, string> = new Map();
+
+  if (typeof inputDirOrImportPaths === "string") {
+    // Old behavior: resolve directory from file path
+    const directory = path.resolve(path.dirname(inputDirOrImportPaths));
+    knownModels = await manageImports(parsed.imports, directory);
+  } else {
+    // New behavior: treat as pre-resolved import URIs (no filesystem)
+    knownModels = await manageImports(parsed.imports, inputDirOrImportPaths);
+  }
+
   for (const chart of parsed.charts) {
     knownModels.set(chart.name, "this");
   }

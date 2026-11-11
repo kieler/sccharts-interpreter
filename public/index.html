@@ -14,11 +14,6 @@
         SCChart Interpreter v1 <span id="version-hash">(__GIT_HASH__)</span>
       </h1>
 
-      <label for="json-file" id="load-json-label" class="button load-file"
-        >Load JSON Model</label
-      >
-      <input id="json-file" type="file" accept=".json" style="display: none" />
-
       <a href="https://github.com/kieler/sccharts-interpreter" id="github-link">
         <svg
           data-component="Octicon"
@@ -48,7 +43,7 @@
           <label
             for="sctx-file"
             id="load-sctx-label"
-            class="button control-button load-file"
+            class="button control-button top-row-btn"
           >
             Upload SCTX
           </label>
@@ -59,8 +54,22 @@
             style="display: none"
           />
 
-          <button id="compile-button" class="control-button button">
-            Compile
+          <label
+            for="json-file"
+            id="load-json-label"
+            class="button control-button top-row-btn"
+          >
+            Upload JSON
+          </label>
+          <input
+            id="json-file"
+            type="file"
+            accept=".json"
+            style="display: none"
+          />
+
+          <button id="compile-button" class="control-button button top-row-btn">
+            Load Model
           </button>
         </div>
         <textarea

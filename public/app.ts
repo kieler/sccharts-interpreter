@@ -38,6 +38,8 @@ import {
   preProcess,
   convertSCTXtoSchema,
   createSCChartsServices,
+  getVariable,
+  getVariableType,
 } from "web-interpreter";
 import type { Context, TickResult, SCChartModel, SCTX } from "web-interpreter";
 
@@ -135,13 +137,21 @@ function logTermination(tick: number) {
 }
 
 function updateVariables(context: Context) {
+  const initialNode = context.graph.initalNode!;
   function helper(panel: HTMLDivElement) {
     for (let i = 0; i < panel.children.length; i++) {
-      const name =
-        panel.children[i].getElementsByClassName("name-element")[0].textContent;
+      const nameEl =
+        panel.children[i].getElementsByClassName("name-element")[0];
+      const name = nameEl ? String(nameEl.textContent || "") : "";
+      if (!name) continue;
 
-      panel.children[i].getElementsByClassName("value-element")[0].textContent =
-        context.variables.get(name);
+      const valueEl =
+        panel.children[i].getElementsByClassName("value-element")[0];
+      if (!valueEl) continue;
+
+      // getVariable handles Variable | Variable[] and scope resolution
+      const val = getVariable(name, initialNode, context);
+      valueEl.textContent = val != null ? String(val) : "";
     }
   }
   helper(inputsPanel);
@@ -154,14 +164,12 @@ function renderModel(context: Context) {
   inputsPanel.innerHTML = "";
   outputsPanel.innerHTML = "";
 
-  const allVars = new Set<string>();
-  for (const v of context.variables.keys()) allVars.add(v);
+  const varNames = Array.from(context.variables.keys()).sort();
+  const initialNode = context.graph.initalNode!;
 
-  const varList = Array.from(allVars).sort();
-
-  for (const name of varList) {
-    const value = context.variables.get(name);
-    const dataTyp = context.variableTypes.get(name) ?? "unknown";
+  for (const name of varNames) {
+    const value = getVariable(name, initialNode, context);
+    const dataTyp = getVariableType(name, initialNode, context) ?? "unknown";
     const isInput = context.inputVariables.includes(name);
     const isOutput = context.outputVariables.includes(name);
 
@@ -225,10 +233,16 @@ function loadModel(model: SCChartModel) {
   context = setupContext(model, false) as Context;
 
   log(`[OK] Model "${context.label}" loaded successfully.`);
-  modelNameEl.textContent = `Model: ${context.label}`;
+  modelNameEl.textContent = `Model: ${context.label} (Last tick: — ms)`;
 
   renderModel(context as Context);
-  logVariables(Object.fromEntries(context.variables), 0);
+
+  const varsForLog: Record<string, unknown> = {};
+  const initialNode = (context as Context).graph.initalNode!;
+  for (const [name] of (context as Context).variables.entries()) {
+    varsForLog[name] = getVariable(name, initialNode, context as Context);
+  }
+  logVariables(varsForLog, 0);
 
   tickButton.disabled = false;
   autoRunButton.disabled = false;
@@ -287,7 +301,8 @@ compileButton.addEventListener("click", async () => {
       throw new Error("Lexer or Parser errors occurred");
     }
 
-    const result = convertSCTXtoSchema(document.parseResult.value, "");
+    const result = await convertSCTXtoSchema(document.parseResult.value, []);
+    scchartModel = result;
 
     loadModel(result);
   } catch (err: any) {
@@ -308,6 +323,13 @@ function doTick(input: any): TickResult {
 
   logVariables(result.variables, tickCount);
   updateVariables(context);
+
+  // Update last tick time inline on model name
+  if (result.telemetry && "ticktime" in result.telemetry) {
+    const ticktime = Number(result.telemetry.ticktime);
+    modelNameEl.textContent = `Model: ${context.label} (Last tick: ${ticktime} ms)`;
+  }
+
   if (result.terminated) {
     tickButton.disabled = true;
     autoRunButton.disabled = true;

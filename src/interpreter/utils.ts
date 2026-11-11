@@ -119,9 +119,12 @@ export function setupContext(
   wonly: boolean,
   filePath: string | undefined = undefined,
   referenceMapping: Record<string, SCChartModel> | undefined = undefined,
+  localModel?: SCChartModel,
 ): Context {
   const valid = validateSCChart(model);
   if (!valid) throw new Error("Invalid SCChart Model JSON");
+
+  const effectiveLocalModel = localModel ?? model;
 
   const context = constructStateGraph(
     model,
@@ -129,7 +132,9 @@ export function setupContext(
     filePath,
     "",
     referenceMapping,
+    effectiveLocalModel,
   );
+  context.localModels = effectiveLocalModel;
   context.graph.activeNode = context.graph.initalNode;
 
   return context;

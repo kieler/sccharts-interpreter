@@ -136,32 +136,46 @@ function constructRegion(
     }
 
     if (state.reference) {
-      if (!readFileSync) {
-        throw new Error("File loading not supported");
-      }
-      if (!filePath) {
+      // Determine if this is a local reference (no targetFile = chart in same model array)
+      const isLocalRef = !state.reference.targetFile;
+
+      let refModel: SCChartModel;
+
+      if (isLocalRef && context.localModels) {
+        // Local reference: find the chart by targetID in the full original model
+        const refState = context.localModels.find(
+          (s) => s.id === state.reference!.targetID,
+        );
+        if (!refState) {
+          throw new Error(
+            `Local reference "${state.reference.targetID}" not found`,
+          );
+        }
+        refModel = [refState];
+      } else if (isLocalRef) {
         throw new Error("File path not provided");
-      }
-
-      let refModel;
-      let path = state.reference.targetFile
-        ? state.reference.targetFile.replace("file:", "")
-        : filePath;
-      path = path.replace(".sctx", ".json").trim();
-
-      if (referenceMapping) {
-        if (!referenceMapping[path])
-          throw new Error(`Reference missing: ${path}`);
-
-        refModel = referenceMapping[path];
+      } else if (!readFileSync) {
+        throw new Error("File loading not supported");
+      } else if (!filePath) {
+        throw new Error("File path not provided");
       } else {
-        try {
-          const jsonPath = state.reference
-            .targetFile!.replace(".sctx", ".json")
-            .replace("file:", "");
-          refModel = JSON.parse(readFileSync(jsonPath, "utf-8"));
-        } catch (e) {
-          throw new Error(`Reference missing - ${e}: ${path}`);
+        // External reference: load from file
+        let path = state.reference
+          .targetFile!.replace("file:", "")
+          .replace(".sctx", ".json")
+          .trim();
+
+        if (referenceMapping) {
+          if (!referenceMapping[path])
+            throw new Error(`Reference missing: ${path}`);
+
+          refModel = referenceMapping[path];
+        } else {
+          try {
+            refModel = JSON.parse(readFileSync(path, "utf-8"));
+          } catch (e) {
+            throw new Error(`Reference missing - ${e}: ${path}`);
+          }
         }
       }
 
@@ -171,6 +185,7 @@ function constructRegion(
         filePath,
         state.reference.targetID,
         referenceMapping,
+        context.localModels, // carry the full model through nested calls
       );
       stateNode.referencedContext.graph.activeNode =
         stateNode.referencedContext.graph.initalNode;
@@ -268,6 +283,7 @@ export function constructStateGraph(
   filePath: string | undefined,
   name: string = "", // The name of the chart that should be constructed
   referenceMapping: Record<string, SCChartModel> | undefined = undefined,
+  localModels?: SCChartModel, // Full original model for resolving nested local references
 ): Context {
   let rootState: State | undefined;
   if (name == "") {
@@ -290,6 +306,9 @@ export function constructStateGraph(
 
   let context: Context = emptyContext([rootState], rootRegion.id);
   context.errorMode = wonly ? "warnings-only" : "strict";
+  if (localModels) {
+    context.localModels = localModels;
+  }
 
   // Go over all States once and add them and the transitions to the graph
   context.graph = constructRegion(

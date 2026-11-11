@@ -17,6 +17,14 @@ export type {
   State,
 } from "./schema/types.js";
 export { setupContext } from "./interpreter/utils.js";
+export {
+  getVariable,
+  getVariablePre,
+  getVariableType,
+  setVariable,
+  setVariableArrayByIndex,
+  setVariableByIndex,
+} from "./interpreter/variables.js";
 
 export { preProcess, convertSCTXtoSchema } from "./converter/functions.js";
 

@@ -86,7 +86,7 @@ Also see the blocklist for models that have unsupported features.
 - [ ] kolja/ArrayAssignment.ktrace: When assigning array values from the same array it doesn't work in the same tick. 
 	- Why does this exist?
 	- Do we want to support this? I don't think so.
-- [ ] When reseting the model that was compiled in the browser the tick buttons still are grayed out. I assume that if the model is compiled instead of uploaded, it isn't stored so the reset can load it.
+- [x] When reseting the model that was compiled in the browser the tick buttons still are grayed out. I assume that if the model is compiled instead of uploaded, it isn't stored so the reset can load it.
 - [x] If an action assigns a variable that doesn't exist, the interpreter is happy to create it. should that be a warning / error?
 	- Also see above in "exceptions"
 - [x] ~~Local variables are named something like: local_region1_A in the simulation so the tests can fail, luckily most tests dont use local variables.~~

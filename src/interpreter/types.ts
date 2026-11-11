@@ -1,4 +1,10 @@
-import { Action, SCChartModel, State, Transition, ReferenceParameter } from "../schema/types.js";
+import {
+  Action,
+  SCChartModel,
+  State,
+  Transition,
+  ReferenceParameter,
+} from "../schema/types.js";
 
 export enum Severity {
   Error,
@@ -69,6 +75,9 @@ export interface Context {
   activeNodes: Set<StateNode>;
 
   functionCache: Map<string, Function>;
+
+  // The models in the loaded file, used for local reference charts
+  localModels?: SCChartModel;
 }
 
 export interface TickResult {
