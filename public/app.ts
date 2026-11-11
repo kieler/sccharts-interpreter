@@ -88,6 +88,13 @@ const diagramImage = document.getElementById(
   "diagram-image",
 ) as HTMLImageElement;
 
+const downloadSctxButton = document.getElementById(
+  "download-sctx",
+) as HTMLButtonElement;
+const downloadJsonButton = document.getElementById(
+  "download-json",
+) as HTMLButtonElement;
+
 let logVisible = false;
 let tickCount = 0;
 let loopInputs = false;
@@ -309,6 +316,39 @@ compileButton.addEventListener("click", async () => {
     log(`[Compiler] Compilation failed: ${(err as Error).message}`, "error");
     return false;
   }
+});
+
+downloadSctxButton.addEventListener("click", () => {
+  const content = sctxTextInput.value;
+  if (!content.trim()) {
+    log("[Download] Nothing to download. The model area is empty.", "error");
+    return;
+  }
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "model.sctx";
+  a.click();
+  URL.revokeObjectURL(url);
+  log("[Download] SCTX file downloaded.");
+});
+
+downloadJsonButton.addEventListener("click", () => {
+  if (!scchartModel) {
+    log("[Download] Nothing to download. Load a model first.", "error");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(scchartModel, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "model.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  log("[Download] JSON file downloaded.");
 });
 
 function getInputJson(): string {
