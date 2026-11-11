@@ -1,0 +1,339 @@
+openapi: "3.1.0"
+info:
+  title: SCCharts Interpreter API
+  description: REST API for loading, ticking, and resetting SCChart models.
+  version: 0.6.0
+
+servers:
+  - url: http://localhost:19339
+    description: API Server for the Interpreter for integration in other programms.
+
+paths:
+  /setup:
+    post:
+      summary: Load an SCChart model
+      description: |
+        Loads an SCChart model in either JSON or .sctx format, initializes the interpreter runtime, and optionally enables warnings-only mode. For models with local references, provide a `filePath` so referenced charts within the same array can be resolved.
+      operationId: setup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupRequest"
+            examples:
+              json-model:
+                summary: Load from JSON
+                value:
+                  format: json
+                  model:
+                    - id: "MainChart"
+                      label: "My Model"
+                      actions: []
+                      transitions:
+                        - targetID: "next"
+                          isImmediate: false
+                          preemption: "weak"
+                          history: false
+                      variables: []
+                      isInitial: true
+                      isFinal: false
+                      isConnector: false
+                      regions: []
+                    - id: "next"
+                      label: ""
+                      actions: []
+                      transitions: []
+                      variables: []
+                      isInitial: false
+                      isFinal: true
+                      isConnector: false
+                      regions: []
+                  wonly: false
+              sctx-model:
+                summary: Load from .sctx source
+                value:
+                  format: sctx
+                  content: |
+                    chart MainChart {
+                      initialState init;
+                      state init {
+                        on enter / x := 1;
+                        transition end;
+                      }
+                      state end [isFinal];
+                    }
+                  filePath: "/path/to/model.sctx"
+                  wonly: true
+      responses:
+        "200":
+          description: Model loaded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetupResponse"
+        "400":
+          description: Malformed request — missing field, invalid format, or parse error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing-format:
+                  summary: Missing format field
+                  value:
+                    error: "missing field: format"
+                unknown-format:
+                  summary: Unknown format value
+                  value:
+                    error: "unknown format: 'yaml'"
+                missing-model-json:
+                  summary: Missing model for JSON format
+                  value:
+                    error: "missing field: model"
+                    format: "json"
+                missing-content-sctx:
+                  summary: Missing content for sctx format
+                  value:
+                    error: "missing field: content"
+                    format: "sctx"
+                parse-error:
+                  summary: Lexer or parser error
+                  value:
+                    error: "Failed to parse SCChart model: Expected 'chart'"
+        "422":
+          description: Valid request but semantically unsatisfiable — a referenced chart ID was not found in the loaded model array.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorRefNotFoundResponse"
+        "500":
+          description: File I/O error or unexpected server-side exception.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /tick:
+    post:
+      summary: Advance the loaded model by one tick
+      description: |
+        Executes a single tick of the currently loaded SCChart model with the provided inputs. Returns updated variables, messages, and termination status. A model must be loaded first via `/setup`.
+      operationId: tick
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TickRequest"
+            example:
+              inputs:
+                startButton: true
+                sensorValue: 42
+      responses:
+        "200":
+          description: Tick completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TickResponse"
+              examples:
+                normal:
+                  summary: Normal tick result
+                  value:
+                    terminated: false
+                    variables:
+                      startButton: true
+                      sensorValue: 42
+                      accumulator: 100
+                    messages: []
+                    telemetry:
+                      ticktime: 0.523
+                terminated:
+                  summary: Model reached terminal state
+                  value:
+                    terminated: true
+                    variables:
+                      finalResult: "done"
+                    messages:
+                      - severity: 1
+                        text: "Model finished successfully"
+                    telemetry:
+                      ticktime: 0.312
+        "400":
+          description: No model is currently loaded — call `/setup` first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "No model loaded. Call /setup first."
+        "500":
+          description: Tick execution error (e.g., invalid variable access).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reset:
+    post:
+      summary: Reset the interpreter to initial state
+      description: |
+        Resets all variables and node states back to the initial configuration of the currently loaded model. The model itself remains loaded; only the runtime state is cleared.
+      operationId: reset
+      responses:
+        "200":
+          description: Model reset successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetResponse"
+        "400":
+          description: No model is currently loaded — call `/setup` first.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "No model loaded. Call /setup first."
+
+  /ping:
+    get:
+      summary: Health check
+      description: Simple health-check endpoint.
+      operationId: ping
+      responses:
+        "200":
+          description: Server is running.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingResponse"
+              example:
+                message: "pong"
+
+  /shutdown:
+    get:
+      summary: Gracefully shutdown the server
+      description: Terminates the server process. No response body is expected.
+      operationId: shutdown
+      responses:
+        "200":
+          description: Server is shutting down.
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    SCChartModel:
+      $ref: "../src/schema/json-schema.json"
+
+    SetupRequest:
+      type: object
+      required: [format]
+      properties:
+        format:
+          type: string
+          enum: [json, sctx]
+          description: Input format — `json` for a SCChartModel array, `sctx` for raw source.
+        model:
+          $ref: "#/components/schemas/SCChartModel"
+          description: The full SCChart model as a JSON array of State objects. Required when format is `json`.
+        content:
+          type: string
+          description: |
+            Raw `.sctx` source text (may contain multiple chart definitions for local references).
+            Required when format is `sctx`.
+        wonly:
+          type: boolean
+          default: false
+          description: Enable warnings-only mode.
+        filePath:
+          type: string
+          description: |
+            File path of the loaded model. Enables local reference resolution for both formats — referenced charts
+            are resolved by searching within the same model array loaded from `filePath`.
+
+    SetupResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          enum: ["Setup successful"]
+        model:
+          type: string
+          description: Label of the loaded root chart.
+
+    TickRequest:
+      type: object
+      properties:
+        inputs:
+          type: object
+          additionalProperties: true
+          description: Variable name → value mappings for this tick's input variables.
+
+    Message:
+      type: object
+      properties:
+        severity:
+          type: integer
+          enum: [0, 1]
+          description: "0 = Error, 1 = Warning."
+        text:
+          type: string
+
+    TickResponse:
+      type: object
+      properties:
+        terminated:
+          type: boolean
+          description: True if the model has reached a terminal state.
+        variables:
+          type: object
+          additionalProperties: true
+          description: All variable values after this tick (scoped variables prefixed with their scope path).
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        telemetry:
+          type: object
+          properties:
+            ticktime:
+              type: number
+              description: Tick duration in milliseconds.
+
+    ResetResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          enum: ["Reset successful"]
+        model:
+          type: string
+          description: Label of the currently loaded root chart.
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+
+    ErrorRefNotFoundResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Local reference "SomeRef" not found'
+        chart:
+          type: string
+          description: Name or ID of the chart where the missing reference was detected.
+
+    PingResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          enum: ["pong"]

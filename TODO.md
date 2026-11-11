@@ -122,8 +122,7 @@ Also see the blocklist for models that have unsupported features.
 - [x] Redo the testing to not use an api, but just the cli. The cli now allows the inputs all at once again. This should fix some stuff and make things with references easier.
 	- [x] random inputs
 	- [x] get all the tests to the new version
-- [ ] The API server still seems useful, so make it better, especially with response codes.
-	- [ ] 501 Multi File Reference Charts not implemented / supported
+- [x] The API server still seems useful, so make it better, especially with response codes.
 - [ ] The converter/functions.ts needs to be split up and organised
 
 

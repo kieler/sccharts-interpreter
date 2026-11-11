@@ -44,6 +44,15 @@ Part of this interpreter convcerts the sctx files of SCCharts to a json intermed
 npm run convert-sctx testing/sctx/ABO.sctx testing/json/ABO.json
 ```
 
+### api
+Te interpreter also provides an API for usage with other programms. It is meant for local use and as such only supports one connection and model at a time. It runs by default on port 19339
+
+```bash
+npm run api
+```
+For further details see the [API Sepcifications](docs/openapi.yaml).
+
+
 ### tests
 For the tests to work properly a version of the Kieler Compiler has to be downloaded (currently from this branch https://github.com/kieler/semantics/tree/dam/json) and its location configured in the `kico_config.json`. It is used to compare the results of the interpreter against that of the compiler.
 

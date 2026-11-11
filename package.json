@@ -1,6 +1,6 @@
 {
 	"name": "sccharts-interpreter",
-	"version": "0.6.0",
+	"version": "0.6.1",
 	"description": "Interpreter for the synchronous language SCChart",
 	"type": "module",
 	"bin": {
@@ -10,8 +10,6 @@
 		"build": "tsc",
 		"start": "node dist/web_server.js",
 		"cli": "node dist/cli.js",
-		"cli-test-prof": "node --cpu-prof --cpu-prof-dir=testing/logs/profiles dist/cli.js",
-		"compiler-server": "node dist/compiler_server.js",
 		"web-dev": "vite --port 5173",
 		"web-build": "vite build",
 		"api": "node dist/api_server.js",
