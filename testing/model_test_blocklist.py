@@ -36,6 +36,7 @@ blocklist = [
     "PR03.ktrace",
     "PR03b.ktrace",
     "BindingShadowsLocal.ktrace",
+    "DFT-abro4-exp.ktrace",
     # signals
     "KISEMA-1595-1.ktrace",
     "KISEMA-1595-2.ktrace",

@@ -80,6 +80,21 @@ export function isAction(item: unknown): item is Action {
     return reflection.isInstance(item, Action.$type);
 }
 
+export interface ArrayLiteral extends langium.AstNode {
+    readonly $container: RefVariableAssignment;
+    readonly $type: 'ArrayLiteral';
+    arrayLiterals: Array<number | string>;
+}
+
+export const ArrayLiteral = {
+    $type: 'ArrayLiteral',
+    arrayLiterals: 'arrayLiterals'
+} as const;
+
+export function isArrayLiteral(item: unknown): item is ArrayLiteral {
+    return reflection.isInstance(item, ArrayLiteral.$type);
+}
+
 export interface Chart extends langium.AstNode {
     readonly $container: SCTX;
     readonly $type: 'Chart';
@@ -112,7 +127,7 @@ export interface RefVariableAssignment extends langium.AstNode {
     readonly $type: 'RefVariableAssignment';
     from?: string;
     indices: Array<number | string>;
-    to: number | string;
+    to: ArrayLiteral | number | string;
 }
 
 export const RefVariableAssignment = {
@@ -257,6 +272,7 @@ export function isVariableAssignment(item: unknown): item is VariableAssignment 
 
 export type SCChartsAstType = {
     Action: Action
+    ArrayLiteral: ArrayLiteral
     Chart: Chart
     Element: Element
     RefVariableAssignment: RefVariableAssignment
@@ -290,6 +306,17 @@ export class SCChartsAstReflection extends langium.AbstractAstReflection {
                 }
             },
             superTypes: [Element.$type]
+        },
+        ArrayLiteral: {
+            name: ArrayLiteral.$type,
+            properties: {
+                arrayLiterals: {
+                    name: ArrayLiteral.arrayLiterals,
+                    defaultValue: [],
+                    optional: true
+                }
+            },
+            superTypes: []
         },
         Chart: {
             name: Chart.$type,

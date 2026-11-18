@@ -246,6 +246,13 @@ function mapReferenceVariables(
     }
   }
 
+  // For the things like inc(O, O)
+  for (const p of resolvedParams) {
+    if (!p.from && referencedContext.outputVariables.includes(p.targetName)) {
+      p.from = p.targetName;
+    }
+  }
+
   // Build the mapping: outer name → list of parameters targeting it.
   for (const param of resolvedParams) {
     const outerName = param.targetName;

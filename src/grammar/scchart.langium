@@ -11,7 +11,10 @@ State:
     isConnector?='connector'? isInitial?='initial'? isFinal?='final'? 'state' name=ID (ID|STRING)? (('{' (elements+=Variable)* (actions+=Action)* (elements+=(Element|Region))* '}')|'is' reference=ID ('(' (refAssignments+=RefVariableAssignment ','?)* ')')?)? (transitions+=Transition)*;
 
 RefVariableAssignment:
-    to=(ID | BOOL | FLOAT | INT | STRING) ('['indices+=(INT|ID)']')* ('to' from=ID)?;
+    to=(ID | BOOL | FLOAT | INT | STRING | ArrayLiteral) ('['indices+=(INT|ID)']')* ('to' from=ID)?;
+
+ArrayLiteral:
+  '{' (arrayLiterals+=(BOOL | FLOAT | INT | STRING) ','?)* '}';
 
 Variable:
     'const'? isInput?='input'? isOutput?='output'? type=VarType assignments+=VariableAssignment (',' assignments+=VariableAssignment)*;

@@ -5,15 +5,28 @@ import { parseGuard } from "./guardParser.js";
 import { Context, StateGraph, StateNode, TransitionEdge } from "./types.js";
 import { Action } from "../schema/types.js";
 import { assignInputVariables } from "./utils.js";
-import { getVariable, setPreVariables, setVariable, setVariableByIndex } from "./variables.js";
+import {
+  getVariable,
+  setPreVariables,
+  setVariable,
+  setVariableByIndex,
+} from "./variables.js";
 
 // Navigate through array elements to get a specific indexed value.
-function getIndexedValue(value: any, indices: (number | string)[], context: Context, node: StateNode): any {
+function getIndexedValue(
+  value: any,
+  indices: (number | string)[],
+  context: Context,
+  node: StateNode,
+): any {
   if (indices.length === 0) return value;
   let current = value;
   for (const idx of indices) {
     if (!Array.isArray(current)) return undefined;
-    const resolvedIndex = typeof idx === "string" ? parseExpression(idx, context, "int", node) : idx;
+    const resolvedIndex =
+      typeof idx === "string"
+        ? parseExpression(idx, context, "int", node)
+        : idx;
     current = current[resolvedIndex];
   }
   return current;
@@ -164,18 +177,20 @@ function processNode(
     // INPUT PASS: outer → inner
     for (const [outer, mappings] of node.referencedVarMap.entries()) {
       for (const mapping of mappings) {
-        if (!node.referencedContext.inputVariables.includes(mapping.from!)) continue;
+        if (!node.referencedContext.inputVariables.includes(mapping.from!))
+          continue;
 
         let outerVal = getVariable(outer, node, context);
         if (outerVal === undefined) {
           outerVal = parseExpression(outer, context, "", node);
         }
 
-        // If indices exist, extract the specific element from the outer array; 
+        // If indices exist, extract the specific element from the outer array;
         // otherwise use the whole value.
-        const innerVal = mapping.indices.length > 0
-          ? getIndexedValue(outerVal, mapping.indices, context, node)
-          : outerVal;
+        const innerVal =
+          mapping.indices.length > 0
+            ? getIndexedValue(outerVal, mapping.indices, context, node)
+            : outerVal;
 
         setVariable(mapping.from!, innerVal, node, node.referencedContext);
       }
@@ -186,9 +201,11 @@ function processNode(
     // OUTPUT PASS: inner → outer
     for (const [outer, mappings] of node.referencedVarMap.entries()) {
       for (const mapping of mappings) {
-        if (!node.referencedContext.outputVariables.includes(mapping.from!)) continue;
-
-        const innerVal = getVariable(mapping.from!, node, node.referencedContext);
+        const innerVal = getVariable(
+          mapping.from!,
+          node,
+          node.referencedContext,
+        );
 
         // If indices exist, write to the specific element; otherwise replace whole variable.
         if (mapping.indices.length > 0) {

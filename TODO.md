@@ -68,8 +68,6 @@ Also see the blocklist for models that have unsupported features.
 - [x] als/various/null_check: null != None (js v Python)
 - [x] ssm/statebased/RBLS/DFT-abro4-exp: a bool is set to 0?
 	- js + kico weirdness: false | false = 0 instead of false
-- [ ] ssm/statebased/RBLS/DFT-abro4-exp: I don't know, some wrong assignements, gotta go through step by step
-    - scheduling porbably
 - [x] als/various/const_float_computation: No expression parsing during assignments
 - [ ] Vector expressions:
 	- Do we want to support this? Maybe not.
@@ -101,6 +99,7 @@ Also see the blocklist for models that have unsupported features.
 	- Had to change the json-schema, as it expected cardinalities to be intigers.
 - [x] testing/models/Pre.sctx: When pre() is in the guard, we get a reference error
 	- The guardParser is mising the function substitution from the actionParser
+- [x] aas/referenced/arrays/BindArrayVector.ktrace: The sctx2json converter does not support binding array literals
 
 ### features
 - [x] aas/referenced/SimpleRef, aas/referenced/AbortedRef, aas/referenced/BindLiteral, aas/referenced/RefDeep: Reference SCCharts

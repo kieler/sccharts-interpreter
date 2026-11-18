@@ -408,8 +408,15 @@ function convertAstStateToSchema(
     }
 
     for (const param of astState.refAssignments) {
-      const targetName: string =
-        typeof param.to == "string" ? param.to : param.to.toString();
+      let targetName: string;
+      if (typeof param.to === "string") {
+        targetName = param.to;
+      } else if (param.to && (param.to as any).$type === "ArrayLiteral") {
+        const arr = (param.to as any).arrayLiterals;
+        targetName = JSON.stringify(arr);
+      } else {
+        targetName = param.to.toString();
+      }
 
       schemaState.reference.parameters.push({
         targetName: targetName,

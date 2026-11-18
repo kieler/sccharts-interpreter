@@ -36,7 +36,7 @@ def test_abo():
     assert_subset(runner.run(inputs), expected)
 
 
-def test_abo_scheduling():
+def test_abo_scheduling_must_fail():
     """
     Known to fail
     This is to see if reordering A and B changes the behaviour of the model
