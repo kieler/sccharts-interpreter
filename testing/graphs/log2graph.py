@@ -59,11 +59,33 @@ import numpy as np
 PlotType = Literal["bar", "line"]
 
 
+def _resolve_labelstyle(style) -> dict[str, Any]:
+    """Convert a shorthand labelstyle (str/tuple) to matplotlib font dict."""
+    if style is None:
+        return {}
+    if isinstance(style, str):
+        props: dict[str, Any] = {}
+        if "bold" in style.lower():
+            props["weight"] = "bold"
+        if "italic" in style.lower():
+            props["style"] = "italic"
+        if "underline" in style.lower():
+            props["fontproperties"] = None  # placeholder; handled separately
+        return props
+    if isinstance(style, tuple):
+        props: dict[str, Any] = {}
+        for s in style:
+            props.update(_resolve_labelstyle(s))
+        return props
+    return {}
+
+
 def log_to_graph(
     log_path: str | Path,
     plot_spec: Any,
     output_path: str | Path = "output.png",
     title: str = "",
+    legend_kwargs: dict[str, Any] | None = None,
 ) -> None:
     """Create a matplotlib figure from a test run log file.
 
@@ -73,6 +95,10 @@ def log_to_graph(
             See module docstring for accepted formats.
         output_path: Where to save the PNG image.
         title: Figure title (defaults to "Test Run Results").
+        legend_kwargs: Optional dict of keyword arguments passed to
+            ``matplotlib.axes.Axes.legend()`` (e.g. ``{"title": "Legend"}``,
+            ``{"fontsize": 10, "loc": "upper left"}``). Use the per-variable
+            ``"label"`` key in a plot config to customise individual legend labels.
 
     Raises:
         FileNotFoundError: If log_path doesn't exist.
@@ -95,10 +121,10 @@ def log_to_graph(
 
     n_ticks = len(entries)
 
-    # ---- normalize plot spec into (type, attrs_dict, axis_key) ----
+    # ---- normalize plot spec into (type, attrs_dict, axis_key, label_style) ----
     normalized: List[
-        Tuple[str, PlotType, Dict[str, Any]]
-    ] = []  # name, type, attrs, axis
+        Tuple[str, PlotType, Dict[str, Any], str | None, dict[str, Any] | None]
+    ] = []  # name, type, attrs, axis, label_style
     for name in plot_spec:
         value = plot_spec[name]
         if isinstance(value, tuple):
@@ -128,11 +154,19 @@ def log_to_graph(
                 f"Invalid spec for variable '{name}': expected tuple or dict, got {type(value).__name__}"
             )
 
+        # Resolve label (defaults to variable name) and optional labelstyle
+        if "label" not in attrs:
+            attrs["label"] = name
+        ls = attrs.pop("labelstyle", None)
+        label_style: dict[str, Any] | None = None
+        if ls is not None:
+            label_style = _resolve_labelstyle(ls)
+
         axis_key = attrs.pop("axis", None)
-        normalized.append((name, ptype, attrs, axis_key))
+        normalized.append((name, ptype, attrs, axis_key, label_style))
 
     # ---- build figure with potentially multiple y-axes ----
-    num_bars = sum(1 for _, t, _, _ in normalized if t == "bar")
+    num_bars = sum(1 for _, t, *_ in normalized if t == "bar")
     bar_width = 0.5
 
     has_secondary = any(_[3] is not None for _ in normalized)
@@ -146,7 +180,7 @@ def log_to_graph(
         axes_by_key: Dict[str | None, plt.Axes] = {None: ax_primary}
         seen_keys: set[str | None] = {None}
 
-        for name, ptype, attrs, axis_key in normalized:
+        for name, ptype, attrs, axis_key, _label_style in normalized:
             if axis_key is not None and axis_key not in seen_keys:
                 ax_new = ax_primary.twinx()
                 axes_by_key[axis_key] = ax_new
@@ -157,11 +191,11 @@ def log_to_graph(
 
     # ---- collect data series ----
     series_map: Dict[str, np.ndarray] = {}
-    for name, ptype, attrs, axis_key in normalized:
+    for name, ptype, attrs, axis_key, _label_style in normalized:
         series_map[name] = _extract_series(entries, name)
 
     # ---- plot each variable ----
-    for name, ptype, attrs, axis_key in normalized:
+    for name, ptype, attrs, axis_key, label_style in normalized:
         ax = axes_by_key[axis_key]
         x = np.arange(n_ticks)
         y = series_map[name]
@@ -185,16 +219,35 @@ def log_to_graph(
     ax_primary.grid(True, alpha=0.3)
 
     # ---- legend (merged from all axes) ----
-    handles, labels = ax_primary.get_legend_handles_labels()
-    for ax_key in axes_by_key:
-        if ax_key is None:  # primary axis already done above
-            continue
-        h, l = axes_by_key[ax_key].get_legend_handles_labels()
-        handles.extend(h)
-        labels.extend(l)
+    ordered_handles: list = []
+    ordered_labels_text: list[str] = []
+    ordered_styles: list[dict[str, Any] | None] = []
 
-    if labels:
-        ax_primary.legend(handles, labels, loc="best")
+    for name, ptype, attrs, axis_key, label_style in normalized:
+        if name not in series_map:
+            continue
+        h_list, l_list = axes_by_key[axis_key].get_legend_handles_labels()
+        legend_label = attrs.get("label", name)
+        if legend_label in l_list:
+            i = l_list.index(legend_label)
+            ordered_handles.append(h_list[i])
+            ordered_labels_text.append(l_list[i])
+            ordered_styles.append(label_style)
+
+    if ordered_labels_text:
+        default_legend_kwargs: dict[str, Any] = {"loc": "best"}
+        merged_kwargs = {**default_legend_kwargs, **(legend_kwargs or {})}
+        leg = ax_primary.legend(ordered_handles, ordered_labels_text, **merged_kwargs)
+        # Apply per-label font properties via legend.get_texts()
+        texts = leg.get_texts()
+        for text_item, style in zip(texts, ordered_styles):
+            if style is not None:
+                props = text_item.get_fontproperties().copy()
+                if "weight" in style:
+                    props.set_weight(style["weight"])
+                if "style" in style:
+                    props.set_style(style["style"])
+                text_item.set_fontproperties(props)
 
     fig.tight_layout()
     fig.savefig(output_path, dpi=150)
